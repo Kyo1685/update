@@ -3,6 +3,10 @@
 One portrait per hero lives here. The detector matches these against the live
 draft slots with `cv2.matchTemplate` (with an HSV colour-histogram fallback).
 
+**A ready-to-use square set (160×160, ~130 heroes) is bundled** — you can run
+the app immediately. Regenerate or extend it any time with `fetch_templates.py`
+or `import_icons.py` (they just overwrite these files).
+
 ## Fastest way: auto-download the whole roster
 
 ```bash

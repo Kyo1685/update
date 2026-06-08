@@ -27,6 +27,7 @@ Run ``python ui.py`` for a self-contained mock demo (no game / capture needed).
 
 from __future__ import annotations
 
+import os
 from typing import Dict, List, Optional
 
 from PyQt5.QtCore import (Qt, QSize, QRectF, QPoint, pyqtSignal, pyqtProperty,
@@ -228,11 +229,13 @@ class RoleRow(QWidget):
 class OverlayCanvas(QWidget):
     """Transparent, click-through layer that paints boxes + tags over slots."""
 
-    def __init__(self, db, layout: config.Layout = config.LAYOUT,
-                 origin=config.CAPTURE_ORIGIN):
+    def __init__(self, db, layout: Optional[config.Layout] = None,
+                 region: Optional[dict] = None):
         super().__init__()
         self.db = db
-        self.layout = layout
+        # Resolve at construction time so a calibrated layout / region is used.
+        self.layout = layout if layout is not None else config.LAYOUT
+        region = region if region is not None else config.ACTIVE_REGION
         self._state = DraftState()
 
         self.setWindowFlags(Qt.FramelessWindowHint
@@ -242,7 +245,8 @@ class OverlayCanvas(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)  # belt & braces
         self.setAttribute(Qt.WA_ShowWithoutActivating, True)
-        self.setGeometry(origin[0], origin[1], config.RES_W, config.RES_H)
+        self.setGeometry(region["left"], region["top"],
+                         region["width"], region["height"])
 
         self._font = QFont(THEME.font_family, 11, QFont.Bold)
         self._font.setStyleHint(QFont.Monospace)
@@ -303,6 +307,108 @@ class OverlayCanvas(QWidget):
             # red strike-through to read as "banned"
             p.setPen(QPen(qcolor(THEME.warn), 2))
             p.drawLine(box.x, box.y, box.x2, box.y2)
+
+
+# ===========================================================================
+#  CALIBRATION OVERLAY: click anchors directly on the live game (WYSIWYG)
+# ===========================================================================
+class CalibrationOverlay(QWidget):
+    """Transparent but INTERACTIVE full-screen overlay for click-to-calibrate.
+
+    You click the 8 anchor points on the live draft showing through, so the
+    coordinates are in the exact space the running overlay paints in (and, with
+    DPI awareness on, the same space mss captures).  No separate cv2 window, no
+    coordinate-space mismatch.
+    """
+    saved = pyqtSignal(str)
+    cancelled = pyqtSignal()
+
+    def __init__(self, region: Optional[dict] = None, out_path: Optional[str] = None):
+        super().__init__()
+        region = region if region is not None else config.ACTIVE_REGION
+        self.out_path = out_path or config.LAYOUT_FILE
+        self._clicks: List = []
+        self._factor = 0.82
+
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setGeometry(region["left"], region["top"],
+                         region["width"], region["height"])
+        self.setCursor(Qt.CrossCursor)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self._font = QFont(THEME.font_family, 15, QFont.Bold)
+        self._font.setStyleHint(QFont.Monospace)
+
+    # ----- input ----------------------------------------------------------
+    def mousePressEvent(self, e) -> None:
+        if e.button() == Qt.LeftButton and len(self._clicks) < 8:
+            self._clicks.append((e.x(), e.y()))
+            self.update()
+
+    def keyPressEvent(self, e) -> None:
+        k = e.key()
+        if k == Qt.Key_Escape:
+            self.cancelled.emit(); self.close(); return
+        if k == Qt.Key_R:
+            self._clicks = []; self.update(); return
+        if len(self._clicks) == 8:
+            if k == Qt.Key_S:
+                config.save_layout(self._layout(), self.out_path)
+                self.saved.emit(os.path.abspath(self.out_path))
+                self.close()
+            elif k == Qt.Key_BracketLeft:
+                self._factor = max(0.40, self._factor - 0.04); self.update()
+            elif k == Qt.Key_BracketRight:
+                self._factor = min(1.20, self._factor + 0.04); self.update()
+
+    # ----- geometry -------------------------------------------------------
+    def _layout(self):
+        from calibrate import layout_from_anchors
+        c = self._clicks
+        return layout_from_anchors((c[0], c[1]), (c[2], c[3]), (c[4], c[5]),
+                                   (c[6], c[7]), self._factor, self._factor)
+
+    # ----- painting -------------------------------------------------------
+    def paintEvent(self, _) -> None:
+        from calibrate import PROMPTS
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.TextAntialiasing)
+        p.fillRect(self.rect(), QColor(0, 0, 0, 55))     # dim => visibly active
+        p.setFont(self._font)
+
+        for i, (x, y) in enumerate(self._clicks):
+            p.setPen(Qt.NoPen); p.setBrush(qcolor(THEME.accent))
+            p.drawEllipse(QPoint(x, y), 7, 7)
+            p.setPen(QPen(QColor(0, 0, 0)))
+            p.drawText(x + 11, y - 9, str(i + 1))
+
+        if len(self._clicks) < 8:
+            self._banner(p, f"[{len(self._clicks)+1}/8]  {PROMPTS[len(self._clicks)]}",
+                         "Click the slot CENTER   -   R restart   Esc cancel")
+        else:
+            p.setBrush(Qt.NoBrush)
+            for boxes, color in ((self._layout().ally_picks, THEME.ally_box),
+                                 (self._layout().enemy_picks, THEME.enemy_box),
+                                 (self._layout().ally_bans, THEME.ban_box),
+                                 (self._layout().enemy_bans, THEME.ban_box)):
+                p.setPen(QPen(qcolor(color), 3))
+                for b in boxes:
+                    p.drawRect(b.x, b.y, b.w, b.h)
+            self._banner(p, "Review the boxes",
+                         "S save    [ / ] resize    R restart    Esc cancel")
+
+    def _banner(self, p, line1: str, line2: str) -> None:
+        w = self.width()
+        p.setBrush(QColor(6, 14, 12, 235))
+        p.setPen(QPen(qcolor(THEME.panel_border), 2))
+        p.drawRoundedRect(int(w / 2 - 390), 22, 780, 74, 10, 10)
+        p.setFont(self._font)
+        p.setPen(QPen(qcolor(THEME.accent)))
+        p.drawText(int(w / 2 - 366), 56, line1)
+        p.setFont(QFont(THEME.font_family, 11))
+        p.setPen(QPen(qcolor(THEME.text_dim)))
+        p.drawText(int(w / 2 - 366), 84, line2)
 
 
 # ===========================================================================

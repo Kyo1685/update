@@ -23,6 +23,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from typing import List, Optional, Tuple
 
@@ -31,6 +32,22 @@ from PyQt5.QtCore import QThread, QTimer, pyqtSignal
 import config
 from engine import DraftState, HeroDB, ScoringEngine, Settings
 from ui import DraftOverlay
+
+
+def _resolve_region(args) -> dict:
+    """Capture region on the desktop.  Default = the whole primary monitor, so
+    the overlay works at the user's real PC resolution regardless of how Scrcpy
+    scaled the phone."""
+    if args.region:
+        l, t, w, h = (int(v) for v in args.region.split(","))
+        return {"left": l, "top": t, "width": w, "height": h}
+    try:
+        from detector import ScreenCapturer
+        return ScreenCapturer.primary_monitor()
+    except Exception as exc:
+        sys.stderr.write(f"[region] could not query monitor ({exc}); "
+                         "falling back to reference frame.\n")
+        return dict(config.ACTIVE_REGION)
 
 
 # ---------------------------------------------------------------------------
@@ -200,15 +217,66 @@ def main() -> int:
     parser.add_argument("--stats-url", default=config.STATS_URL,
                         help="JSON endpoint for live win/ban stats (overlays "
                              "heroes.json; cached + auto-refreshed)")
+    parser.add_argument("--region", default=None,
+                        help="capture region L,T,W,H (default: whole primary monitor)")
+    parser.add_argument("--layout", default=config.LAYOUT_FILE,
+                        help="calibration JSON produced by calibrate.py")
     parser.add_argument("--accept-low", action="store_true",
                         help="accept low-confidence template guesses")
     parser.add_argument("--mock", action="store_true",
                         help="run a scripted demo without screen capture")
+    parser.add_argument("--calibrate", action="store_true",
+                        help="click-to-align the boxes over the live game, "
+                             "save layout.json, then exit")
     args = parser.parse_args()
 
-    # QApplication must exist before any widget.
+    # DPI awareness BEFORE Qt so mss (physical px) and PyQt agree on coordinates
+    # (Windows display scaling otherwise offsets/rescales the boxes).
+    config.enable_dpi_awareness()
+    os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "0")
+    os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "0")
     from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtCore import Qt as _Qt
+    try:
+        QApplication.setAttribute(_Qt.AA_DisableHighDpiScaling, True)
+    except Exception:
+        pass
     app = QApplication(sys.argv)
+
+    # Resolve capture region + per-device layout BEFORE building the overlay,
+    # so the boxes are positioned for THIS screen (not the 2712x1220 phone).
+    region = _resolve_region(args)
+    layout = None
+    if args.layout and os.path.exists(args.layout):
+        try:
+            layout = config.load_layout(args.layout)
+            print(f"[layout] loaded calibration from {os.path.abspath(args.layout)}")
+        except Exception as exc:
+            sys.stderr.write(f"[layout] could not read {args.layout}: {exc}\n")
+    if layout is None and not args.calibrate:
+        sys.stderr.write("[layout] no calibration found - using scaled fallback. "
+                         "Run 'python main.py --calibrate' for pixel-perfect boxes.\n")
+    config.apply_region(region, layout)
+
+    # Diagnostics: capture size vs Qt screen reveals any residual DPI mismatch.
+    scr = app.primaryScreen()
+    sw, sh = scr.size().width(), scr.size().height()
+    print(f"[display] capture {region['width']}x{region['height']} | "
+          f"Qt screen {sw}x{sh} dpr={scr.devicePixelRatio():.2f}")
+    if (sw, sh) != (region["width"], region["height"]):
+        sys.stderr.write("[display] WARNING: capture size != Qt screen size - "
+                         "DPI scaling may still offset boxes.\n")
+
+    # ---- calibration mode: align on the live game, save, exit ----
+    if args.calibrate:
+        from ui import CalibrationOverlay
+        cal = CalibrationOverlay(config.ACTIVE_REGION, args.layout)
+        cal.saved.connect(lambda pth: (
+            print(f"[calibrate] saved {pth}\nNow run:  python main.py"), app.quit()))
+        cal.cancelled.connect(lambda: (
+            print("[calibrate] cancelled (nothing saved)"), app.quit()))
+        cal.show(); cal.raise_(); cal.activateWindow(); cal.setFocus()
+        return app.exec_()
 
     # Build the hero DB - seed from heroes.json, optionally overlay live stats.
     repo = None
