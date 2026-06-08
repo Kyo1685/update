@@ -118,6 +118,20 @@ STATS_CACHE_TTL: float = 3600.0                     # serve cache for 1h
 STATS_REFRESH_SEC: int = 900                        # auto-refresh every 15 min
 
 # ---------------------------------------------------------------------------
+# 4c. TEMPLATE AUTO-FETCH (consumed by fetch_templates.py)
+# ---------------------------------------------------------------------------
+# A JSON source that pairs each hero with a portrait image URL.  The default is
+# a public community DB on GitHub whose `portrait` field is a 128x128 square on
+# Moonton's own CDN - swap it for any source by changing these five values.
+TEMPLATE_SOURCE_URL: str = (
+    "https://raw.githubusercontent.com/p3hndrx/MLBB-API/main/v1/hero-meta-final.json"
+)
+TEMPLATE_SOURCE_RECORD_PATH: Optional[str] = "data"     # dotted path to records
+TEMPLATE_SOURCE_NAME_KEYS: Tuple[str, ...] = ("hero_name", "uid")
+TEMPLATE_SOURCE_IMAGE_KEY: str = "portrait"
+TEMPLATE_FETCH_SIZE: int = 160                          # saved square px size
+
+# ---------------------------------------------------------------------------
 # 5. PIXEL-PERFECT SLOT LAYOUT
 # ---------------------------------------------------------------------------
 # A draft slot box: integer pixel rectangle on the capture surface.

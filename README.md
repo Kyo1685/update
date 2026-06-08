@@ -67,6 +67,32 @@ Position the Scrcpy window borderless at the top-left of the primary monitor
 
 ---
 
+## Hero templates (auto-download — no screenshots!)
+
+Don't grind ranked to screenshot 130 heroes. One command pulls a portrait for
+every hero into `templates/`:
+
+```bash
+python fetch_templates.py            # whole roster (~130 portraits)
+python fetch_templates.py --only-db  # just the heroes in heroes.json
+python fetch_templates.py --overwrite
+```
+
+It reads a JSON source that pairs each hero with an image URL (default: a public
+community DB whose `portrait` field is a 128×128 square on the official CDN),
+centre-crops to a square and saves `templates/<hero>.png`. Name matching is
+fuzzy, so spelling variants (e.g. "Minsithar" vs "Minsitthar") still resolve.
+Fully pluggable — point it at any source:
+
+```bash
+python fetch_templates.py --source-url <url> --record-path data \
+       --name-keys hero_name,uid --image-key portrait
+```
+
+> Portraits are game assets fetched for personal, local template-matching use;
+> they're git-ignored and never committed. For the last few % of accuracy you
+> can drop a hand-cropped draft portrait over any specific file.
+
 ## Calibration (pixel-perfect boxes)
 
 All 20 slot rectangles are derived from fractional anchors in
