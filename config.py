@@ -29,8 +29,8 @@ from typing import Dict, List, Optional, Tuple
 # The Scrcpy mirror is assumed to be a borderless window of EXACTLY this size,
 # pinned to the top-left of the primary monitor.  If your mirror lives at a
 # different origin, set CAPTURE_ORIGIN to its top-left (x, y) on the desktop.
-RES_W: int = 2712
-RES_H: int = 1220
+RES_W: int = 1920
+RES_H: int = 864
 CAPTURE_ORIGIN: Tuple[int, int] = (0, 0)
 
 # Capture / detection throttling (seconds).  Drafts move slowly, so ~12 FPS of
