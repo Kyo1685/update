@@ -142,6 +142,8 @@ so hard-coded coordinates land off-screen. Two things handle this:
 Without calibration the app falls back to scaled fractional anchors — close, but
 calibrate once for exact boxes.
 
+![calibrated layout at 1366x768](docs/overlay_1366x768.png)
+
 ---
 
 ## The scoring engine
