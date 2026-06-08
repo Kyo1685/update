@@ -20,6 +20,7 @@ pre-computed ``LAYOUT`` constant.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -32,6 +33,17 @@ from typing import Dict, List, Optional, Tuple
 RES_W: int = 2712
 RES_H: int = 1220
 CAPTURE_ORIGIN: Tuple[int, int] = (0, 0)
+
+# Capture region on the DESKTOP.  None => grab the whole primary monitor, which
+# is the robust default: the overlay then works at your real PC resolution no
+# matter how Scrcpy scaled the 2712x1220 phone to fit the screen.  Set to
+# (left, top, width, height) to grab only the mirror window instead.
+CAPTURE_REGION: Optional[Tuple[int, int, int, int]] = None
+
+# Per-device calibration (absolute pixel boxes) written by calibrate.py.  When
+# this file exists it OVERRIDES the fractional fallback layout computed below -
+# this is how you make the boxes land exactly on YOUR mirror.
+LAYOUT_FILE: str = "layout.json"
 
 # Capture / detection throttling (seconds).  Drafts move slowly, so ~12 FPS of
 # detection is plenty and keeps CPU + GPU cool.  The capturer also caches the
@@ -177,48 +189,80 @@ class Layout:
 
 def build_layout(res_w: int = RES_W, res_h: int = RES_H) -> Layout:
     """
-    Derive every slot rectangle from fractional anchors so the same proportions
-    re-scale to any resolution.  Values below were calibrated against the
-    2712x1220 MLBB draft screen (allied picks down the LEFT margin, enemy picks
-    down the RIGHT margin, all ten ban portraits along the TOP margin).
+    Fractional FALLBACK layout, re-scaled to whatever frame size you pass in.
 
-    NOTE on calibration: ship ``tools/calibrate.py`` (or the in-app F2 grid)
-    to nudge these anchors per-device.  Template matching is forgiving of a few
-    px of drift, but the tighter the box the higher the confidence score.
+    These anchors are eyeballed from the real MLBB draft (ally = circular
+    avatars down the far LEFT, enemy = wide splash art down the far RIGHT, bans
+    = small circles in the TOP-LEFT / TOP-RIGHT corners).  They get you close;
+    for pixel accuracy run ``python calibrate.py`` once, which writes a
+    ``layout.json`` that overrides this entirely.
     """
-    # ---- vertical pick column geometry (fractions of height) --------------
-    pick_w = round(0.0560 * res_w)          # ~152 px portrait at 2712
-    pick_h = pick_w                          # portraits are square
-    pick_y0 = round(0.0820 * res_h)          # first slot top  (~100 px)
-    pick_pitch = round(0.1605 * res_h)       # vertical stride (~196 px)
+    def col(x_frac: float, w_frac: float, y0_frac: float,
+            pitch_frac: float) -> List[Box]:
+        w = round(w_frac * res_w)            # square boxes (height == width px)
+        x = round(x_frac * res_w)
+        return [Box(x, round((y0_frac + i * pitch_frac) * res_h), w, w)
+                for i in range(5)]
 
-    ally_x = round(0.0130 * res_w)           # left margin     (~35 px)
-    enemy_x = res_w - ally_x - pick_w        # mirrored to right margin
+    def row(x0_frac: float, w_frac: float, y_frac: float,
+            pitch_frac: float) -> List[Box]:
+        w = round(w_frac * res_w)
+        y = round(y_frac * res_h)
+        return [Box(round((x0_frac + i * pitch_frac) * res_w), y, w, w)
+                for i in range(5)]
 
-    ally_picks = [Box(ally_x, pick_y0 + i * pick_pitch, pick_w, pick_h)
-                  for i in range(5)]
-    enemy_picks = [Box(enemy_x, pick_y0 + i * pick_pitch, pick_w, pick_h)
-                   for i in range(5)]
-
-    # ---- horizontal ban row geometry (fractions of width) -----------------
-    ban_w = round(0.0288 * res_w)            # ~78 px ban portrait
-    ban_h = ban_w
-    ban_y = round(0.0180 * res_h)            # top margin (~22 px)
-    ban_pitch = round(0.0553 * res_w)        # horizontal stride (~150 px)
-
-    ally_ban_x0 = round(0.1730 * res_w)      # first allied ban (~469 px)
-    ally_bans = [Box(ally_ban_x0 + i * ban_pitch, ban_y, ban_w, ban_h)
-                 for i in range(5)]
-    # Enemy bans mirror the allied row across the screen's vertical centre.
-    enemy_bans = [Box(res_w - (ally_ban_x0 + i * ban_pitch) - ban_w,
-                      ban_y, ban_w, ban_h)
-                  for i in range(5)]
-
+    ally_picks = col(x_frac=0.060, w_frac=0.060, y0_frac=0.143, pitch_frac=0.1625)
+    enemy_picks = col(x_frac=0.870, w_frac=0.080, y0_frac=0.143, pitch_frac=0.1625)
+    ally_bans = row(x0_frac=0.050, w_frac=0.032, y_frac=0.015, pitch_frac=0.0588)
+    enemy_bans = row(x0_frac=0.684, w_frac=0.032, y_frac=0.015, pitch_frac=0.0625)
     return Layout(ally_picks, enemy_picks, ally_bans, enemy_bans)
 
 
-# Pre-computed layout for the default 2712x1220 target.
+# ---------------------------------------------------------------------------
+#  Layout <-> JSON (per-device calibration persistence) + active region
+# ---------------------------------------------------------------------------
+def layout_to_dict(layout: Layout) -> Dict[str, List[List[int]]]:
+    return {
+        "ally_picks": [list(b.as_tuple()) for b in layout.ally_picks],
+        "enemy_picks": [list(b.as_tuple()) for b in layout.enemy_picks],
+        "ally_bans": [list(b.as_tuple()) for b in layout.ally_bans],
+        "enemy_bans": [list(b.as_tuple()) for b in layout.enemy_bans],
+    }
+
+
+def layout_from_dict(d: Dict[str, List[List[int]]]) -> Layout:
+    f = lambda key: [Box(int(x), int(y), int(w), int(h)) for x, y, w, h in d[key]]
+    return Layout(f("ally_picks"), f("enemy_picks"), f("ally_bans"), f("enemy_bans"))
+
+
+def save_layout(layout: Layout, path: str = LAYOUT_FILE) -> None:
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(layout_to_dict(layout), fh, indent=2)
+
+
+def load_layout(path: str = LAYOUT_FILE) -> Layout:
+    with open(path, "r", encoding="utf-8") as fh:
+        return layout_from_dict(json.load(fh))
+
+
+# Pre-computed fallback layout for the default 2712x1220 reference frame.
 LAYOUT: Layout = build_layout()
+
+# The region the app is currently capturing + drawing over.  main.py sets this
+# at startup (typically the whole primary monitor at your real PC resolution).
+ACTIVE_REGION: Dict[str, int] = {"left": CAPTURE_ORIGIN[0], "top": CAPTURE_ORIGIN[1],
+                                 "width": RES_W, "height": RES_H}
+
+
+def apply_region(region: Dict[str, int], layout: Optional[Layout] = None) -> None:
+    """Set the active capture region (and layout) once at startup.  When no
+    explicit layout is supplied the fractional fallback is rebuilt at the
+    region's size so the boxes are at least proportionally placed."""
+    global ACTIVE_REGION, LAYOUT
+    ACTIVE_REGION = {"left": int(region["left"]), "top": int(region["top"]),
+                     "width": int(region["width"]), "height": int(region["height"])}
+    LAYOUT = layout if layout is not None else build_layout(
+        ACTIVE_REGION["width"], ACTIVE_REGION["height"])
 
 # ---------------------------------------------------------------------------
 # 6. UI THEME  (consumed by ui.py) -- neon "terminal" aesthetic

@@ -23,6 +23,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from typing import List, Optional, Tuple
 
@@ -31,6 +32,22 @@ from PyQt5.QtCore import QThread, QTimer, pyqtSignal
 import config
 from engine import DraftState, HeroDB, ScoringEngine, Settings
 from ui import DraftOverlay
+
+
+def _resolve_region(args) -> dict:
+    """Capture region on the desktop.  Default = the whole primary monitor, so
+    the overlay works at the user's real PC resolution regardless of how Scrcpy
+    scaled the phone."""
+    if args.region:
+        l, t, w, h = (int(v) for v in args.region.split(","))
+        return {"left": l, "top": t, "width": w, "height": h}
+    try:
+        from detector import ScreenCapturer
+        return ScreenCapturer.primary_monitor()
+    except Exception as exc:
+        sys.stderr.write(f"[region] could not query monitor ({exc}); "
+                         "falling back to reference frame.\n")
+        return dict(config.ACTIVE_REGION)
 
 
 # ---------------------------------------------------------------------------
@@ -200,6 +217,10 @@ def main() -> int:
     parser.add_argument("--stats-url", default=config.STATS_URL,
                         help="JSON endpoint for live win/ban stats (overlays "
                              "heroes.json; cached + auto-refreshed)")
+    parser.add_argument("--region", default=None,
+                        help="capture region L,T,W,H (default: whole primary monitor)")
+    parser.add_argument("--layout", default=config.LAYOUT_FILE,
+                        help="calibration JSON produced by calibrate.py")
     parser.add_argument("--accept-low", action="store_true",
                         help="accept low-confidence template guesses")
     parser.add_argument("--mock", action="store_true",
@@ -209,6 +230,23 @@ def main() -> int:
     # QApplication must exist before any widget.
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
+
+    # Resolve capture region + per-device layout BEFORE building the overlay,
+    # so the boxes are positioned for THIS screen (not the 2712x1220 phone).
+    region = _resolve_region(args)
+    layout = None
+    if args.layout and os.path.exists(args.layout):
+        try:
+            layout = config.load_layout(args.layout)
+            print(f"[layout] loaded calibration from {args.layout}")
+        except Exception as exc:
+            sys.stderr.write(f"[layout] could not read {args.layout}: {exc}\n")
+    if layout is None:
+        sys.stderr.write("[layout] no calibration found - using scaled fallback. "
+                         "Run 'python calibrate.py' once for pixel-perfect boxes.\n")
+    config.apply_region(region, layout)
+    print(f"[region] capturing {region['width']}x{region['height']} "
+          f"at ({region['left']},{region['top']})")
 
     # Build the hero DB - seed from heroes.json, optionally overlay live stats.
     repo = None
