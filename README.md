@@ -56,7 +56,7 @@ frames). The Qt event loop never blocks, so toggles and animations stay smooth.
 pip install -r requirements.txt          # PyQt5, opencv-python, numpy, mss
 
 python main.py --mock                     # preview the HUD with a scripted draft
-python calibrate.py                       # one-time: click to align boxes (any resolution)
+python main.py --calibrate                # one-time: click to align boxes (any resolution)
 python main.py                            # live; captures your whole monitor
 python main.py --accept-low               # also trust low-confidence guesses
 python main.py --region 0,0,1366,614      # capture only a sub-region if you prefer
@@ -124,20 +124,26 @@ so hard-coded coordinates land off-screen. Two things handle this:
 1. **Full-screen capture by default.** The app grabs your whole primary monitor
    and draws over it, so it works at your real resolution no matter how Scrcpy
    scaled the mirror. (Override with `--region L,T,W,H` if you want.)
-2. **Click-to-calibrate.** Because the draft UI is asymmetric (ally = circular
-   avatars far-left, enemy = splash art far-right, bans = small circles in the
-   top corners), run a one-time calibration:
+2. **DPI-aware.** On Windows the app makes itself DPI-aware so screen capture
+   (physical px) and the overlay (PyQt) share one coordinate space — display
+   scaling (125 %/150 %) no longer offsets the boxes.
+
+3. **Click-to-calibrate.** The draft UI is asymmetric (ally = circular avatars
+   far-left, enemy = splash art far-right, bans = small circles in the top
+   corners), so align once — directly on the live game:
 
    ```bash
-   python calibrate.py
+   python main.py --calibrate
    ```
-   It screenshots your monitor and asks you to click **8 points** — the first
+   A transparent overlay appears over the draft. Click **8 points** — the first
    and last slot of each group (ally picks, enemy picks, ally bans, enemy bans).
-   It computes all 20 boxes, lets you fine-tune size with `[` / `]`, and saves
-   `layout.json`. `main.py` loads it automatically for pixel-perfect placement.
+   Tune box size with `[` / `]`, press **S** to save `layout.json` (Esc cancels,
+   R restarts). `main.py` then loads it automatically. Because you click on the
+   live game in the overlay's own coordinate space, it's WYSIWYG.
 
-   > Re-run it if you move/resize the Scrcpy window. `layout.json` is per-device
-   > and git-ignored.
+   > Re-run if you move/resize the Scrcpy window. `layout.json` is per-device and
+   > git-ignored. A standalone `python calibrate.py` (cv2 window) exists too, but
+   > needs the GUI OpenCV build (`opencv-python`, not `-headless`).
 
 Without calibration the app falls back to scaled fractional anchors — close, but
 calibrate once for exact boxes.

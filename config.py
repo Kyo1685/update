@@ -21,8 +21,26 @@ pre-computed ``LAYOUT`` constant.
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
+
+
+def enable_dpi_awareness() -> None:
+    """Make the process DPI-aware on Windows so mss (physical pixels) and PyQt
+    agree on coordinates.  Without this, display scaling (125%/150%) offsets and
+    rescales the overlay boxes.  No-op off Windows.  Call before QApplication.
+    """
+    if sys.platform != "win32":
+        return
+    import ctypes
+    try:                                            # Win 8.1+ per-monitor aware
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:                                        # Win 7/8 system aware
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
 
 # ---------------------------------------------------------------------------
 # 1. CAPTURE TARGET

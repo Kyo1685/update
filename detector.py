@@ -63,6 +63,16 @@ def _require_cv():
         )
 
 
+def _mss_instance():
+    """Create an mss grabber, preferring the new ``MSS`` class (newer versions
+    deprecate the lowercase ``mss.mss`` alias)."""
+    if mss is None:
+        raise RuntimeError("mss is required for screen capture. "
+                           "Install with:  pip install mss")
+    factory = getattr(mss, "MSS", None) or getattr(mss, "mss")
+    return factory()
+
+
 # ===========================================================================
 #  ROLE / LANE OPTIMISER  (pure python - always available)
 # ===========================================================================
@@ -124,10 +134,7 @@ class ScreenCapturer:
     def __init__(self, region: Optional[dict] = None,
                  min_interval: float = config.CAPTURE_MIN_INTERVAL):
         _require_cv()
-        if mss is None:
-            raise RuntimeError("mss is required for screen capture. "
-                               "Install with:  pip install mss")
-        self._sct = mss.mss()
+        self._sct = _mss_instance()
         if region is None:
             region = config.ACTIVE_REGION
         self._region = {"left": int(region["left"]), "top": int(region["top"]),
@@ -139,9 +146,7 @@ class ScreenCapturer:
     @staticmethod
     def primary_monitor() -> dict:
         """Geometry of the primary monitor (handles any PC resolution)."""
-        if mss is None:
-            raise RuntimeError("mss is required: pip install mss")
-        with mss.mss() as sct:
+        with _mss_instance() as sct:
             m = sct.monitors[1]
             return {"left": m["left"], "top": m["top"],
                     "width": m["width"], "height": m["height"]}
