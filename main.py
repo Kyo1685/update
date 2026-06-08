@@ -84,10 +84,27 @@ class DraftAssistant:
         self.overlay = DraftOverlay(db)
         self.state = DraftState()
         self.worker: Optional[DetectorWorker] = None
+        self.repo = None
+        self._stats_timer: Optional[QTimer] = None
 
         # Recompute whenever the board OR the toggles change.
         self.overlay.settingsChanged.connect(self._on_settings)
         self.overlay.closed.connect(self.shutdown)
+
+    # ----- live stats -----------------------------------------------------
+    def enable_live_stats(self, repo, interval_sec: int) -> None:
+        """Periodically refresh hero stats from the StatsRepository in place.
+        The DB is mutated, so the engine immediately scores on fresh numbers."""
+        self.repo = repo
+        self._stats_timer = QTimer()
+        self._stats_timer.timeout.connect(self._refresh_stats)
+        self._stats_timer.start(max(30, interval_sec) * 1000)
+
+    def _refresh_stats(self) -> None:
+        if self.repo is None:
+            return
+        if self.repo.refresh(self.db) > 0:
+            self._recompute()                     # re-score with new stats
 
     # ----- event handlers -------------------------------------------------
     def on_state(self, state: DraftState) -> None:
@@ -180,6 +197,9 @@ def main() -> int:
                         help="folder of cropped hero avatar PNGs")
     parser.add_argument("--heroes", default="heroes.json",
                         help="hero database json")
+    parser.add_argument("--stats-url", default=config.STATS_URL,
+                        help="JSON endpoint for live win/ban stats (overlays "
+                             "heroes.json; cached + auto-refreshed)")
     parser.add_argument("--accept-low", action="store_true",
                         help="accept low-confidence template guesses")
     parser.add_argument("--mock", action="store_true",
@@ -190,8 +210,27 @@ def main() -> int:
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
 
-    _DB = HeroDB.load(args.heroes)
+    # Build the hero DB - seed from heroes.json, optionally overlay live stats.
+    repo = None
+    if args.stats_url:
+        from stats_provider import (StatsRepository, HttpJsonStatsProvider,
+                                    CachedStatsProvider)
+        http = HttpJsonStatsProvider(
+            args.stats_url,
+            record_path=config.STATS_RECORD_PATH,
+            name_key=config.STATS_NAME_KEY,
+            field_map=config.STATS_FIELD_MAP,
+        )
+        provider = CachedStatsProvider(http, cache_path=config.STATS_CACHE_PATH,
+                                       ttl=config.STATS_CACHE_TTL)
+        repo = StatsRepository(args.heroes, provider)
+        _DB = repo.build()
+    else:
+        _DB = HeroDB.load(args.heroes)
+
     assistant = DraftAssistant(_DB)
+    if repo is not None:
+        assistant.enable_live_stats(repo, config.STATS_REFRESH_SEC)
     assistant.show()
 
     if args.mock:

@@ -25,6 +25,7 @@ update/
 │                    #   per-slot caching, lane-prediction optimiser
 ├── engine.py        # the scoring brain (pure, testable maths)
 ├── ui.py            # PyQt5: click-through canvas + interactive control dock
+├── stats_provider.py# pluggable live-stats overlay (HTTP/JSON + TTL cache)
 ├── heroes.json      # hero database (roles, win/ban %, counters, synergies…)
 ├── requirements.txt
 ├── templates/       # drop cropped hero avatars here (see templates/README.md)
@@ -112,6 +113,38 @@ Every candidate starts at a **baseline of 10**, then:
   `GO FULL DAMAGE` / `GO HYBRID` / `GO FULL TANK` plus a resist hint.
 
 ---
+
+## Live hero stats (optional)
+
+`heroes.json` is the always-present seed/fallback. To overlay fresh win/ban
+rates (or counters) from any source, point the pluggable provider at a JSON
+endpoint — nothing site-specific is hard-coded:
+
+```bash
+python main.py --stats-url https://example.com/mlbb/heroes.json
+```
+
+Describe the payload's shape in `config.py`:
+
+```python
+STATS_URL        = "https://example.com/mlbb/heroes.json"
+STATS_RECORD_PATH = "data.heroes"        # dotted path to the list/dict of records
+STATS_NAME_KEY    = "name"
+STATS_FIELD_MAP   = {"win_rate": "winRate", "ban_rate": "banRate"}  # ours -> theirs
+STATS_CACHE_TTL   = 3600                  # serve cache for 1h
+STATS_REFRESH_SEC = 900                   # auto-refresh every 15 min
+```
+
+How it behaves (`stats_provider.py`):
+- `HttpJsonStatsProvider` fetches + normalises the JSON to our schema (stdlib
+  `urllib`, no extra dependency).
+- `CachedStatsProvider` wraps it with an on-disk TTL cache and **serves stale
+  data if the network is down** instead of crashing the overlay.
+- `StatsRepository.build()` overlays live data onto the seed and **degrades to
+  `heroes.json` on any error**; `refresh()` mutates the live `HeroDB` in place
+  on a `QTimer`, so the engine immediately re-scores on fresh numbers.
+- Writing your own scraper? Wrap it in `CallableStatsProvider(fn)` — same
+  caching/refresh machinery applies.
 
 ## Why two windows?
 
