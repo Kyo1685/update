@@ -21,7 +21,7 @@ pre-computed ``LAYOUT`` constant.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
 # 1. CAPTURE TARGET
@@ -102,6 +102,20 @@ TEMPLATE_MATCH_THRESHOLD: float = 0.62      # TM_CCOEFF_NORMED accept threshold
 HISTOGRAM_MATCH_THRESHOLD: float = 0.55     # fallback correlation accept
 EMPTY_SLOT_STDDEV: float = 11.0             # below this a slot is treated empty
 SIGNATURE_DELTA: int = 6                    # per-slot change threshold for cache
+
+# ---------------------------------------------------------------------------
+# 4b. LIVE STATS SOURCE (consumed by stats_provider.py / main.py)
+# ---------------------------------------------------------------------------
+# Leave STATS_URL = None to run purely from heroes.json.  Set it to a JSON
+# endpoint and describe its shape with STATS_RECORD_PATH + STATS_FIELD_MAP to
+# overlay live win/ban rates etc.  Nothing site-specific is assumed.
+STATS_URL: Optional[str] = None
+STATS_RECORD_PATH: Optional[str] = None             # e.g. "data.heroes"
+STATS_NAME_KEY: str = "name"
+STATS_FIELD_MAP: Dict[str, str] = {}                # our_field -> source_key
+STATS_CACHE_PATH: str = ".stats_cache.json"
+STATS_CACHE_TTL: float = 3600.0                     # serve cache for 1h
+STATS_REFRESH_SEC: int = 900                        # auto-refresh every 15 min
 
 # ---------------------------------------------------------------------------
 # 5. PIXEL-PERFECT SLOT LAYOUT

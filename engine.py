@@ -39,7 +39,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from itertools import permutations
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -123,6 +123,47 @@ class HeroDB:
                     continue
                 out.append(h)
         return out
+
+    # ----- live overlay ----------------------------------------------------
+    _SCALAR_FIELDS = ("base_role", "damage_type")
+    _NUMERIC_FIELDS = ("win_rate", "ban_rate")
+    _LIST_FIELDS = ("counters", "countered_by", "synergies", "archetypes")
+
+    def apply_updates(self, updates: Dict[str, dict]) -> int:
+        """Overlay partial stat updates (e.g. from a live StatsProvider) onto
+        existing heroes, keyed by name (case-insensitive).
+
+        ``Hero`` is a frozen dataclass, so each touched hero is rebuilt via
+        ``dataclasses.replace`` *in place* inside this DB - every object that
+        already holds a reference to this HeroDB therefore sees the new numbers
+        without needing to be re-wired.  Unknown heroes and unknown fields are
+        ignored.  Returns the number of heroes actually changed.
+        """
+        updated = 0
+        for raw_name, fields in (updates or {}).items():
+            key = self._key(raw_name)
+            hero = self._by_key.get(key)
+            if hero is None or not isinstance(fields, dict):
+                continue
+            clean: Dict[str, object] = {}
+            for f in self._NUMERIC_FIELDS:
+                if fields.get(f) is not None:
+                    try:
+                        clean[f] = float(fields[f])
+                    except (TypeError, ValueError):
+                        pass
+            for f in self._SCALAR_FIELDS:
+                if fields.get(f):
+                    clean[f] = str(fields[f])
+            if "owned" in fields:
+                clean["owned"] = bool(fields["owned"])
+            for f in self._LIST_FIELDS:
+                if fields.get(f) is not None:
+                    clean[f] = tuple(fields[f])
+            if clean:
+                self._by_key[key] = replace(hero, **clean)
+                updated += 1
+        return updated
 
 
 @dataclass
