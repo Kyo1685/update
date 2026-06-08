@@ -13,8 +13,6 @@ venv/
 # Per-device calibration (run calibrate.py to regenerate)
 layout.json
 
-# Personal avatar crops (keep the folder + its README, ignore the images)
-templates/*.png
-templates/*.jpg
-templates/*.jpeg
-templates/*.webp
+# A ready-to-use square template set is committed under templates/.
+# Re-running fetch_templates.py / import_icons.py just overwrites the tracked
+# files, so we no longer ignore them.

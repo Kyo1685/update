@@ -99,15 +99,30 @@ def _require_gui() -> None:
 
 
 def _grab_monitor(index: int):
-    with mss.mss() as sct:
+    factory = getattr(mss, "MSS", None) or getattr(mss, "mss")
+    with factory() as sct:
         mon = sct.monitors[index]
         raw = np.asarray(sct.grab(mon))[:, :, :3]
         return np.ascontiguousarray(raw), mon
 
 
+def _check_gui() -> None:
+    """opencv-python-headless has no imshow; fail with a clear message."""
+    try:
+        cv2.namedWindow("__probe__")
+        cv2.destroyWindow("__probe__")
+    except cv2.error:
+        raise RuntimeError(
+            "Your OpenCV has no GUI (opencv-python-headless is installed).\n"
+            "Either:  pip uninstall opencv-python-headless && pip install opencv-python\n"
+            "Or just use the built-in calibrator:  python main.py --calibrate")
+
+
 def run_gui(out_path: str, monitor: int = 1,
             max_w: int = 1280, max_h: int = 720) -> int:
     _require_gui()
+    config.enable_dpi_awareness()
+    _check_gui()
     frame, mon = _grab_monitor(monitor)
     H, W = frame.shape[:2]
     scale = min(max_w / W, max_h / H, 1.0)
