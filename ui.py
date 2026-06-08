@@ -228,11 +228,13 @@ class RoleRow(QWidget):
 class OverlayCanvas(QWidget):
     """Transparent, click-through layer that paints boxes + tags over slots."""
 
-    def __init__(self, db, layout: config.Layout = config.LAYOUT,
-                 origin=config.CAPTURE_ORIGIN):
+    def __init__(self, db, layout: Optional[config.Layout] = None,
+                 region: Optional[dict] = None):
         super().__init__()
         self.db = db
-        self.layout = layout
+        # Resolve at construction time so a calibrated layout / region is used.
+        self.layout = layout if layout is not None else config.LAYOUT
+        region = region if region is not None else config.ACTIVE_REGION
         self._state = DraftState()
 
         self.setWindowFlags(Qt.FramelessWindowHint
@@ -242,7 +244,8 @@ class OverlayCanvas(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)  # belt & braces
         self.setAttribute(Qt.WA_ShowWithoutActivating, True)
-        self.setGeometry(origin[0], origin[1], config.RES_W, config.RES_H)
+        self.setGeometry(region["left"], region["top"],
+                         region["width"], region["height"])
 
         self._font = QFont(THEME.font_family, 11, QFont.Bold)
         self._font.setStyleHint(QFont.Monospace)

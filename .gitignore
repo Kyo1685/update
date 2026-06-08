@@ -10,6 +10,9 @@ venv/
 .stats_cache.json
 *.stats_cache.json.tmp
 
+# Per-device calibration (run calibrate.py to regenerate)
+layout.json
+
 # Personal avatar crops (keep the folder + its README, ignore the images)
 templates/*.png
 templates/*.jpg

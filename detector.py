@@ -121,20 +121,30 @@ class ScreenCapturer:
     ndarray until ``CAPTURE_MIN_INTERVAL`` has elapsed, then refreshes.
     """
 
-    def __init__(self,
-                 origin: Tuple[int, int] = config.CAPTURE_ORIGIN,
-                 size: Tuple[int, int] = (config.RES_W, config.RES_H),
+    def __init__(self, region: Optional[dict] = None,
                  min_interval: float = config.CAPTURE_MIN_INTERVAL):
         _require_cv()
         if mss is None:
             raise RuntimeError("mss is required for screen capture. "
                                "Install with:  pip install mss")
         self._sct = mss.mss()
-        self._region = {"left": origin[0], "top": origin[1],
-                        "width": size[0], "height": size[1]}
+        if region is None:
+            region = config.ACTIVE_REGION
+        self._region = {"left": int(region["left"]), "top": int(region["top"]),
+                        "width": int(region["width"]), "height": int(region["height"])}
         self._min_interval = min_interval
         self._last_frame = None
         self._last_t = 0.0
+
+    @staticmethod
+    def primary_monitor() -> dict:
+        """Geometry of the primary monitor (handles any PC resolution)."""
+        if mss is None:
+            raise RuntimeError("mss is required: pip install mss")
+        with mss.mss() as sct:
+            m = sct.monitors[1]
+            return {"left": m["left"], "top": m["top"],
+                    "width": m["width"], "height": m["height"]}
 
     def grab(self, force: bool = False):
         """Return a BGR ndarray of the capture region (cached/throttled)."""
@@ -259,10 +269,11 @@ class _SlotCache:
 class DraftDetector:
     def __init__(self, db: HeroDB,
                  library: Optional[TemplateLibrary] = None,
-                 layout: config.Layout = config.LAYOUT,
+                 layout: Optional[config.Layout] = None,
                  accept_low: bool = False):
         self.db = db
-        self.layout = layout
+        # Resolve at call time so a calibrated config.LAYOUT is picked up.
+        self.layout = layout if layout is not None else config.LAYOUT
         self.library = library if library is not None else TemplateLibrary()
         self.accept_low = accept_low
         # One cache entry per slot, keyed by a stable slot id.

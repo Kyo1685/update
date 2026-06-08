@@ -56,10 +56,14 @@ frames). The Qt event loop never blocks, so toggles and animations stay smooth.
 pip install -r requirements.txt          # PyQt5, opencv-python, numpy, mss
 
 python main.py --mock                     # preview the HUD with a scripted draft
-python main.py                            # live, capturing the Scrcpy mirror
-python main.py --templates ./templates    # point at your avatar crops
+python calibrate.py                       # one-time: click to align boxes (any resolution)
+python main.py                            # live; captures your whole monitor
 python main.py --accept-low               # also trust low-confidence guesses
+python main.py --region 0,0,1366,614      # capture only a sub-region if you prefer
 ```
+
+> Works at any PC resolution (1366×768, 1080p, …) — it captures your real
+> screen, not the phone's 2712×1220. See **Calibration** below.
 
 Position the Scrcpy window borderless at the top-left of the primary monitor
 (or set `config.CAPTURE_ORIGIN`). Drag the dock anywhere; press **Esc** or the
@@ -112,21 +116,31 @@ Filenames already being hero names (`Luo Yi.png`, `X.Borg.png`) just work.
 Mix freely with `fetch_templates.py` to backfill any hero the pack is missing
 (run it without `--overwrite` and it only grabs the gaps).
 
-## Calibration (pixel-perfect boxes)
+## Calibration (works at ANY PC resolution)
 
-All 20 slot rectangles are derived from fractional anchors in
-`config.build_layout()` and baked into `config.LAYOUT` for 2712 × 1220:
+Your phone is 2712×1220, but Scrcpy scales it to fit your PC (e.g. 1366×768),
+so hard-coded coordinates land off-screen. Two things handle this:
 
-```bash
-python config.py            # prints every ally/enemy pick + ban box
-```
+1. **Full-screen capture by default.** The app grabs your whole primary monitor
+   and draws over it, so it works at your real resolution no matter how Scrcpy
+   scaled the mirror. (Override with `--region L,T,W,H` if you want.)
+2. **Click-to-calibrate.** Because the draft UI is asymmetric (ally = circular
+   avatars far-left, enemy = splash art far-right, bans = small circles in the
+   top corners), run a one-time calibration:
 
-If your device drifts a few pixels, nudge the anchors in `build_layout()` —
-template matching tolerates small offsets (it searches a ±10 px window), but
-tighter boxes yield higher confidence.
+   ```bash
+   python calibrate.py
+   ```
+   It screenshots your monitor and asks you to click **8 points** — the first
+   and last slot of each group (ally picks, enemy picks, ally bans, enemy bans).
+   It computes all 20 boxes, lets you fine-tune size with `[` / `]`, and saves
+   `layout.json`. `main.py` loads it automatically for pixel-perfect placement.
 
-Add hero portraits to `templates/` (filename → hero name). See
-`templates/README.md`.
+   > Re-run it if you move/resize the Scrcpy window. `layout.json` is per-device
+   > and git-ignored.
+
+Without calibration the app falls back to scaled fractional anchors — close, but
+calibrate once for exact boxes.
 
 ---
 
