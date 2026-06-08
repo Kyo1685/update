@@ -1,0 +1,425 @@
+{
+  "meta": {
+    "source": "mock",
+    "patch": "1.9.xx",
+    "updated": "2026-06-08",
+    "note": "Illustrative/mock data. Replace via data_manager.scrape_web() or by editing this file. Rates are fractions 0.0-1.0.",
+    "ranks": ["all", "epic", "legend", "mythic", "mythical_glory"]
+  },
+  "heroes": {
+    "Beatrix": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.53, "ban_rate": 0.30, "pick_rate": 0.08},
+        "all": {"win_rate": 0.51, "ban_rate": 0.12, "pick_rate": 0.06}
+      },
+      "strong_against": ["Layla", "Miya", "Hanabi"],
+      "weak_against": ["Lancelot", "Fanny", "Ling"],
+      "synergies": ["Mathilda", "Angela"]
+    },
+    "Wanwan": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.50, "ban_rate": 0.25, "pick_rate": 0.10},
+        "all": {"win_rate": 0.47, "ban_rate": 0.10, "pick_rate": 0.07}
+      },
+      "strong_against": ["Tigreal", "Atlas", "Franco"],
+      "weak_against": ["Khufra", "Saber", "Karina"],
+      "synergies": ["Angela", "Mathilda"]
+    },
+    "Brody": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.20, "pick_rate": 0.09},
+        "all": {"win_rate": 0.51, "ban_rate": 0.08, "pick_rate": 0.08}
+      },
+      "strong_against": ["Miya", "Layla", "Hanabi"],
+      "weak_against": ["Franco", "Khufra", "Saber"],
+      "synergies": ["Angela", "Estes"]
+    },
+    "Karrie": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.54, "ban_rate": 0.18, "pick_rate": 0.06},
+        "all": {"win_rate": 0.50, "ban_rate": 0.06, "pick_rate": 0.04}
+      },
+      "strong_against": ["Esmeralda", "Fredrinn", "Uranus"],
+      "weak_against": ["Lancelot", "Saber", "Fanny"],
+      "synergies": ["Angela", "Tigreal"]
+    },
+    "Melissa": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.53, "ban_rate": 0.35, "pick_rate": 0.07},
+        "all": {"win_rate": 0.51, "ban_rate": 0.15, "pick_rate": 0.05}
+      },
+      "strong_against": ["Fanny", "Lancelot", "Ling"],
+      "weak_against": ["Pharsa", "Yve", "Xavier"],
+      "synergies": ["Angela", "Mathilda"]
+    },
+    "Ixia": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.51, "ban_rate": 0.15, "pick_rate": 0.05},
+        "all": {"win_rate": 0.49, "ban_rate": 0.05, "pick_rate": 0.04}
+      },
+      "strong_against": ["Tigreal", "Atlas", "Hanabi"],
+      "weak_against": ["Saber", "Karina", "Fanny"],
+      "synergies": ["Mathilda", "Estes"]
+    },
+    "Layla": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.47, "ban_rate": 0.01, "pick_rate": 0.02},
+        "all": {"win_rate": 0.51, "ban_rate": 0.01, "pick_rate": 0.07}
+      },
+      "strong_against": [],
+      "weak_against": ["Fanny", "Ling", "Lancelot", "Saber"],
+      "synergies": ["Tigreal", "Estes"]
+    },
+    "Miya": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.46, "ban_rate": 0.01, "pick_rate": 0.02},
+        "all": {"win_rate": 0.50, "ban_rate": 0.01, "pick_rate": 0.06}
+      },
+      "strong_against": [],
+      "weak_against": ["Fanny", "Ling", "Lancelot", "Saber"],
+      "synergies": ["Tigreal", "Estes"]
+    },
+    "Hanabi": {
+      "roles": ["Marksman"], "lanes": ["gold"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.48, "ban_rate": 0.04, "pick_rate": 0.03},
+        "all": {"win_rate": 0.51, "ban_rate": 0.02, "pick_rate": 0.05}
+      },
+      "strong_against": ["Layla", "Miya"],
+      "weak_against": ["Fanny", "Ling", "Saber"],
+      "synergies": ["Tigreal", "Angela"]
+    },
+
+    "Paquito": {
+      "roles": ["Fighter"], "lanes": ["exp"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.40, "pick_rate": 0.08},
+        "all": {"win_rate": 0.49, "ban_rate": 0.18, "pick_rate": 0.06}
+      },
+      "strong_against": ["Yu Zhong", "Esmeralda", "Terizla"],
+      "weak_against": ["Khufra", "Gatotkaca", "Baxia"],
+      "synergies": ["Mathilda", "Angela"]
+    },
+    "Yu Zhong": {
+      "roles": ["Fighter"], "lanes": ["exp"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.51, "ban_rate": 0.30, "pick_rate": 0.07},
+        "all": {"win_rate": 0.50, "ban_rate": 0.12, "pick_rate": 0.06}
+      },
+      "strong_against": ["Chou", "Terizla", "Uranus"],
+      "weak_against": ["Esmeralda", "Baxia", "Paquito"],
+      "synergies": ["Estes", "Angela"]
+    },
+    "Chou": {
+      "roles": ["Fighter"], "lanes": ["exp"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.49, "ban_rate": 0.45, "pick_rate": 0.09},
+        "all": {"win_rate": 0.47, "ban_rate": 0.20, "pick_rate": 0.07}
+      },
+      "strong_against": ["Fanny", "Lancelot", "Ling"],
+      "weak_against": ["Yu Zhong", "Esmeralda"],
+      "synergies": ["Angela", "Pharsa"]
+    },
+    "Fredrinn": {
+      "roles": ["Fighter", "Tank"], "lanes": ["exp", "jungle"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.25, "pick_rate": 0.08},
+        "all": {"win_rate": 0.51, "ban_rate": 0.10, "pick_rate": 0.06}
+      },
+      "strong_against": ["Lancelot", "Hayabusa", "Fanny"],
+      "weak_against": ["Karrie", "Esmeralda"],
+      "synergies": ["Pharsa", "Angela"]
+    },
+    "Arlott": {
+      "roles": ["Fighter", "Assassin"], "lanes": ["exp", "jungle"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.50, "ban_rate": 0.28, "pick_rate": 0.07},
+        "all": {"win_rate": 0.49, "ban_rate": 0.11, "pick_rate": 0.06}
+      },
+      "strong_against": ["Ling", "Fanny", "Yu Zhong"],
+      "weak_against": ["Khufra", "Esmeralda"],
+      "synergies": ["Angela", "Pharsa"]
+    },
+    "Esmeralda": {
+      "roles": ["Fighter", "Mage"], "lanes": ["exp"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.53, "ban_rate": 0.35, "pick_rate": 0.08},
+        "all": {"win_rate": 0.52, "ban_rate": 0.16, "pick_rate": 0.07}
+      },
+      "strong_against": ["Yu Zhong", "Uranus", "Terizla"],
+      "weak_against": ["Karrie", "Baxia"],
+      "synergies": ["Angela", "Atlas"]
+    },
+    "Terizla": {
+      "roles": ["Fighter"], "lanes": ["exp"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.51, "ban_rate": 0.12, "pick_rate": 0.04},
+        "all": {"win_rate": 0.50, "ban_rate": 0.05, "pick_rate": 0.04}
+      },
+      "strong_against": ["Esmeralda", "Uranus", "Chou"],
+      "weak_against": ["Pharsa", "Yve"],
+      "synergies": ["Angela", "Atlas"]
+    },
+    "Uranus": {
+      "roles": ["Tank", "Fighter"], "lanes": ["exp"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.51, "ban_rate": 0.10, "pick_rate": 0.05},
+        "all": {"win_rate": 0.52, "ban_rate": 0.04, "pick_rate": 0.06}
+      },
+      "strong_against": ["Yu Zhong", "Chou"],
+      "weak_against": ["Esmeralda", "Karrie", "Baxia"],
+      "synergies": ["Angela", "Estes"]
+    },
+
+    "Kagura": {
+      "roles": ["Mage"], "lanes": ["mid"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.50, "ban_rate": 0.30, "pick_rate": 0.07},
+        "all": {"win_rate": 0.48, "ban_rate": 0.12, "pick_rate": 0.05}
+      },
+      "strong_against": ["Lancelot", "Hayabusa", "Pharsa"],
+      "weak_against": ["Fanny", "Saber"],
+      "synergies": ["Tigreal", "Atlas"]
+    },
+    "Pharsa": {
+      "roles": ["Mage"], "lanes": ["mid"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.53, "ban_rate": 0.35, "pick_rate": 0.08},
+        "all": {"win_rate": 0.51, "ban_rate": 0.15, "pick_rate": 0.06}
+      },
+      "strong_against": ["Terizla", "Yu Zhong", "Lylia"],
+      "weak_against": ["Fanny", "Ling", "Valentina"],
+      "synergies": ["Atlas", "Tigreal"]
+    },
+    "Yve": {
+      "roles": ["Mage"], "lanes": ["mid"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.54, "ban_rate": 0.40, "pick_rate": 0.07},
+        "all": {"win_rate": 0.51, "ban_rate": 0.18, "pick_rate": 0.05}
+      },
+      "strong_against": ["Terizla", "Tigreal", "Lylia"],
+      "weak_against": ["Fanny", "Ling", "Valentina"],
+      "synergies": ["Atlas", "Khufra"]
+    },
+    "Lylia": {
+      "roles": ["Mage"], "lanes": ["mid"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.20, "pick_rate": 0.06},
+        "all": {"win_rate": 0.51, "ban_rate": 0.08, "pick_rate": 0.05}
+      },
+      "strong_against": ["Chou", "Yu Zhong"],
+      "weak_against": ["Saber", "Fanny", "Pharsa"],
+      "synergies": ["Khufra", "Atlas"]
+    },
+    "Valentina": {
+      "roles": ["Mage"], "lanes": ["mid"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.53, "ban_rate": 0.50, "pick_rate": 0.09},
+        "all": {"win_rate": 0.50, "ban_rate": 0.22, "pick_rate": 0.06}
+      },
+      "strong_against": ["Pharsa", "Yve", "Estes"],
+      "weak_against": ["Fanny", "Ling"],
+      "synergies": ["Atlas", "Tigreal"]
+    },
+    "Xavier": {
+      "roles": ["Mage"], "lanes": ["mid"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.54, "ban_rate": 0.38, "pick_rate": 0.08},
+        "all": {"win_rate": 0.52, "ban_rate": 0.16, "pick_rate": 0.06}
+      },
+      "strong_against": ["Layla", "Miya", "Terizla"],
+      "weak_against": ["Fanny", "Ling"],
+      "synergies": ["Atlas", "Tigreal"]
+    },
+    "Novaria": {
+      "roles": ["Mage"], "lanes": ["mid"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.22, "pick_rate": 0.05},
+        "all": {"win_rate": 0.50, "ban_rate": 0.09, "pick_rate": 0.04}
+      },
+      "strong_against": ["Pharsa", "Lylia"],
+      "weak_against": ["Lancelot", "Fanny"],
+      "synergies": ["Atlas", "Khufra"]
+    },
+
+    "Fanny": {
+      "roles": ["Assassin"], "lanes": ["jungle"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.49, "ban_rate": 0.72, "pick_rate": 0.06},
+        "all": {"win_rate": 0.44, "ban_rate": 0.40, "pick_rate": 0.04}
+      },
+      "strong_against": ["Layla", "Miya", "Pharsa", "Yve"],
+      "weak_against": ["Khufra", "Chou", "Franco", "Arlott"],
+      "synergies": ["Angela", "Estes"]
+    },
+    "Ling": {
+      "roles": ["Assassin"], "lanes": ["jungle"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.50, "ban_rate": 0.65, "pick_rate": 0.07},
+        "all": {"win_rate": 0.46, "ban_rate": 0.35, "pick_rate": 0.05}
+      },
+      "strong_against": ["Layla", "Miya", "Pharsa", "Xavier"],
+      "weak_against": ["Khufra", "Franco", "Akai", "Arlott"],
+      "synergies": ["Angela", "Estes"]
+    },
+    "Hayabusa": {
+      "roles": ["Assassin"], "lanes": ["jungle"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.40, "pick_rate": 0.08},
+        "all": {"win_rate": 0.50, "ban_rate": 0.18, "pick_rate": 0.06}
+      },
+      "strong_against": ["Layla", "Miya", "Pharsa"],
+      "weak_against": ["Fredrinn", "Khufra", "Saber"],
+      "synergies": ["Angela", "Atlas"]
+    },
+    "Lancelot": {
+      "roles": ["Assassin"], "lanes": ["jungle"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.51, "ban_rate": 0.45, "pick_rate": 0.09},
+        "all": {"win_rate": 0.49, "ban_rate": 0.20, "pick_rate": 0.07}
+      },
+      "strong_against": ["Beatrix", "Karrie", "Layla"],
+      "weak_against": ["Chou", "Khufra", "Saber", "Kagura"],
+      "synergies": ["Angela", "Estes"]
+    },
+    "Joy": {
+      "roles": ["Assassin"], "lanes": ["jungle"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.50, "ban_rate": 0.55, "pick_rate": 0.08},
+        "all": {"win_rate": 0.47, "ban_rate": 0.25, "pick_rate": 0.05}
+      },
+      "strong_against": ["Layla", "Miya", "Pharsa"],
+      "weak_against": ["Khufra", "Franco"],
+      "synergies": ["Angela", "Estes"]
+    },
+    "Nolan": {
+      "roles": ["Assassin"], "lanes": ["jungle"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.51, "ban_rate": 0.42, "pick_rate": 0.07},
+        "all": {"win_rate": 0.49, "ban_rate": 0.18, "pick_rate": 0.05}
+      },
+      "strong_against": ["Layla", "Miya", "Hanabi"],
+      "weak_against": ["Khufra", "Franco"],
+      "synergies": ["Angela", "Estes"]
+    },
+    "Baxia": {
+      "roles": ["Tank"], "lanes": ["jungle", "roam"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.53, "ban_rate": 0.20, "pick_rate": 0.05},
+        "all": {"win_rate": 0.52, "ban_rate": 0.08, "pick_rate": 0.05}
+      },
+      "strong_against": ["Esmeralda", "Uranus", "Estes"],
+      "weak_against": ["Karrie"],
+      "synergies": ["Pharsa", "Yve"]
+    },
+    "Saber": {
+      "roles": ["Assassin"], "lanes": ["jungle"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.25, "pick_rate": 0.05},
+        "all": {"win_rate": 0.50, "ban_rate": 0.10, "pick_rate": 0.05}
+      },
+      "strong_against": ["Lancelot", "Karrie", "Layla", "Wanwan"],
+      "weak_against": ["Khufra", "Tigreal"],
+      "synergies": ["Angela", "Atlas"]
+    },
+    "Akai": {
+      "roles": ["Tank"], "lanes": ["roam", "jungle"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.22, "pick_rate": 0.06},
+        "all": {"win_rate": 0.51, "ban_rate": 0.09, "pick_rate": 0.05}
+      },
+      "strong_against": ["Ling", "Fanny", "Wanwan"],
+      "weak_against": ["Valir", "Khufra"],
+      "synergies": ["Pharsa", "Yve"]
+    },
+
+    "Khufra": {
+      "roles": ["Tank"], "lanes": ["roam"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.45, "pick_rate": 0.09},
+        "all": {"win_rate": 0.51, "ban_rate": 0.20, "pick_rate": 0.07}
+      },
+      "strong_against": ["Fanny", "Ling", "Wanwan", "Lancelot"],
+      "weak_against": ["Diggie", "Valir"],
+      "synergies": ["Pharsa", "Yve"]
+    },
+    "Tigreal": {
+      "roles": ["Tank"], "lanes": ["roam"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.51, "ban_rate": 0.15, "pick_rate": 0.08},
+        "all": {"win_rate": 0.52, "ban_rate": 0.06, "pick_rate": 0.08}
+      },
+      "strong_against": ["Layla", "Miya"],
+      "weak_against": ["Wanwan", "Yve"],
+      "synergies": ["Pharsa", "Odette", "Xavier"]
+    },
+    "Atlas": {
+      "roles": ["Tank"], "lanes": ["roam"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.35, "pick_rate": 0.08},
+        "all": {"win_rate": 0.51, "ban_rate": 0.15, "pick_rate": 0.06}
+      },
+      "strong_against": ["Layla", "Miya", "Estes"],
+      "weak_against": ["Diggie", "Khufra", "Wanwan"],
+      "synergies": ["Pharsa", "Yve", "Valentina"]
+    },
+    "Franco": {
+      "roles": ["Tank"], "lanes": ["roam"], "damage_type": "physical",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.49, "ban_rate": 0.50, "pick_rate": 0.07},
+        "all": {"win_rate": 0.48, "ban_rate": 0.25, "pick_rate": 0.06}
+      },
+      "strong_against": ["Fanny", "Ling", "Joy"],
+      "weak_against": ["Diggie"],
+      "synergies": ["Pharsa", "Valentina"]
+    },
+    "Mathilda": {
+      "roles": ["Support", "Assassin"], "lanes": ["roam"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.52, "ban_rate": 0.30, "pick_rate": 0.07},
+        "all": {"win_rate": 0.51, "ban_rate": 0.12, "pick_rate": 0.05}
+      },
+      "strong_against": ["Estes"],
+      "weak_against": ["Khufra"],
+      "synergies": ["Wanwan", "Beatrix", "Paquito"]
+    },
+    "Angela": {
+      "roles": ["Support"], "lanes": ["roam"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.54, "ban_rate": 0.25, "pick_rate": 0.08},
+        "all": {"win_rate": 0.52, "ban_rate": 0.10, "pick_rate": 0.06}
+      },
+      "strong_against": [],
+      "weak_against": ["Franco", "Khufra", "Saber"],
+      "synergies": ["Fanny", "Ling", "Lancelot", "Karrie"]
+    },
+    "Estes": {
+      "roles": ["Support"], "lanes": ["roam"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.50, "ban_rate": 0.30, "pick_rate": 0.05},
+        "all": {"win_rate": 0.52, "ban_rate": 0.12, "pick_rate": 0.06}
+      },
+      "strong_against": [],
+      "weak_against": ["Baxia", "Karrie", "Valentina", "Mathilda"],
+      "synergies": ["Wanwan", "Brody", "Hanabi"]
+    },
+    "Chip": {
+      "roles": ["Support", "Tank"], "lanes": ["roam"], "damage_type": "magic",
+      "stats_by_rank": {
+        "mythical_glory": {"win_rate": 0.51, "ban_rate": 0.18, "pick_rate": 0.05},
+        "all": {"win_rate": 0.50, "ban_rate": 0.07, "pick_rate": 0.04}
+      },
+      "strong_against": ["Layla", "Miya"],
+      "weak_against": ["Khufra"],
+      "synergies": ["Beatrix", "Wanwan", "Brody"]
+    }
+  }
+}

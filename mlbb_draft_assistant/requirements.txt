@@ -1,0 +1,23 @@
+# --- Core runtime ---------------------------------------------------------
+# Vision module (screen capture + image recognition)
+mss>=9.0.1
+opencv-python>=4.9.0
+numpy>=1.26.0
+
+# UI overlay (transparent, always-on-top)
+PyQt5>=5.15.10
+
+# --- Optional but recommended --------------------------------------------
+# Global hotkeys (unlock the overlay while it is in click-through mode).
+keyboard>=0.13.5
+# Targeting a specific game window instead of a raw monitor region.
+pygetwindow>=0.0.9
+
+# --- Only needed if you implement a REAL web scraper ---------------------
+# (data_manager.scrape_web ships as an offline mock by default.)
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# --- Dev / tests ----------------------------------------------------------
+# The unit tests in tests/ use only the standard library (unittest), so no
+# extra test dependency is required.
