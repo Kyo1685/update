@@ -1,0 +1,438 @@
+"""
+detector.py
+===========
+Computer-vision pipeline that turns the 2712x1220 Scrcpy mirror into a
+``DraftState``.  No neural networks - just fast, deterministic OpenCV.
+
+Stages
+------
+1. ScreenCapturer  - grabs the mirror window with ``mss`` (fast, zero-copy),
+   throttled + cached so the UI thread never stutters waiting on a frame.
+2. For each of the 20 slot boxes defined in config.LAYOUT we crop the pixels.
+3. A cheap per-slot SIGNATURE (8x8 grey thumbnail) is compared to the previous
+   frame.  Unchanged slots short-circuit straight to the cached result - this
+   is the single most important anti-stutter optimisation, because template
+   matching only runs on slots that actually changed.
+4. Changed slots are classified by TemplateLibrary:
+       a) primary  : multi-position ``cv2.matchTemplate`` (TM_CCOEFF_NORMED)
+       b) fallback : HSV colour-histogram correlation
+   Empty / locked-but-blank slots are rejected by a std-dev gate.
+5. assign_lanes() runs an optimal 1-to-1 role->lane assignment so every
+   detected hero gets a predicted lane even when base roles collide.
+
+The heavy imports (numpy / cv2 / mss) are guarded: this module always *imports*
+so that the pure-Python optimiser and the rest of the app can be exercised on
+machines without the CV stack; the relevant class raises a clear error only
+when you actually try to use it.
+"""
+
+from __future__ import annotations
+
+import glob
+import os
+import time
+from dataclasses import dataclass
+from itertools import permutations
+from typing import Dict, List, Optional, Sequence, Tuple
+
+import config
+from engine import DraftState, HeroDB
+
+# --- guarded heavy imports -------------------------------------------------
+try:
+    import numpy as np
+except Exception:                       # pragma: no cover
+    np = None
+
+try:
+    import cv2
+except Exception:                       # pragma: no cover
+    cv2 = None
+
+try:
+    import mss
+except Exception:                       # pragma: no cover
+    mss = None
+
+
+def _require_cv():
+    if np is None or cv2 is None:
+        raise RuntimeError(
+            "numpy + opencv-python are required for vision. "
+            "Install with:  pip install numpy opencv-python"
+        )
+
+
+# ===========================================================================
+#  ROLE / LANE OPTIMISER  (pure python - always available)
+# ===========================================================================
+def assign_lanes(names: Sequence[Optional[str]], db: HeroDB) -> Dict[str, str]:
+    """Assign each detected hero to a UNIQUE lane, maximising total role-fit.
+
+    With <=5 heroes we brute-force every lane permutation (<=120) which is both
+    optimal and instant - no scipy/Hungarian dependency needed.  Heroes with an
+    unknown role contribute 0 preference and simply absorb a leftover lane.
+    """
+    picks = [n for n in names if n]
+    if not picks:
+        return {}
+
+    heroes = [(n, db.get(n)) for n in picks]
+
+    def pref(role: Optional[str], lane: str) -> int:
+        order = config.ROLE_LANE_PRIORITY.get(role or "", [])
+        # First choice scores highest; absent -> 0.
+        return (len(order) - order.index(lane)) if lane in order else 0
+
+    best_perm: Optional[Tuple[str, ...]] = None
+    best_score = -1
+    for perm in permutations(config.LANES, len(heroes)):
+        score = sum(pref(h.base_role if h else None, perm[i])
+                    for i, (_, h) in enumerate(heroes))
+        if score > best_score:
+            best_score, best_perm = score, perm
+
+    assignment: Dict[str, str] = {}
+    if best_perm:
+        for i, (name, _) in enumerate(heroes):
+            assignment[best_perm[i]] = name
+    return assignment
+
+
+def predicted_role_label(name: str, lane: Optional[str], db: HeroDB) -> str:
+    """Short tag shown next to a portrait, e.g. 'GUINEVERE [EXP]'."""
+    if lane:
+        return config.LANE_ABBR.get(lane, lane[:3].upper())
+    hero = db.get(name)
+    if hero:
+        order = config.ROLE_LANE_PRIORITY.get(hero.base_role, [])
+        if order:
+            return config.LANE_ABBR.get(order[0], order[0][:3].upper())
+    return "???"
+
+
+# ===========================================================================
+#  SCREEN CAPTURE  (mss + cache + throttle)
+# ===========================================================================
+class ScreenCapturer:
+    """Grabs the mirror window and caches the last frame.
+
+    ``grab()`` is safe to spam from any thread - it returns the cached BGR
+    ndarray until ``CAPTURE_MIN_INTERVAL`` has elapsed, then refreshes.
+    """
+
+    def __init__(self,
+                 origin: Tuple[int, int] = config.CAPTURE_ORIGIN,
+                 size: Tuple[int, int] = (config.RES_W, config.RES_H),
+                 min_interval: float = config.CAPTURE_MIN_INTERVAL):
+        _require_cv()
+        if mss is None:
+            raise RuntimeError("mss is required for screen capture. "
+                               "Install with:  pip install mss")
+        self._sct = mss.mss()
+        self._region = {"left": origin[0], "top": origin[1],
+                        "width": size[0], "height": size[1]}
+        self._min_interval = min_interval
+        self._last_frame = None
+        self._last_t = 0.0
+
+    def grab(self, force: bool = False):
+        """Return a BGR ndarray of the capture region (cached/throttled)."""
+        now = time.monotonic()
+        if (not force and self._last_frame is not None
+                and now - self._last_t < self._min_interval):
+            return self._last_frame
+        raw = self._sct.grab(self._region)            # BGRA
+        frame = np.asarray(raw)[:, :, :3]             # drop alpha -> BGR
+        self._last_frame = np.ascontiguousarray(frame)
+        self._last_t = now
+        return self._last_frame
+
+    def close(self):
+        try:
+            self._sct.close()
+        except Exception:
+            pass
+
+
+# ===========================================================================
+#  TEMPLATE LIBRARY  (matchTemplate + histogram fallback)
+# ===========================================================================
+class TemplateLibrary:
+    CANON = 96          # canonical avatar size used for correlation
+    PAD = 10            # search slack so small mis-alignment still matches
+
+    def __init__(self):
+        _require_cv()
+        self._gray: Dict[str, "np.ndarray"] = {}
+        self._hist: Dict[str, "np.ndarray"] = {}
+
+    # ----- loading ---------------------------------------------------------
+    @classmethod
+    def from_dir(cls, path: str = config.TEMPLATE_DIR) -> "TemplateLibrary":
+        lib = cls()
+        if not os.path.isdir(path):
+            return lib                                   # empty but valid
+        patterns = ("*.png", "*.jpg", "*.jpeg", "*.webp")
+        for pat in patterns:
+            for fp in glob.glob(os.path.join(path, pat)):
+                img = cv2.imread(fp, cv2.IMREAD_COLOR)
+                if img is None:
+                    continue
+                name = cls._name_from_file(fp)
+                lib.add(name, img)
+        return lib
+
+    @staticmethod
+    def _name_from_file(fp: str) -> str:
+        stem = os.path.splitext(os.path.basename(fp))[0]
+        return stem.replace("_", " ").replace("-", "-").strip().title()
+
+    def add(self, name: str, bgr: "np.ndarray") -> None:
+        self._gray[name] = self._prep_gray(bgr)
+        self._hist[name] = self._prep_hist(bgr)
+
+    def __len__(self) -> int:
+        return len(self._gray)
+
+    # ----- preprocessing ---------------------------------------------------
+    @classmethod
+    def _prep_gray(cls, bgr: "np.ndarray") -> "np.ndarray":
+        g = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+        return cv2.resize(g, (cls.CANON, cls.CANON), interpolation=cv2.INTER_AREA)
+
+    @staticmethod
+    def _prep_hist(bgr: "np.ndarray") -> "np.ndarray":
+        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+        hist = cv2.calcHist([hsv], [0, 1], None, [50, 60], [0, 180, 0, 256])
+        cv2.normalize(hist, hist, 0, 1, cv2.NORM_MINMAX)
+        return hist
+
+    # ----- matching --------------------------------------------------------
+    def match(self, crop_bgr: "np.ndarray"
+              ) -> Tuple[Optional[str], float, str]:
+        """Return (best_name, confidence 0..1, method) for a slot crop."""
+        if not self._gray:
+            return None, 0.0, "none"
+
+        # Primary: normalised cross-correlation with a small search window so a
+        # few px of calibration drift does not tank the score.
+        target = cv2.resize(crop_bgr, (self.CANON + self.PAD, self.CANON + self.PAD),
+                            interpolation=cv2.INTER_AREA)
+        target_gray = cv2.cvtColor(target, cv2.COLOR_BGR2GRAY)
+
+        best_name, best_score = None, -1.0
+        for name, tmpl in self._gray.items():
+            res = cv2.matchTemplate(target_gray, tmpl, cv2.TM_CCOEFF_NORMED)
+            score = float(res.max())
+            if score > best_score:
+                best_name, best_score = name, score
+        if best_score >= config.TEMPLATE_MATCH_THRESHOLD:
+            return best_name, best_score, "template"
+
+        # Fallback: HSV histogram correlation (robust to small shape changes,
+        # picks up the dominant colour signature of the splash art).
+        crop_hist = self._prep_hist(crop_bgr)
+        h_name, h_score = None, -1.0
+        for name, hist in self._hist.items():
+            score = float(cv2.compareHist(crop_hist, hist, cv2.HISTCMP_CORREL))
+            if score > h_score:
+                h_name, h_score = name, score
+        if h_score >= config.HISTOGRAM_MATCH_THRESHOLD:
+            return h_name, h_score, "histogram"
+
+        # Nothing crossed threshold - return the best template guess but flag
+        # it as low confidence so callers can choose to ignore it.
+        return best_name, max(best_score, 0.0), "low"
+
+
+# ===========================================================================
+#  DRAFT DETECTOR  (orchestrates capture -> slots -> state, with caching)
+# ===========================================================================
+@dataclass
+class _SlotCache:
+    signature: Optional["np.ndarray"] = None
+    name: Optional[str] = None
+    confidence: float = 0.0
+
+
+class DraftDetector:
+    def __init__(self, db: HeroDB,
+                 library: Optional[TemplateLibrary] = None,
+                 layout: config.Layout = config.LAYOUT,
+                 accept_low: bool = False):
+        self.db = db
+        self.layout = layout
+        self.library = library if library is not None else TemplateLibrary()
+        self.accept_low = accept_low
+        # One cache entry per slot, keyed by a stable slot id.
+        self._cache: Dict[str, _SlotCache] = {}
+
+    # ----- helpers ---------------------------------------------------------
+    @staticmethod
+    def _crop(frame: "np.ndarray", box: config.Box) -> "np.ndarray":
+        h, w = frame.shape[:2]
+        x1 = max(0, min(box.x, w - 1))
+        y1 = max(0, min(box.y, h - 1))
+        x2 = max(x1 + 1, min(box.x2, w))
+        y2 = max(y1 + 1, min(box.y2, h))
+        return frame[y1:y2, x1:x2]
+
+    @staticmethod
+    def _signature(crop: "np.ndarray") -> "np.ndarray":
+        g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        return cv2.resize(g, (8, 8), interpolation=cv2.INTER_AREA)
+
+    @staticmethod
+    def _is_empty(crop: "np.ndarray") -> bool:
+        # Locked portraits are busy splash-art (high variance); empty/dimmed
+        # slots are comparatively flat.
+        g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        return float(g.std()) < config.EMPTY_SLOT_STDDEV
+
+    def _classify_slot(self, frame: "np.ndarray", box: config.Box,
+                       slot_id: str) -> Tuple[Optional[str], float]:
+        """Detect the hero in one slot, using the per-slot cache to skip work
+        when the pixels have not changed since last frame."""
+        crop = self._crop(frame, box)
+        sig = self._signature(crop)
+        cache = self._cache.get(slot_id)
+
+        if cache is not None and cache.signature is not None:
+            delta = float(np.abs(sig.astype(np.int16)
+                                 - cache.signature.astype(np.int16)).mean())
+            if delta < config.SIGNATURE_DELTA:
+                return cache.name, cache.confidence       # cache hit
+
+        # Slot changed (or first sight) - do the real work.
+        if self._is_empty(crop):
+            result_name, conf = None, 0.0
+        else:
+            raw_name, conf, method = self.library.match(crop)
+            if method == "low" and not self.accept_low:
+                result_name = None
+            elif raw_name is None:
+                result_name = None
+            else:
+                hero = self.db.get(raw_name)
+                result_name = hero.name if hero else raw_name
+
+        self._cache[slot_id] = _SlotCache(signature=sig, name=result_name,
+                                          confidence=conf)
+        return result_name, conf
+
+    # ----- public API ------------------------------------------------------
+    def detect(self, frame: "np.ndarray") -> DraftState:
+        """Scan every slot box and return a fully-populated DraftState
+        (including predicted lanes for both teams)."""
+        _require_cv()
+        state = DraftState()
+
+        def scan(boxes, prefix):
+            out: List[Optional[str]] = []
+            for i, box in enumerate(boxes):
+                name, _ = self._classify_slot(frame, box, f"{prefix}{i}")
+                out.append(name)
+            return out
+
+        state.ally_picks = scan(self.layout.ally_picks, "ap")
+        state.enemy_picks = scan(self.layout.enemy_picks, "ep")
+        state.ally_bans = scan(self.layout.ally_bans, "ab")
+        state.enemy_bans = scan(self.layout.enemy_bans, "eb")
+
+        state.ally_lanes = assign_lanes(state.ally_picks, self.db)
+        state.enemy_lanes = assign_lanes(state.enemy_picks, self.db)
+        return state
+
+    # ----- debug visualisation --------------------------------------------
+    def draw_debug(self, frame: "np.ndarray", state: DraftState) -> "np.ndarray":
+        """Return a copy of ``frame`` annotated with boxes + labels (handy for
+        calibration without launching the PyQt overlay)."""
+        _require_cv()
+        out = frame.copy()
+
+        def label_for(name, lanes):
+            lane = next((ln for ln, hn in lanes.items() if hn == name), None)
+            return f"{name.upper()} [{predicted_role_label(name, lane, self.db)}]"
+
+        def draw(boxes, names, color, lanes, is_ban=False):
+            for box, name in zip(boxes, names):
+                if not name:
+                    continue
+                cv2.rectangle(out, (box.x, box.y), (box.x2, box.y2),
+                              color, 2 if is_ban else config.THEME.box_thickness)
+                if is_ban:
+                    continue
+                text = label_for(name, lanes)
+                (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+                ty = box.y - 8 if box.y > 24 else box.y2 + th + 8
+                cv2.rectangle(out, (box.x, ty - th - 6), (box.x + tw + 10, ty + 4),
+                              (8, 16, 14), -1)
+                cv2.putText(out, text, (box.x + 5, ty),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (180, 255, 210), 1,
+                            cv2.LINE_AA)
+
+        c = config.THEME
+        draw(self.layout.ally_picks, state.ally_picks, c.ally_box[:3], state.ally_lanes)
+        draw(self.layout.enemy_picks, state.enemy_picks, c.enemy_box[:3], state.enemy_lanes)
+        draw(self.layout.ally_bans, state.ally_bans, c.ban_box[:3], {}, is_ban=True)
+        draw(self.layout.enemy_bans, state.enemy_bans, c.ban_box[:3], {}, is_ban=True)
+        return out
+
+
+# ===========================================================================
+#  SELF-TEST  (synthetic frame -> verifies matching, caching, lane optimiser)
+# ===========================================================================
+if __name__ == "__main__":
+    _require_cv()
+    db = HeroDB.load("heroes.json")
+
+    # --- pure-python optimiser check (no CV needed) -----------------------
+    lanes = assign_lanes(["Guinevere", "Minsithar", "Zetian", "Aamon", "Estes"], db)
+    print("assign_lanes (2 EXP fighters + mage + jungler + support):")
+    for ln in config.LANES:
+        print(f"   {ln:7} -> {lanes.get(ln, '-')}")
+
+    # --- build a synthetic 2712x1220 frame with unique colour 'avatars' ----
+    rng = np.random.default_rng(7)
+    frame = np.full((config.RES_H, config.RES_W, 3), 18, np.uint8)
+    lib = TemplateLibrary()
+    planted = {
+        "ap0": "Guinevere", "ap1": "Zetian", "ap2": "Minsithar",
+        "ep0": "Alice", "ep1": "Khufra", "ep2": "Akai", "ep3": "Gord",
+    }
+
+    def paint(box, seed_name):
+        # deterministic noisy texture per hero so matchTemplate has signal
+        s = abs(hash(seed_name)) % (2**32)
+        r = np.random.default_rng(s)
+        patch = r.integers(0, 255, (box.h, box.w, 3), dtype=np.uint8)
+        frame[box.y:box.y2, box.x:box.x2] = patch
+        return patch
+
+    L = config.LAYOUT
+    slot_boxes = {f"ap{i}": L.ally_picks[i] for i in range(5)}
+    slot_boxes.update({f"ep{i}": L.enemy_picks[i] for i in range(5)})
+    for sid, hero_name in planted.items():
+        patch = paint(slot_boxes[sid], hero_name)
+        lib.add(hero_name, patch)            # register as the template
+
+    det = DraftDetector(db, library=lib)
+
+    t0 = time.perf_counter()
+    state = det.detect(frame)
+    t1 = time.perf_counter()
+    state2 = det.detect(frame)               # identical frame -> all cache hits
+    t2 = time.perf_counter()
+
+    print(f"\nDetect #1 (cold): {(t1 - t0) * 1000:6.1f} ms")
+    print(f"Detect #2 (cached): {(t2 - t1) * 1000:6.1f} ms  "
+          f"(speed-up {((t1 - t0) / max(t2 - t1, 1e-6)):.1f}x)")
+    print("\nAlly picks :", state.ally_picks)
+    print("Enemy picks:", state.enemy_picks)
+    print("Ally lanes :", state.ally_lanes)
+    print("Enemy lanes:", state.enemy_lanes)
+
+    ok = (state.ally_picks[:3] == ["Guinevere", "Zetian", "Minsithar"]
+          and state.enemy_picks[:4] == ["Alice", "Khufra", "Akai", "Gord"])
+    print("\nMATCH RESULT:", "PASS" if ok else "FAIL")

@@ -1,0 +1,6 @@
+# MLBB real-time draft overlay — PC-side companion (Scrcpy mirror @ 2712x1220)
+# Python 3.9+
+PyQt5>=5.15,<6           # transparent click-through HUD
+opencv-python>=4.8       # template matching + histogram fallback (use -headless on servers)
+numpy>=1.24              # array maths / per-slot signatures
+mss>=9.0                 # fast, low-latency screen capture
