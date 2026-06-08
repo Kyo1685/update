@@ -93,6 +93,25 @@ python fetch_templates.py --source-url <url> --record-path data \
 > they're git-ignored and never committed. For the last few % of accuracy you
 > can drop a hand-cropped draft portrait over any specific file.
 
+### Already have an icon pack? Import it.
+
+If you have a local folder of hero icons — including the common **circular
+icons with transparent corners** — import them directly (no download):
+
+```bash
+python import_icons.py --src /path/to/heroes            # import the whole pack
+python import_icons.py --src ./heroes --only-db         # only heroes.json heroes
+python import_icons.py --src ./heroes --shape inscribed # face-only crop
+python import_icons.py --src ./heroes --bg 12,18,16     # bg for transparent corners
+```
+
+It composites each circle onto a solid background (so transparency doesn't
+break matching), squares + resizes it, and **canonicalises the filename to your
+DB spelling** (e.g. a pack's `Minsitthar.png` is saved as `minsithar.png`).
+Filenames already being hero names (`Luo Yi.png`, `X.Borg.png`) just work.
+Mix freely with `fetch_templates.py` to backfill any hero the pack is missing
+(run it without `--overwrite` and it only grabs the gaps).
+
 ## Calibration (pixel-perfect boxes)
 
 All 20 slot rectangles are derived from fractional anchors in
