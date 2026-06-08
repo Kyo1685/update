@@ -1,0 +1,1939 @@
+{
+  "version": 1,
+  "heroes": [
+    {
+      "name": "Aamon",
+      "base_role": "Assassin",
+      "win_rate": 52.6,
+      "ban_rate": 24.0,
+      "counters": [
+        "Layla",
+        "Estes",
+        "Pharsa",
+        "Hanabi",
+        "Natan"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber",
+        "Akai"
+      ],
+      "synergies": [
+        "Tigreal",
+        "Atlas",
+        "Kadita"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Akai",
+      "base_role": "Tank",
+      "win_rate": 52.0,
+      "ban_rate": 14.0,
+      "counters": [
+        "Estes",
+        "Angela",
+        "Pharsa",
+        "Hanabi",
+        "Natan"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Valentina"
+      ],
+      "synergies": [
+        "Kadita",
+        "Gord",
+        "Aamon"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Alice",
+      "base_role": "Mage",
+      "win_rate": 51.6,
+      "ban_rate": 12.0,
+      "counters": [
+        "Masha",
+        "Uranus",
+        "Layla",
+        "Hanabi"
+      ],
+      "countered_by": [
+        "Karrie",
+        "Baxia"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain",
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Angela",
+      "base_role": "Support",
+      "win_rate": 51.5,
+      "ban_rate": 9.0,
+      "counters": [],
+      "countered_by": [
+        "Helcurt",
+        "Saber",
+        "Lancelot"
+      ],
+      "synergies": [
+        "Wanwan",
+        "Karrie",
+        "Masha",
+        "Claude",
+        "Granger"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Arlott",
+      "base_role": "Fighter",
+      "win_rate": 50.9,
+      "ban_rate": 13.0,
+      "counters": [
+        "Lancelot",
+        "Yu Zhong",
+        "Estes"
+      ],
+      "countered_by": [
+        "Phoveus",
+        "Gloo"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Atlas",
+      "base_role": "Tank",
+      "win_rate": 51.0,
+      "ban_rate": 22.0,
+      "counters": [
+        "Claude",
+        "Brody",
+        "Beatrix",
+        "Hanabi"
+      ],
+      "countered_by": [
+        "Diggie",
+        "Khufra"
+      ],
+      "synergies": [
+        "Pharsa",
+        "Aamon",
+        "Valentina",
+        "Gord"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Utility",
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Baxia",
+      "base_role": "Fighter",
+      "win_rate": 52.4,
+      "ban_rate": 15.0,
+      "counters": [
+        "Uranus",
+        "Esmeralda",
+        "Yu Zhong",
+        "Thamuz",
+        "X.Borg"
+      ],
+      "countered_by": [
+        "Valentina"
+      ],
+      "synergies": [
+        "Pharsa",
+        "Gord",
+        "Aamon"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Beatrix",
+      "base_role": "Marksman",
+      "win_rate": 51.0,
+      "ban_rate": 18.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Bruno"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Khufra"
+      ],
+      "synergies": [
+        "Tigreal",
+        "Atlas",
+        "Mathilda"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst",
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Benedetta",
+      "base_role": "Assassin",
+      "win_rate": 50.0,
+      "ban_rate": 14.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Pharsa"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber",
+        "Phoveus"
+      ],
+      "synergies": [
+        "Atlas",
+        "Mathilda"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Brody",
+      "base_role": "Marksman",
+      "win_rate": 51.2,
+      "ban_rate": 9.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Uranus"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Khufra"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela",
+        "Atlas"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Bruno",
+      "base_role": "Marksman",
+      "win_rate": 50.0,
+      "ban_rate": 3.0,
+      "counters": [
+        "Layla",
+        "Hanabi"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Khufra"
+      ],
+      "synergies": [
+        "Angela",
+        "Estes"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Carmilla",
+      "base_role": "Support",
+      "win_rate": 50.8,
+      "ban_rate": 5.0,
+      "counters": [
+        "Wanwan",
+        "Claude"
+      ],
+      "countered_by": [
+        "Khufra"
+      ],
+      "synergies": [
+        "Cecilion",
+        "Pharsa",
+        "Karrie"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Cecilion",
+      "base_role": "Mage",
+      "win_rate": 51.8,
+      "ban_rate": 11.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Lancelot"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Carmilla",
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst",
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Chou",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 18.0,
+      "counters": [
+        "Gusion",
+        "Lancelot",
+        "Kagura",
+        "Harley"
+      ],
+      "countered_by": [
+        "Phoveus",
+        "Gloo"
+      ],
+      "synergies": [
+        "Angela",
+        "Mathilda"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Claude",
+      "base_role": "Marksman",
+      "win_rate": 51.4,
+      "ban_rate": 16.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Bruno"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Atlas",
+        "Saber"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela",
+        "Diggie"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Clint",
+      "base_role": "Marksman",
+      "win_rate": 50.4,
+      "ban_rate": 5.0,
+      "counters": [
+        "Layla",
+        "Hanabi"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Khufra"
+      ],
+      "synergies": [
+        "Angela",
+        "Estes"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Diggie",
+      "base_role": "Support",
+      "win_rate": 51.4,
+      "ban_rate": 8.0,
+      "counters": [
+        "Khufra",
+        "Franco",
+        "Atlas",
+        "Kadita",
+        "Saber"
+      ],
+      "countered_by": [
+        "Helcurt"
+      ],
+      "synergies": [
+        "Claude",
+        "Granger",
+        "Melissa"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Esmeralda",
+      "base_role": "Fighter",
+      "win_rate": 51.3,
+      "ban_rate": 12.0,
+      "counters": [
+        "Uranus",
+        "Yu Zhong",
+        "Masha",
+        "Thamuz"
+      ],
+      "countered_by": [
+        "Baxia",
+        "Karrie"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Estes"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Estes",
+      "base_role": "Support",
+      "win_rate": 51.2,
+      "ban_rate": 10.0,
+      "counters": [
+        "Masha",
+        "Thamuz",
+        "Uranus"
+      ],
+      "countered_by": [
+        "Helcurt",
+        "Karina",
+        "Saber",
+        "Baxia"
+      ],
+      "synergies": [
+        "Hanabi",
+        "Wanwan",
+        "Karrie",
+        "Claude"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Eudora",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 5.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Estes"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Fanny",
+      "base_role": "Assassin",
+      "win_rate": 49.5,
+      "ban_rate": 26.0,
+      "counters": [
+        "Layla",
+        "Pharsa",
+        "Hanabi",
+        "Estes"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Minsithar",
+        "Phoveus",
+        "Franco"
+      ],
+      "synergies": [
+        "Estes",
+        "Angela"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": false
+    },
+    {
+      "name": "Faramis",
+      "base_role": "Mage",
+      "win_rate": 51.6,
+      "ban_rate": 13.0,
+      "counters": [
+        "Karrie",
+        "Wanwan"
+      ],
+      "countered_by": [
+        "Helcurt",
+        "Saber"
+      ],
+      "synergies": [
+        "Pharsa",
+        "Cecilion",
+        "Aamon",
+        "Beatrix"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Utility",
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Floryn",
+      "base_role": "Support",
+      "win_rate": 51.0,
+      "ban_rate": 6.0,
+      "counters": [],
+      "countered_by": [
+        "Helcurt",
+        "Saber"
+      ],
+      "synergies": [
+        "Masha",
+        "Uranus",
+        "Phoveus"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Franco",
+      "base_role": "Tank",
+      "win_rate": 49.0,
+      "ban_rate": 16.0,
+      "counters": [
+        "Estes",
+        "Angela",
+        "Hanabi",
+        "Layla"
+      ],
+      "countered_by": [
+        "Diggie",
+        "Khufra"
+      ],
+      "synergies": [
+        "Aamon",
+        "Karrie"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Fredrinn",
+      "base_role": "Fighter",
+      "win_rate": 52.8,
+      "ban_rate": 20.0,
+      "counters": [
+        "Lancelot",
+        "Ling",
+        "Fanny",
+        "Masha",
+        "Wanwan"
+      ],
+      "countered_by": [
+        "Karrie",
+        "Baxia"
+      ],
+      "synergies": [
+        "Pharsa",
+        "Gord",
+        "Aamon"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Gloo",
+      "base_role": "Tank",
+      "win_rate": 52.5,
+      "ban_rate": 26.0,
+      "counters": [
+        "Lancelot",
+        "Hayabusa",
+        "Wanwan",
+        "Ling"
+      ],
+      "countered_by": [
+        "Valentina"
+      ],
+      "synergies": [
+        "Kadita",
+        "Gord"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Gord",
+      "base_role": "Mage",
+      "win_rate": 51.0,
+      "ban_rate": 6.0,
+      "counters": [
+        "Fanny",
+        "Ling",
+        "Lancelot",
+        "Layla"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt",
+        "Khufra"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Khufra",
+        "Akai"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Granger",
+      "base_role": "Marksman",
+      "win_rate": 51.3,
+      "ban_rate": 12.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Uranus"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Khufra"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela",
+        "Diggie"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Grock",
+      "base_role": "Tank",
+      "win_rate": 51.0,
+      "ban_rate": 3.0,
+      "counters": [
+        "Lancelot",
+        "Fanny"
+      ],
+      "countered_by": [
+        "Valentina"
+      ],
+      "synergies": [
+        "Pharsa",
+        "Aamon"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Guinevere",
+      "base_role": "Fighter",
+      "win_rate": 51.0,
+      "ban_rate": 11.0,
+      "counters": [
+        "Lancelot",
+        "Ling",
+        "Hayabusa",
+        "Gusion"
+      ],
+      "countered_by": [
+        "Phoveus",
+        "Khufra"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Mathilda"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Gusion",
+      "base_role": "Assassin",
+      "win_rate": 50.3,
+      "ban_rate": 30.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Estes",
+        "Pharsa"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber",
+        "Akai"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Kadita"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Hanabi",
+      "base_role": "Marksman",
+      "win_rate": 50.2,
+      "ban_rate": 4.0,
+      "counters": [
+        "Layla",
+        "Bruno",
+        "Clint"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Saber",
+        "Khufra"
+      ],
+      "synergies": [
+        "Tigreal",
+        "Atlas",
+        "Lolita",
+        "Estes"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Harley",
+      "base_role": "Mage",
+      "win_rate": 50.4,
+      "ban_rate": 21.0,
+      "counters": [
+        "Layla",
+        "Estes",
+        "Hanabi",
+        "Kagura"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Hayabusa",
+      "base_role": "Assassin",
+      "win_rate": 51.0,
+      "ban_rate": 16.0,
+      "counters": [
+        "Layla",
+        "Estes",
+        "Pharsa",
+        "Gord"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber",
+        "Gloo"
+      ],
+      "synergies": [
+        "Atlas",
+        "Kadita"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Helcurt",
+      "base_role": "Assassin",
+      "win_rate": 50.3,
+      "ban_rate": 6.0,
+      "counters": [
+        "Kagura",
+        "Pharsa",
+        "Cecilion",
+        "Xavier",
+        "Yve"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Ixia",
+      "base_role": "Marksman",
+      "win_rate": 50.9,
+      "ban_rate": 11.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Bruno"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Khufra"
+      ],
+      "synergies": [
+        "Angela",
+        "Estes",
+        "Mathilda"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Joy",
+      "base_role": "Assassin",
+      "win_rate": 50.2,
+      "ban_rate": 32.0,
+      "counters": [
+        "Layla",
+        "Pharsa",
+        "Hanabi",
+        "Gord"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Phoveus",
+        "Saber"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": false
+    },
+    {
+      "name": "Kadita",
+      "base_role": "Mage",
+      "win_rate": 51.2,
+      "ban_rate": 10.0,
+      "counters": [
+        "Layla",
+        "Estes",
+        "Hanabi",
+        "Lancelot"
+      ],
+      "countered_by": [
+        "Saber",
+        "Diggie"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Akai"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Kagura",
+      "base_role": "Mage",
+      "win_rate": 51.0,
+      "ban_rate": 12.0,
+      "counters": [
+        "Lancelot",
+        "Chou",
+        "Hayabusa"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Tigreal",
+        "Atlas"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Karina",
+      "base_role": "Assassin",
+      "win_rate": 50.6,
+      "ban_rate": 7.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Estes",
+        "Pharsa"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Karrie",
+      "base_role": "Marksman",
+      "win_rate": 51.8,
+      "ban_rate": 20.0,
+      "counters": [
+        "Uranus",
+        "Esmeralda",
+        "Baxia",
+        "Gloo",
+        "Fredrinn",
+        "Yu Zhong"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Khufra"
+      ],
+      "synergies": [
+        "Angela",
+        "Mathilda",
+        "Estes"
+      ],
+      "damage_type": "True",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Khufra",
+      "base_role": "Tank",
+      "win_rate": 51.8,
+      "ban_rate": 28.0,
+      "counters": [
+        "Fanny",
+        "Wanwan",
+        "Ling",
+        "Benedetta",
+        "Joy"
+      ],
+      "countered_by": [
+        "Diggie",
+        "Valentina"
+      ],
+      "synergies": [
+        "Pharsa",
+        "Gord",
+        "Aamon",
+        "Kadita"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Lancelot",
+      "base_role": "Assassin",
+      "win_rate": 50.6,
+      "ban_rate": 22.0,
+      "counters": [
+        "Kagura",
+        "Lunox",
+        "Pharsa",
+        "Hanabi",
+        "Layla"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Minsithar",
+        "Saber",
+        "Phoveus"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Khufra"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Layla",
+      "base_role": "Marksman",
+      "win_rate": 49.0,
+      "ban_rate": 1.0,
+      "counters": [],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Fanny",
+        "Khufra",
+        "Saber"
+      ],
+      "synergies": [
+        "Tigreal",
+        "Estes",
+        "Angela"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Leomord",
+      "base_role": "Fighter",
+      "win_rate": 51.1,
+      "ban_rate": 5.0,
+      "counters": [
+        "Estes",
+        "Angela",
+        "Hanabi",
+        "Natan",
+        "Layla"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Phoveus"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela",
+        "Estes"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst",
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Ling",
+      "base_role": "Assassin",
+      "win_rate": 51.4,
+      "ban_rate": 34.0,
+      "counters": [
+        "Pharsa",
+        "Layla",
+        "Estes",
+        "Hanabi"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Minsithar",
+        "Akai"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Khufra"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": false
+    },
+    {
+      "name": "Lolita",
+      "base_role": "Tank",
+      "win_rate": 50.2,
+      "ban_rate": 4.0,
+      "counters": [
+        "Beatrix",
+        "Brody",
+        "Claude",
+        "Hanabi",
+        "Wanwan"
+      ],
+      "countered_by": [
+        "Gord",
+        "Pharsa"
+      ],
+      "synergies": [
+        "Hanabi",
+        "Natan"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Lunox",
+      "base_role": "Mage",
+      "win_rate": 51.5,
+      "ban_rate": 13.0,
+      "counters": [
+        "Lancelot",
+        "Chou",
+        "Yu Zhong"
+      ],
+      "countered_by": [
+        "Saber",
+        "Khufra"
+      ],
+      "synergies": [
+        "Tigreal",
+        "Atlas",
+        "Khufra"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst",
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Marcel",
+      "base_role": "Fighter",
+      "win_rate": 51.9,
+      "ban_rate": 23.0,
+      "counters": [
+        "Lancelot",
+        "Ling",
+        "Fanny",
+        "Estes"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Phoveus"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela",
+        "Estes"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst",
+        "Sustain"
+      ],
+      "owned": false
+    },
+    {
+      "name": "Masha",
+      "base_role": "Fighter",
+      "win_rate": 50.8,
+      "ban_rate": 5.0,
+      "counters": [
+        "Gloo",
+        "Khufra",
+        "Fredrinn",
+        "Uranus"
+      ],
+      "countered_by": [
+        "Baxia",
+        "Esmeralda"
+      ],
+      "synergies": [
+        "Angela",
+        "Estes",
+        "Floryn"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Mathilda",
+      "base_role": "Support",
+      "win_rate": 51.8,
+      "ban_rate": 11.0,
+      "counters": [
+        "Fanny",
+        "Ling"
+      ],
+      "countered_by": [
+        "Khufra"
+      ],
+      "synergies": [
+        "Beatrix",
+        "Brody",
+        "Claude",
+        "Granger",
+        "Leomord"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Utility",
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Melissa",
+      "base_role": "Marksman",
+      "win_rate": 51.5,
+      "ban_rate": 13.0,
+      "counters": [
+        "Lancelot",
+        "Ling",
+        "Karina",
+        "Hayabusa"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Atlas"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela",
+        "Diggie"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Minsithar",
+      "base_role": "Fighter",
+      "win_rate": 50.4,
+      "ban_rate": 4.0,
+      "counters": [
+        "Fanny",
+        "Ling",
+        "Lancelot",
+        "Hayabusa",
+        "Benedetta"
+      ],
+      "countered_by": [
+        "Pharsa",
+        "Gord"
+      ],
+      "synergies": [
+        "Pharsa",
+        "Aamon"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Utility",
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Moskov",
+      "base_role": "Marksman",
+      "win_rate": 51.0,
+      "ban_rate": 8.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Estes"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Khufra"
+      ],
+      "synergies": [
+        "Angela",
+        "Mathilda"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Natan",
+      "base_role": "Marksman",
+      "win_rate": 51.7,
+      "ban_rate": 17.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Bruno"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Khufra"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela",
+        "Lolita"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain",
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Paquito",
+      "base_role": "Fighter",
+      "win_rate": 51.5,
+      "ban_rate": 12.0,
+      "counters": [
+        "Yu Zhong",
+        "Thamuz",
+        "Uranus",
+        "Esmeralda"
+      ],
+      "countered_by": [
+        "Phoveus",
+        "Gloo"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Pharsa",
+      "base_role": "Mage",
+      "win_rate": 52.0,
+      "ban_rate": 9.0,
+      "counters": [
+        "Lancelot",
+        "Ling",
+        "Fanny",
+        "Hayabusa",
+        "Layla"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Khufra",
+        "Minsithar"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Phoveus",
+      "base_role": "Fighter",
+      "win_rate": 50.1,
+      "ban_rate": 6.0,
+      "counters": [
+        "Fanny",
+        "Joy",
+        "Ling",
+        "Benedetta",
+        "Wanwan"
+      ],
+      "countered_by": [
+        "Gord",
+        "Pharsa"
+      ],
+      "synergies": [
+        "Estes",
+        "Floryn"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Rafaela",
+      "base_role": "Support",
+      "win_rate": 50.0,
+      "ban_rate": 2.0,
+      "counters": [],
+      "countered_by": [
+        "Helcurt",
+        "Saber"
+      ],
+      "synergies": [
+        "Hanabi",
+        "Wanwan",
+        "Layla"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Saber",
+      "base_role": "Assassin",
+      "win_rate": 50.5,
+      "ban_rate": 8.0,
+      "counters": [
+        "Lancelot",
+        "Gusion",
+        "Hayabusa",
+        "Ling",
+        "Karrie",
+        "Layla"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Diggie"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Sora",
+      "base_role": "Marksman",
+      "win_rate": 52.3,
+      "ban_rate": 27.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Bruno",
+        "Tigreal"
+      ],
+      "countered_by": [
+        "Lancelot",
+        "Ling",
+        "Khufra"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela",
+        "Estes"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Burst"
+      ],
+      "owned": false
+    },
+    {
+      "name": "Thamuz",
+      "base_role": "Fighter",
+      "win_rate": 51.6,
+      "ban_rate": 7.0,
+      "counters": [
+        "Esmeralda",
+        "Uranus",
+        "Yu Zhong"
+      ],
+      "countered_by": [
+        "Baxia",
+        "Karrie"
+      ],
+      "synergies": [
+        "Estes",
+        "Angela"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Tigreal",
+      "base_role": "Tank",
+      "win_rate": 51.4,
+      "ban_rate": 9.0,
+      "counters": [
+        "Lancelot",
+        "Ling",
+        "Fanny",
+        "Gusion",
+        "Hayabusa"
+      ],
+      "countered_by": [
+        "Valentina",
+        "Xavier"
+      ],
+      "synergies": [
+        "Pharsa",
+        "Aamon",
+        "Kadita",
+        "Gord"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Uranus",
+      "base_role": "Fighter",
+      "win_rate": 52.2,
+      "ban_rate": 6.0,
+      "counters": [
+        "Masha",
+        "Lancelot",
+        "Wanwan",
+        "Hanabi"
+      ],
+      "countered_by": [
+        "Baxia",
+        "Karrie"
+      ],
+      "synergies": [
+        "Estes",
+        "Floryn",
+        "Angela"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Valentina",
+      "base_role": "Mage",
+      "win_rate": 51.3,
+      "ban_rate": 19.0,
+      "counters": [
+        "Baxia",
+        "Atlas",
+        "Gloo",
+        "Grock",
+        "Tigreal"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Vexana",
+      "base_role": "Mage",
+      "win_rate": 50.7,
+      "ban_rate": 7.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Lancelot"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Akai"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Wanwan",
+      "base_role": "Marksman",
+      "win_rate": 50.5,
+      "ban_rate": 24.0,
+      "counters": [
+        "Tigreal",
+        "Atlas",
+        "Franco",
+        "Grock"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber",
+        "Gloo"
+      ],
+      "synergies": [
+        "Tigreal",
+        "Atlas",
+        "Angela"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Burst"
+      ],
+      "owned": true
+    },
+    {
+      "name": "X.Borg",
+      "base_role": "Fighter",
+      "win_rate": 50.5,
+      "ban_rate": 9.0,
+      "counters": [
+        "Uranus",
+        "Esmeralda",
+        "Yu Zhong",
+        "Gloo"
+      ],
+      "countered_by": [
+        "Karrie",
+        "Baxia"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Angela"
+      ],
+      "damage_type": "True",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Xavier",
+      "base_role": "Mage",
+      "win_rate": 52.4,
+      "ban_rate": 14.0,
+      "counters": [
+        "Tigreal",
+        "Layla",
+        "Lancelot",
+        "Franco"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Khufra"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Yi Sun-shin",
+      "base_role": "Marksman",
+      "win_rate": 51.6,
+      "ban_rate": 15.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Lancelot"
+      ],
+      "countered_by": [
+        "Khufra",
+        "Saber"
+      ],
+      "synergies": [
+        "Tigreal",
+        "Atlas",
+        "Mathilda"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Yu Zhong",
+      "base_role": "Fighter",
+      "win_rate": 51.2,
+      "ban_rate": 10.0,
+      "counters": [
+        "Paquito",
+        "Chou",
+        "Arlott"
+      ],
+      "countered_by": [
+        "Baxia",
+        "Karrie"
+      ],
+      "synergies": [
+        "Mathilda",
+        "Estes"
+      ],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Yve",
+      "base_role": "Mage",
+      "win_rate": 51.1,
+      "ban_rate": 8.0,
+      "counters": [
+        "Layla",
+        "Hanabi",
+        "Lancelot"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Khufra"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst",
+        "Utility"
+      ],
+      "owned": true
+    },
+    {
+      "name": "Zetian",
+      "base_role": "Mage",
+      "win_rate": 52.9,
+      "ban_rate": 31.0,
+      "counters": [
+        "Lancelot",
+        "Ling",
+        "Fanny",
+        "Layla",
+        "Hanabi",
+        "Natan"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Khufra"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst",
+        "Utility"
+      ],
+      "owned": false
+    },
+    {
+      "name": "Zhuxin",
+      "base_role": "Mage",
+      "win_rate": 52.7,
+      "ban_rate": 29.0,
+      "counters": [
+        "Lancelot",
+        "Ling",
+        "Fanny",
+        "Layla",
+        "Hanabi"
+      ],
+      "countered_by": [
+        "Saber",
+        "Helcurt"
+      ],
+      "synergies": [
+        "Atlas",
+        "Tigreal",
+        "Khufra"
+      ],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst",
+        "Utility"
+      ],
+      "owned": true
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.DS_Store
+
+# Personal avatar crops (keep the folder + its README, ignore the images)
+templates/*.png
+templates/*.jpg
+templates/*.jpeg
+templates/*.webp
