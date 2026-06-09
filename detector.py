@@ -179,7 +179,7 @@ class TemplateLibrary:
 
     def __init__(self):
         _require_cv()
-        self._gray: Dict[str, "np.ndarray"] = {}
+        self._tmpl: Dict[str, "np.ndarray"] = {}      # colour canonical (BGR)
         self._hist: Dict[str, "np.ndarray"] = {}
 
     # ----- loading ---------------------------------------------------------
@@ -204,17 +204,19 @@ class TemplateLibrary:
         return stem.replace("_", " ").replace("-", "-").strip().title()
 
     def add(self, name: str, bgr: "np.ndarray") -> None:
-        self._gray[name] = self._prep_gray(bgr)
+        self._tmpl[name] = self._prep_tmpl(bgr)
         self._hist[name] = self._prep_hist(bgr)
 
     def __len__(self) -> int:
-        return len(self._gray)
+        return len(self._tmpl)
 
     # ----- preprocessing ---------------------------------------------------
     @classmethod
-    def _prep_gray(cls, bgr: "np.ndarray") -> "np.ndarray":
-        g = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
-        return cv2.resize(g, (cls.CANON, cls.CANON), interpolation=cv2.INTER_AREA)
+    def _prep_tmpl(cls, bgr: "np.ndarray") -> "np.ndarray":
+        # Keep COLOUR: many heroes share a silhouette but differ in palette
+        # (e.g. Helcurt vs Gord), so grayscale matching confuses them.
+        img = bgr[:, :, :3] if bgr.ndim == 3 else cv2.cvtColor(bgr, cv2.COLOR_GRAY2BGR)
+        return cv2.resize(img, (cls.CANON, cls.CANON), interpolation=cv2.INTER_AREA)
 
     @staticmethod
     def _prep_hist(bgr: "np.ndarray") -> "np.ndarray":
@@ -227,18 +229,18 @@ class TemplateLibrary:
     def match(self, crop_bgr: "np.ndarray"
               ) -> Tuple[Optional[str], float, str]:
         """Return (best_name, confidence 0..1, method) for a slot crop."""
-        if not self._gray:
+        if not self._tmpl:
             return None, 0.0, "none"
 
-        # Primary: normalised cross-correlation with a small search window so a
-        # few px of calibration drift does not tank the score.
-        target = cv2.resize(crop_bgr, (self.CANON + self.PAD, self.CANON + self.PAD),
+        # Primary: COLOUR normalised cross-correlation with a small search
+        # window so a few px of calibration drift does not tank the score.
+        target = cv2.resize(crop_bgr[:, :, :3],
+                            (self.CANON + self.PAD, self.CANON + self.PAD),
                             interpolation=cv2.INTER_AREA)
-        target_gray = cv2.cvtColor(target, cv2.COLOR_BGR2GRAY)
 
         best_name, best_score = None, -1.0
-        for name, tmpl in self._gray.items():
-            res = cv2.matchTemplate(target_gray, tmpl, cv2.TM_CCOEFF_NORMED)
+        for name, tmpl in self._tmpl.items():
+            res = cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED)
             score = float(res.max())
             if score > best_score:
                 best_name, best_score = name, score

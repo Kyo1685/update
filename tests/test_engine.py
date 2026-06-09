@@ -24,7 +24,7 @@ def _state():
         enemy_picks=["Alice", "Khufra", "Akai", "Gord", None],
         ally_bans=["Harley", "Karrie", "Sora", "Gloo", "Freya"],
         enemy_bans=["Freya", "Gusion", "Yi Sun-shin", "Sora", "Zhuxin"],
-        ally_lanes={"EXP": "Guinevere", "MID": "Zetian"},
+        ally_lanes={"EXP": "Guinevere", "JUNGLE": "Minsithar"},   # MID/GOLD/ROAM open
         enemy_lanes={"JUNGLE": "Alice", "ROAM": "Akai", "EXP": "Khufra", "MID": "Gord"},
     )
 
@@ -41,6 +41,17 @@ def test_no_picked_or_banned_in_suggestions():
     for lane in config.LANES:
         for s in res.suggestions[lane]:
             assert s.name.lower() not in taken, f"{s.name} already taken"
+
+
+def test_filled_lanes_get_no_suggestions():
+    res = ENG.evaluate(_state(), Settings())
+    # lanes already taken by an ally pick are grayed out (no recommendations)
+    assert res.suggestions["EXP"] == [] and res.suggestions["JUNGLE"] == []
+    assert res.filled_lanes.get("EXP") == "Guinevere"
+    assert res.filled_lanes.get("JUNGLE") == "Minsithar"
+    # open lanes still get recommendations
+    assert len(res.suggestions["MID"]) > 0
+    assert len(res.suggestions["GOLD"]) > 0
 
 
 def test_dark_mode_inverts_ranking():
