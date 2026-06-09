@@ -87,11 +87,14 @@ def test_lane_counter_amplifies_direct_matchup():
 
 
 def test_assign_lanes_unique_and_optimal():
-    lanes = assign_lanes(["Guinevere", "Zetian", "Minsithar", "Aamon", "Estes"], DB)
-    assert len(set(lanes.values())) == len(lanes)          # no double-booked lane
-    assert lanes.get("MID") == "Zetian"                    # only mage -> MID
-    assert lanes.get("JUNGLE") == "Aamon"                  # only assassin -> JUNGLE
-    assert lanes.get("ROAM") == "Estes"                    # only support -> ROAM
+    # One clear hero per lane -> unambiguous 1:1 assignment.
+    lanes = assign_lanes(["Phoveus", "Aamon", "Zetian", "Melissa", "Estes"], DB)
+    assert len(set(lanes.values())) == len(lanes) == 5    # no double-booked lane
+    assert lanes["EXP"] == "Phoveus"
+    assert lanes["JUNGLE"] == "Aamon"
+    assert lanes["MID"] == "Zetian"
+    assert lanes["GOLD"] == "Melissa"
+    assert lanes["ROAM"] == "Estes"
 
 
 def test_build_path_reacts_to_enemy_profile():

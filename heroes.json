@@ -60,7 +60,8 @@
       ],
       "owned": true,
       "lanes": [
-        "ROAM"
+        "ROAM",
+        "JUNGLE"
       ]
     },
     {
@@ -77,7 +78,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "ROAM"
       ]
     },
     {
@@ -107,7 +109,8 @@
       "owned": true,
       "lanes": [
         "EXP",
-        "JUNGLE"
+        "ROAM",
+        "MID"
       ]
     },
     {
@@ -142,7 +145,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "EXP"
       ]
     },
     {
@@ -187,7 +191,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -214,7 +219,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -262,7 +268,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "EXP"
       ]
     },
     {
@@ -279,7 +286,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -296,8 +304,7 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "ROAM"
+        "EXP"
       ]
     },
     {
@@ -332,8 +339,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "EXP"
+        "EXP",
+        "GOLD"
       ]
     },
     {
@@ -351,12 +358,13 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "ROAM"
       ]
     },
     {
       "name": "Baxia",
-      "base_role": "Fighter",
+      "base_role": "Tank",
       "win_rate": 52.4,
       "ban_rate": 15.0,
       "counters": [
@@ -381,7 +389,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "ROAM"
       ]
     },
     {
@@ -457,7 +466,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -649,7 +659,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "MID"
       ]
     },
     {
@@ -721,7 +732,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "JUNGLE"
       ]
     },
     {
@@ -786,8 +798,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "ROAM"
+        "ROAM",
+        "EXP"
       ]
     },
     {
@@ -815,7 +827,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -933,7 +946,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -1017,7 +1031,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "ROAM"
       ]
     },
     {
@@ -1143,7 +1158,8 @@
       ],
       "owned": true,
       "lanes": [
-        "GOLD"
+        "GOLD",
+        "JUNGLE"
       ]
     },
     {
@@ -1199,7 +1215,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "MID"
       ]
     },
     {
@@ -1324,6 +1341,7 @@
       ],
       "owned": true,
       "lanes": [
+        "MID",
         "JUNGLE"
       ]
     },
@@ -1534,7 +1552,7 @@
     },
     {
       "name": "Julian",
-      "base_role": "Assassin",
+      "base_role": "Fighter",
       "win_rate": 50.0,
       "ban_rate": 0.0,
       "counters": [],
@@ -1546,7 +1564,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "EXP"
       ]
     },
     {
@@ -1575,7 +1594,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -1714,7 +1734,7 @@
       "owned": true,
       "lanes": [
         "EXP",
-        "ROAM"
+        "JUNGLE"
       ]
     },
     {
@@ -1813,7 +1833,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -1871,7 +1892,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "EXP"
       ]
     },
     {
@@ -1964,8 +1986,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "JUNGLE",
+        "EXP"
       ]
     },
     {
@@ -2011,7 +2033,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -2058,7 +2081,8 @@
       ],
       "owned": false,
       "lanes": [
-        "ROAM"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -2075,7 +2099,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "EXP"
       ]
     },
     {
@@ -2104,7 +2129,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -2209,24 +2235,9 @@
         "Sustain"
       ],
       "owned": true,
-      "lanes": []
-    },
-    {
-      "name": "Minsitthar",
-      "base_role": "Fighter",
-      "win_rate": 50.0,
-      "ban_rate": 0.0,
-      "counters": [],
-      "countered_by": [],
-      "synergies": [],
-      "damage_type": "Physical",
-      "archetypes": [
-        "Sustain"
-      ],
-      "owned": true,
       "lanes": [
-        "EXP",
-        "ROAM"
+        "ROAM",
+        "EXP"
       ]
     },
     {
@@ -2287,7 +2298,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -2431,7 +2443,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -2508,8 +2521,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "GOLD"
+        "GOLD",
+        "JUNGLE"
       ]
     },
     {
@@ -2551,7 +2564,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "GOLD"
       ]
     },
     {
@@ -2568,7 +2582,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "ROAM"
       ]
     },
     {
@@ -2599,8 +2614,7 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "ROAM"
+        "JUNGLE"
       ]
     },
     {
@@ -2617,8 +2631,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "ROAM",
+        "MID"
       ]
     },
     {
@@ -2635,7 +2649,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -2666,7 +2681,7 @@
       ],
       "owned": false,
       "lanes": [
-        "EXP"
+        "GOLD"
       ]
     },
     {
@@ -2701,7 +2716,8 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "EXP"
       ]
     },
     {
@@ -2745,7 +2761,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     },
     {
@@ -2853,7 +2870,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -2870,7 +2888,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -2899,7 +2918,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -2988,7 +3008,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "GOLD"
       ]
     },
     {
@@ -3017,6 +3038,7 @@
       ],
       "owned": true,
       "lanes": [
+        "GOLD",
         "JUNGLE"
       ]
     },
@@ -3140,7 +3162,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "GOLD"
       ]
     },
     {
@@ -3171,7 +3194,8 @@
       ],
       "owned": true,
       "lanes": [
-        "MID"
+        "MID",
+        "ROAM"
       ]
     },
     {
@@ -3188,7 +3212,8 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "JUNGLE"
       ]
     }
   ]
