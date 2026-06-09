@@ -258,9 +258,7 @@ class TemplateLibrary:
               threshold: Optional[float] = None,
               hist_threshold: Optional[float] = None
               ) -> Tuple[Optional[str], float, str]:
-        """Aggressive 2-stage match: colour-histogram shortlist, then multi-scale
-        template correlation over the shortlist.  Returns (name, score, method).
-        """
+        """Return (best_name, confidence 0..1, method) for a slot crop."""
         if threshold is None:
             threshold = config.TEMPLATE_MATCH_THRESHOLD
         if hist_threshold is None:
@@ -268,68 +266,48 @@ class TemplateLibrary:
         if not self._tmpl:
             return None, 0.0, "none"
 
-        # Stage 1: colour-histogram shortlist (cheap; keeps same-palette
-        # look-alikes together so stage 2 can tell them apart).
-        crop_hist = self._prep_hist(crop_bgr)
-        hist_ranked = sorted(
-            ((float(cv2.compareHist(crop_hist, h, cv2.HISTCMP_CORREL)), n)
-             for n, h in self._hist.items()), reverse=True)
-        shortlist = [n for _, n in hist_ranked[:config.MATCH_SHORTLIST]]
-
-        # Stage 2: multi-scale template correlation over an expanded target.
-        best_name, best = self._best_template(crop_bgr, shortlist)
-        if best >= threshold:
-            return best_name, best, "template"
-
-        if config.USE_HISTOGRAM_FALLBACK and hist_ranked and \
-                hist_ranked[0][0] >= hist_threshold:
-            return hist_ranked[0][1], hist_ranked[0][0], "histogram"
-        return best_name, max(best, 0.0), "low"
-
-    def _best_template(self, crop_bgr, names):
-        """Highest multi-scale TM_CCOEFF_NORMED over ``names``."""
-        big = self.CANON + 40
-        target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]), (big, big),
+        # Primary: COLOUR normalised cross-correlation with a small search
+        # window so a few px of calibration drift does not tank the score.
+        target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
+                            (self.CANON + self.PAD, self.CANON + self.PAD),
                             interpolation=cv2.INTER_AREA)
-        best_name, best = None, -1.0
-        for name in names:
-            full = self._tmpl.get(name)
-            if full is None:
-                continue
-            for sc in config.MATCH_SCALES:
-                s = max(8, int(round(self.CANON * sc)))
-                if s > big:
-                    continue
-                tmpl = full if s == self.CANON else cv2.resize(
-                    full, (s, s), interpolation=cv2.INTER_AREA)
-                score = float(cv2.matchTemplate(
-                    target, tmpl, cv2.TM_CCOEFF_NORMED).max())
-                if score > best:
-                    best_name, best = name, score
-        return best_name, best
+
+        best_name, best_score = None, -1.0
+        for name, tmpl in self._tmpl.items():
+            res = cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED)
+            score = float(res.max())
+            if score > best_score:
+                best_name, best_score = name, score
+        if best_score >= threshold:
+            return best_name, best_score, "template"
+
+        # Optional colour-histogram fallback (off by default - strict matching).
+        if config.USE_HISTOGRAM_FALLBACK:
+            crop_hist = self._prep_hist(crop_bgr)
+            h_name, h_score = None, -1.0
+            for name, hist in self._hist.items():
+                score = float(cv2.compareHist(crop_hist, hist, cv2.HISTCMP_CORREL))
+                if score > h_score:
+                    h_name, h_score = name, score
+            if h_score >= hist_threshold:
+                return h_name, h_score, "histogram"
+
+        # No confident match.  Return the best guess flagged "low" so only
+        # --accept-low callers use it; by default this becomes "no hero".
+        return best_name, max(best_score, 0.0), "low"
 
     def top_matches(self, crop_bgr: "np.ndarray", n: int = 3):
-        """Top-n (name, score) multi-scale matches over the whole library
-        (diagnostics)."""
+        """Top-n (name, score) template matches for a crop - for diagnostics."""
         if not self._tmpl:
             return []
-        big = self.CANON + 40
-        target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]), (big, big),
+        target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
+                            (self.CANON + self.PAD, self.CANON + self.PAD),
                             interpolation=cv2.INTER_AREA)
-        out = []
-        for name, full in self._tmpl.items():
-            best = -1.0
-            for sc in config.MATCH_SCALES:
-                s = max(8, int(round(self.CANON * sc)))
-                if s > big:
-                    continue
-                tmpl = full if s == self.CANON else cv2.resize(
-                    full, (s, s), interpolation=cv2.INTER_AREA)
-                best = max(best, float(cv2.matchTemplate(
-                    target, tmpl, cv2.TM_CCOEFF_NORMED).max()))
-            out.append((name, best))
-        out.sort(key=lambda kv: kv[1], reverse=True)
-        return out[:n]
+        scores = [(name, float(cv2.matchTemplate(target, tmpl,
+                                                 cv2.TM_CCOEFF_NORMED).max()))
+                  for name, tmpl in self._tmpl.items()]
+        scores.sort(key=lambda kv: kv[1], reverse=True)
+        return scores[:n]
 
 
 # ===========================================================================
@@ -348,19 +326,17 @@ class DraftDetector:
                  ally_library: Optional[TemplateLibrary] = None,
                  enemy_library: Optional[TemplateLibrary] = None,
                  ban_library: Optional[TemplateLibrary] = None,
-                 ally_libraries=None, enemy_libraries=None, ban_libraries=None,
                  layout: Optional[config.Layout] = None,
                  accept_low: bool = False):
         self.db = db
         # Resolve at call time so a calibrated config.LAYOUT is picked up.
         self.layout = layout if layout is not None else config.LAYOUT
         base = library if library is not None else TemplateLibrary()
-        # Each slot group can be matched against SEVERAL template sets; the most
-        # confident wins (e.g. ally picks try the square portrait AND the
-        # circular icon, so the exact hero beats a look-alike).
-        self.ally_libraries = ally_libraries or [ally_library or base]
-        self.enemy_libraries = enemy_libraries or [enemy_library or base]
-        self.ban_libraries = ban_libraries or [ban_library or base]
+        # Ally picks + bans are circular; enemy picks are square splash art - so
+        # each slot group matches against its own template set.
+        self.ally_library = ally_library if ally_library is not None else base
+        self.enemy_library = enemy_library if enemy_library is not None else base
+        self.ban_library = ban_library if ban_library is not None else base
         self.accept_low = accept_low
         # One cache entry per slot, keyed by a stable slot id.
         self._cache: Dict[str, _SlotCache] = {}
@@ -401,21 +377,12 @@ class DraftDetector:
         hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
         return float(hsv[:, :, 1].mean()) < config.LOCKED_MIN_SATURATION
 
-    def _crop_expanded(self, frame: "np.ndarray", box: config.Box,
-                       frac: float) -> "np.ndarray":
-        """Crop the box plus a margin, so the template can be searched even if
-        the calibrated box is a little off-centre."""
-        dx, dy = int(box.w * frac), int(box.h * frac)
-        h, w = frame.shape[:2]
-        x1, y1 = max(0, box.x - dx), max(0, box.y - dy)
-        x2, y2 = min(w, box.x2 + dx), min(h, box.y2 + dy)
-        return frame[y1:y2, x1:x2]
-
     def _classify_slot(self, frame: "np.ndarray", box: config.Box, slot_id: str,
-                       libraries, threshold: Optional[float] = None
+                       library: "TemplateLibrary",
+                       threshold: Optional[float] = None
                        ) -> Tuple[Optional[str], float]:
-        """Detect the hero in one slot, trying every library and keeping the
-        most confident match; per-slot cache skips unchanged frames."""
+        """Detect the hero in one slot, using the per-slot cache to skip work
+        when the pixels have not changed since last frame."""
         crop = self._crop(frame, box)
         sig = self._signature(crop)
         cache = self._cache.get(slot_id)
@@ -426,22 +393,15 @@ class DraftDetector:
             if delta < config.SIGNATURE_DELTA:
                 return cache.name, cache.confidence       # cache hit
 
-        # Skip empty / un-locked (grayed) slots so only confirmed picks show.
+        # Slot changed (or first sight) - do the real work.  Skip empty slots
+        # and un-locked/hovered (grayed) slots so only confirmed picks show.
         if self._is_empty(crop) or self._is_grayed(crop):
             result_name, conf = None, 0.0
         else:
-            mcrop = self._crop_expanded(frame, box, config.MATCH_EXPAND)
-            results = [lib.match(mcrop, threshold) for lib in libraries]
-            confident = [(n, c, m) for (n, c, m) in results
-                         if m in ("template", "histogram") and n]
-            if confident:
-                raw_name, conf, _ = max(confident, key=lambda r: r[1])
-            elif self.accept_low:
-                lows = [(n, c, m) for (n, c, m) in results if n]
-                raw_name, conf = max(lows, key=lambda r: r[1])[:2] if lows else (None, 0.0)
-            else:
-                raw_name, conf = None, 0.0
-            if raw_name is None:
+            raw_name, conf, method = library.match(crop, threshold)
+            if method == "low" and not self.accept_low:
+                result_name = None
+            elif raw_name is None:
                 result_name = None
             else:
                 hero = self.db.get(raw_name)
@@ -458,9 +418,11 @@ class DraftDetector:
         _require_cv()
         state = DraftState()
 
-        def scan(boxes, prefix, libraries, threshold=None, lock_gate=False):
+        def scan(boxes, prefix, library, threshold=None, lock_gate=False):
             crops = [self._crop(frame, b) for b in boxes]
-            # Relative-brightness lock gate (picks only, off unless configured).
+            # Relative-brightness lock gate (picks only): a slot much dimmer
+            # than the brightest non-empty slot in the group reads as an
+            # un-locked hover, not a confirmed pick.
             ref = 0.0
             if lock_gate and config.LOCKED_REL_BRIGHTNESS > 0:
                 vals = [self._mean_value(c) for c, b in zip(crops, boxes)
@@ -469,21 +431,21 @@ class DraftDetector:
             out: List[Optional[str]] = []
             for i, (box, crop) in enumerate(zip(boxes, crops)):
                 name, _ = self._classify_slot(frame, box, f"{prefix}{i}",
-                                              libraries, threshold)
+                                              library, threshold)
                 if (name and ref > 0
                         and self._mean_value(crop) < config.LOCKED_REL_BRIGHTNESS * ref):
                     name = None                       # too dim => un-locked
                 out.append(name)
             return out
 
-        state.ally_picks = scan(self.layout.ally_picks, "ap", self.ally_libraries,
+        state.ally_picks = scan(self.layout.ally_picks, "ap", self.ally_library,
                                 config.TEMPLATE_MATCH_THRESHOLD, lock_gate=True)
-        state.enemy_picks = scan(self.layout.enemy_picks, "ep", self.enemy_libraries,
+        state.enemy_picks = scan(self.layout.enemy_picks, "ep", self.enemy_library,
                                  config.ENEMY_MATCH_THRESHOLD, lock_gate=True)
         state.ally_bans = scan(self.layout.ally_bans, "ab",
-                               self.ban_libraries, config.BAN_MATCH_THRESHOLD)
+                               self.ban_library, config.BAN_MATCH_THRESHOLD)
         state.enemy_bans = scan(self.layout.enemy_bans, "eb",
-                                self.ban_libraries, config.BAN_MATCH_THRESHOLD)
+                                self.ban_library, config.BAN_MATCH_THRESHOLD)
 
         state.ally_lanes = assign_lanes(state.ally_picks, self.db)
         state.enemy_lanes = assign_lanes(state.enemy_picks, self.db)

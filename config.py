@@ -142,13 +142,6 @@ BAN_MATCH_THRESHOLD: float = 0.45             # bans (small circular)
 HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback
 USE_HISTOGRAM_FALLBACK: bool = True           # keep detection robust
 
-# "Aggressive" search: shortlist by colour histogram, then multi-scale template
-# match over a slightly expanded window so alignment/size drift can't hand the
-# win to a look-alike.
-MATCH_SCALES: Tuple[float, ...] = (0.82, 0.92, 1.0, 1.1, 1.2)
-MATCH_SHORTLIST: int = 24                      # colour pre-filter (prunes ~130->K)
-MATCH_EXPAND: float = 0.16                     # crop this fraction extra per box
-
 EMPTY_SLOT_STDDEV: float = 11.0               # below this a slot is treated empty
 SIGNATURE_DELTA: int = 6                      # per-slot change threshold for cache
 LOCKED_MIN_SATURATION: int = 0                # un-locked/grayed gate (0=off; was
