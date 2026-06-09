@@ -61,6 +61,7 @@ class Hero:
     damage_type: str                   # Physical | Magical | True
     archetypes: Tuple[str, ...]        # subset of Sustain | Burst | Utility
     owned: bool = True
+    lanes: Tuple[str, ...] = ()        # actual lanes this hero plays (data-driven)
 
     @property
     def is_frontline(self) -> bool:
@@ -96,6 +97,7 @@ class HeroDB:
                 damage_type=d.get("damage_type", "Physical"),
                 archetypes=tuple(d.get("archetypes", [])),
                 owned=bool(d.get("owned", True)),
+                lanes=tuple(d.get("lanes", [])),
             ))
         return cls(heroes)
 
@@ -118,7 +120,9 @@ class HeroDB:
     def candidates_for_lane(self, lane: str, owned_only: bool = False) -> List[Hero]:
         out = []
         for h in self._by_key.values():
-            if lane in config.ROLE_LANE_PRIORITY.get(h.base_role, []):
+            # Prefer the hero's actual lanes; fall back to role-based priority.
+            lanes = h.lanes or tuple(config.ROLE_LANE_PRIORITY.get(h.base_role, []))
+            if lane in lanes:
                 if owned_only and not h.owned:
                     continue
                 out.append(h)

@@ -71,13 +71,19 @@ def test_pool_filter_only_owned():
 
 
 def test_lane_counter_amplifies_direct_matchup():
-    st = _state()
-    base = {s.name: s.score for s in ENG.evaluate(st, Settings()).suggestions["MID"]}
-    lc = {s.name: s.score for s in
-          ENG.evaluate(st, Settings(lane_counter_mode=True)).suggestions["MID"]}
-    # Joy hard-counters Gord (the enemy MID); LC mode (3x) must boost it hard.
-    assert "Joy" in lc and "Joy" in base
-    assert lc["Joy"] > base["Joy"] + 5
+    # Enemy JUNGLE = Gord; Joy (a jungler) hard-counters Gord, so Lane Counter
+    # mode (3x on the direct match-up) must boost Joy hard.
+    st = DraftState(enemy_picks=["Gord", None, None, None, None],
+                    enemy_lanes={"JUNGLE": "Gord"})
+
+    def joy(settings):
+        res = ENG.evaluate(st, settings)
+        return next((s.score for s in res.suggestions["JUNGLE"]
+                     if s.name == "Joy"), None)
+
+    base, lc = joy(Settings()), joy(Settings(lane_counter_mode=True))
+    assert base is not None and lc is not None
+    assert lc > base + 5
 
 
 def test_assign_lanes_unique_and_optimal():

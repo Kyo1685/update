@@ -89,16 +89,17 @@ def assign_lanes(names: Sequence[Optional[str]], db: HeroDB) -> Dict[str, str]:
 
     heroes = [(n, db.get(n)) for n in picks]
 
-    def pref(role: Optional[str], lane: str) -> int:
-        order = config.ROLE_LANE_PRIORITY.get(role or "", [])
+    def pref(hero, lane: str) -> int:
+        # Use the hero's actual lanes (data-driven); fall back to role priority.
+        order = (list(hero.lanes) if (hero and hero.lanes)
+                 else config.ROLE_LANE_PRIORITY.get(hero.base_role if hero else "", []))
         # First choice scores highest; absent -> 0.
         return (len(order) - order.index(lane)) if lane in order else 0
 
     best_perm: Optional[Tuple[str, ...]] = None
     best_score = -1
     for perm in permutations(config.LANES, len(heroes)):
-        score = sum(pref(h.base_role if h else None, perm[i])
-                    for i, (_, h) in enumerate(heroes))
+        score = sum(pref(h, perm[i]) for i, (_, h) in enumerate(heroes))
         if score > best_score:
             best_score, best_perm = score, perm
 
@@ -210,6 +211,18 @@ class TemplateLibrary:
     def __len__(self) -> int:
         return len(self._tmpl)
 
+    def merge_missing(self, other: "TemplateLibrary") -> int:
+        """Add any heroes present in ``other`` but missing here (e.g. backfill
+        the ban library with square portraits for heroes the circular pack
+        lacks).  Existing entries are kept.  Returns how many were added."""
+        added = 0
+        for name, tmpl in other._tmpl.items():
+            if name not in self._tmpl:
+                self._tmpl[name] = tmpl
+                self._hist[name] = other._hist[name]
+                added += 1
+        return added
+
     # ----- preprocessing ---------------------------------------------------
     @classmethod
     def _prep_tmpl(cls, bgr: "np.ndarray") -> "np.ndarray":
@@ -318,6 +331,16 @@ class DraftDetector:
         g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
         return float(g.std()) < config.EMPTY_SLOT_STDDEV
 
+    @staticmethod
+    def _is_grayed(crop: "np.ndarray") -> bool:
+        # Un-locked / hovered slots render desaturated ("grayed"); a confirmed
+        # pick is full colour.  Gate on mean HSV saturation so we only report
+        # heroes that are actually locked in.
+        if config.LOCKED_MIN_SATURATION <= 0:
+            return False
+        hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+        return float(hsv[:, :, 1].mean()) < config.LOCKED_MIN_SATURATION
+
     def _classify_slot(self, frame: "np.ndarray", box: config.Box, slot_id: str,
                        library: "TemplateLibrary",
                        threshold: Optional[float] = None
@@ -334,8 +357,9 @@ class DraftDetector:
             if delta < config.SIGNATURE_DELTA:
                 return cache.name, cache.confidence       # cache hit
 
-        # Slot changed (or first sight) - do the real work.
-        if self._is_empty(crop):
+        # Slot changed (or first sight) - do the real work.  Skip empty slots
+        # and un-locked/hovered (grayed) slots so only confirmed picks show.
+        if self._is_empty(crop) or self._is_grayed(crop):
             result_name, conf = None, 0.0
         else:
             raw_name, conf, method = library.match(crop, threshold)
