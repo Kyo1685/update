@@ -137,7 +137,7 @@ class DraftAssistant:
         self.overlay.update_result(result)
 
     # ----- lifecycle ------------------------------------------------------
-    def start_live(self, template_dir: str, accept_low: bool) -> None:
+    def start_live(self, template_dir: str, ban_dir: str, accept_low: bool) -> None:
         # Imported lazily so --mock works on machines without the CV stack.
         from detector import ScreenCapturer, TemplateLibrary, DraftDetector
 
@@ -147,8 +147,16 @@ class DraftAssistant:
                 f"[warn] no templates found in '{template_dir}'. "
                 "Detection will rely on the histogram fallback only - drop "
                 "cropped hero avatars (e.g. guinevere.png) into that folder.\n")
+        # Circular ban-row templates (optional): better matches for the small
+        # circular ban icons.  Falls back to the main library if absent.
+        ban_library = TemplateLibrary.from_dir(ban_dir)
+        if len(ban_library) == 0:
+            ban_library = None
+        else:
+            print(f"[templates] {len(library)} pick + {len(ban_library)} ban templates")
         capturer = ScreenCapturer()
-        detector = DraftDetector(self.db, library=library, accept_low=accept_low)
+        detector = DraftDetector(self.db, library=library, ban_library=ban_library,
+                                 accept_low=accept_low)
 
         self.worker = DetectorWorker(detector, capturer)
         self.worker.state_ready.connect(self.on_state)
@@ -211,7 +219,9 @@ def main() -> int:
     global _DB
     parser = argparse.ArgumentParser(description="MLBB real-time draft overlay")
     parser.add_argument("--templates", default=config.TEMPLATE_DIR,
-                        help="folder of cropped hero avatar PNGs")
+                        help="folder of cropped hero avatar PNGs (picks)")
+    parser.add_argument("--ban-templates", default=config.TEMPLATE_BAN_DIR,
+                        help="folder of circular ban-icon templates (ban row)")
     parser.add_argument("--heroes", default="heroes.json",
                         help="hero database json")
     parser.add_argument("--stats-url", default=config.STATS_URL,
@@ -305,7 +315,7 @@ def main() -> int:
         assistant.start_mock()
     else:
         try:
-            assistant.start_live(args.templates, args.accept_low)
+            assistant.start_live(args.templates, args.ban_templates, args.accept_low)
         except Exception as exc:
             sys.stderr.write(
                 f"[fatal] could not start live capture: {exc}\n"

@@ -226,9 +226,15 @@ class TemplateLibrary:
         return hist
 
     # ----- matching --------------------------------------------------------
-    def match(self, crop_bgr: "np.ndarray"
+    def match(self, crop_bgr: "np.ndarray",
+              threshold: Optional[float] = None,
+              hist_threshold: Optional[float] = None
               ) -> Tuple[Optional[str], float, str]:
         """Return (best_name, confidence 0..1, method) for a slot crop."""
+        if threshold is None:
+            threshold = config.TEMPLATE_MATCH_THRESHOLD
+        if hist_threshold is None:
+            hist_threshold = config.HISTOGRAM_MATCH_THRESHOLD
         if not self._tmpl:
             return None, 0.0, "none"
 
@@ -244,7 +250,7 @@ class TemplateLibrary:
             score = float(res.max())
             if score > best_score:
                 best_name, best_score = name, score
-        if best_score >= config.TEMPLATE_MATCH_THRESHOLD:
+        if best_score >= threshold:
             return best_name, best_score, "template"
 
         # Fallback: HSV histogram correlation (robust to small shape changes,
@@ -255,7 +261,7 @@ class TemplateLibrary:
             score = float(cv2.compareHist(crop_hist, hist, cv2.HISTCMP_CORREL))
             if score > h_score:
                 h_name, h_score = name, score
-        if h_score >= config.HISTOGRAM_MATCH_THRESHOLD:
+        if h_score >= hist_threshold:
             return h_name, h_score, "histogram"
 
         # Nothing crossed threshold - return the best template guess but flag
@@ -276,12 +282,16 @@ class _SlotCache:
 class DraftDetector:
     def __init__(self, db: HeroDB,
                  library: Optional[TemplateLibrary] = None,
+                 ban_library: Optional[TemplateLibrary] = None,
                  layout: Optional[config.Layout] = None,
                  accept_low: bool = False):
         self.db = db
         # Resolve at call time so a calibrated config.LAYOUT is picked up.
         self.layout = layout if layout is not None else config.LAYOUT
         self.library = library if library is not None else TemplateLibrary()
+        # Separate templates for the ban row (small circular icons match those
+        # far better than square portraits); falls back to the main library.
+        self.ban_library = ban_library if ban_library is not None else self.library
         self.accept_low = accept_low
         # One cache entry per slot, keyed by a stable slot id.
         self._cache: Dict[str, _SlotCache] = {}
@@ -308,8 +318,10 @@ class DraftDetector:
         g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
         return float(g.std()) < config.EMPTY_SLOT_STDDEV
 
-    def _classify_slot(self, frame: "np.ndarray", box: config.Box,
-                       slot_id: str) -> Tuple[Optional[str], float]:
+    def _classify_slot(self, frame: "np.ndarray", box: config.Box, slot_id: str,
+                       library: "TemplateLibrary",
+                       threshold: Optional[float] = None
+                       ) -> Tuple[Optional[str], float]:
         """Detect the hero in one slot, using the per-slot cache to skip work
         when the pixels have not changed since last frame."""
         crop = self._crop(frame, box)
@@ -326,7 +338,7 @@ class DraftDetector:
         if self._is_empty(crop):
             result_name, conf = None, 0.0
         else:
-            raw_name, conf, method = self.library.match(crop)
+            raw_name, conf, method = library.match(crop, threshold)
             if method == "low" and not self.accept_low:
                 result_name = None
             elif raw_name is None:
@@ -346,17 +358,20 @@ class DraftDetector:
         _require_cv()
         state = DraftState()
 
-        def scan(boxes, prefix):
+        def scan(boxes, prefix, library, threshold=None):
             out: List[Optional[str]] = []
             for i, box in enumerate(boxes):
-                name, _ = self._classify_slot(frame, box, f"{prefix}{i}")
+                name, _ = self._classify_slot(frame, box, f"{prefix}{i}",
+                                              library, threshold)
                 out.append(name)
             return out
 
-        state.ally_picks = scan(self.layout.ally_picks, "ap")
-        state.enemy_picks = scan(self.layout.enemy_picks, "ep")
-        state.ally_bans = scan(self.layout.ally_bans, "ab")
-        state.enemy_bans = scan(self.layout.enemy_bans, "eb")
+        state.ally_picks = scan(self.layout.ally_picks, "ap", self.library)
+        state.enemy_picks = scan(self.layout.enemy_picks, "ep", self.library)
+        state.ally_bans = scan(self.layout.ally_bans, "ab",
+                               self.ban_library, config.BAN_MATCH_THRESHOLD)
+        state.enemy_bans = scan(self.layout.enemy_bans, "eb",
+                                self.ban_library, config.BAN_MATCH_THRESHOLD)
 
         state.ally_lanes = assign_lanes(state.ally_picks, self.db)
         state.enemy_lanes = assign_lanes(state.enemy_picks, self.db)

@@ -339,6 +339,16 @@ class ScoringEngine:
             score *= config.COMP_MULTIPLIER
             reasons.append("fills magic dmg")
 
+        # --- ban relief: a hero that COUNTERS us being banned is a threat
+        #     removed, so this candidate gets safer (uses both teams' bans).
+        banned = {DraftState._key(b) for lst in (state.ally_bans, state.enemy_bans)
+                  for b in lst if b}
+        if banned:
+            relief = sum(1 for c in hero.countered_by if DraftState._key(c) in banned)
+            if relief:
+                score += config.W_BAN_RELIEF * relief
+                reasons.append(f"{relief} threat banned")
+
         # --- Dark System Mode: invert the universe ----------------------
         if settings.dark_mode:
             score = -score
