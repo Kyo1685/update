@@ -278,15 +278,18 @@ class OverlayCanvas(QWidget):
         p.setFont(self._font)
 
         self._paint_picks(p, self.layout.ally_picks, self._state.ally_picks,
-                          self._state.ally_lanes, THEME.ally_box)
+                          self._state.ally_lanes, THEME.ally_box,
+                          self._state.ally_pick_conf)
         self._paint_picks(p, self.layout.enemy_picks, self._state.enemy_picks,
-                          self._state.enemy_lanes, THEME.enemy_box)
+                          self._state.enemy_lanes, THEME.enemy_box,
+                          self._state.enemy_pick_conf)
         # Bans are listed inside the control dock (like the reference video),
         # so we don't draw anything over the game's tiny ban icons here.
 
-    def _paint_picks(self, p, boxes, names, lanes, color) -> None:
+    def _paint_picks(self, p, boxes, names, lanes, color, confs=None) -> None:
         pen = QPen(qcolor(color), THEME.box_thickness)
-        for box, name in zip(boxes, names):
+        confs = confs or [0.0] * len(boxes)
+        for box, name, conf in zip(boxes, names, confs):
             if not name:
                 continue
             p.setPen(pen)
@@ -294,7 +297,10 @@ class OverlayCanvas(QWidget):
             p.drawRect(box.x, box.y, box.w, box.h)
             lane = next((ln for ln, hn in lanes.items() if hn == name), None)
             tag = predicted_role_label(name, lane, self.db)
-            self._paint_label(p, box, f"{name.upper()} [{tag}]", color)
+            label = f"{name.upper()} [{tag}]"
+            if config.SHOW_CONFIDENCE and conf:
+                label += f" {int(round(conf * 100))}%"
+            self._paint_label(p, box, label, color)
 
     def _paint_label(self, p, box, text, color, font=None) -> None:
         font = font or self._font

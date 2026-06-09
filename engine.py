@@ -184,6 +184,12 @@ class DraftState:
     enemy_bans: List[Optional[str]] = field(default_factory=lambda: [None] * 5)
     ally_lanes: Dict[str, str] = field(default_factory=dict)
     enemy_lanes: Dict[str, str] = field(default_factory=dict)
+    # Per-slot match confidence (0..1) parallel to the pick/ban lists - shown on
+    # the overlay so detection quality is visible for tuning.
+    ally_pick_conf: List[float] = field(default_factory=lambda: [0.0] * 5)
+    enemy_pick_conf: List[float] = field(default_factory=lambda: [0.0] * 5)
+    ally_ban_conf: List[float] = field(default_factory=lambda: [0.0] * 5)
+    enemy_ban_conf: List[float] = field(default_factory=lambda: [0.0] * 5)
 
     def ally_names(self) -> List[str]:
         return [n for n in self.ally_picks if n]
