@@ -428,24 +428,33 @@ class DraftDetector:
                 vals = [self._mean_value(c) for c, b in zip(crops, boxes)
                         if not self._is_empty(c)]
                 ref = max(vals) if vals else 0.0
-            out: List[Optional[str]] = []
+            names: List[Optional[str]] = []
+            confs: List[float] = []
             for i, (box, crop) in enumerate(zip(boxes, crops)):
-                name, _ = self._classify_slot(frame, box, f"{prefix}{i}",
-                                              library, threshold)
+                name, conf = self._classify_slot(frame, box, f"{prefix}{i}",
+                                                 library, threshold)
                 if (name and ref > 0
                         and self._mean_value(crop) < config.LOCKED_REL_BRIGHTNESS * ref):
-                    name = None                       # too dim => un-locked
-                out.append(name)
-            return out
+                    name, conf = None, 0.0             # too dim => un-locked
+                # Hide matches below the display floor (un-picked / uncertain).
+                if name and conf < config.MIN_DISPLAY_CONFIDENCE:
+                    name = None
+                names.append(name)
+                confs.append(round(conf, 3))
+            return names, confs
 
-        state.ally_picks = scan(self.layout.ally_picks, "ap", self.ally_library,
-                                config.TEMPLATE_MATCH_THRESHOLD, lock_gate=True)
-        state.enemy_picks = scan(self.layout.enemy_picks, "ep", self.enemy_library,
-                                 config.ENEMY_MATCH_THRESHOLD, lock_gate=True)
-        state.ally_bans = scan(self.layout.ally_bans, "ab",
-                               self.ban_library, config.BAN_MATCH_THRESHOLD)
-        state.enemy_bans = scan(self.layout.enemy_bans, "eb",
-                                self.ban_library, config.BAN_MATCH_THRESHOLD)
+        state.ally_picks, state.ally_pick_conf = scan(
+            self.layout.ally_picks, "ap", self.ally_library,
+            config.TEMPLATE_MATCH_THRESHOLD, lock_gate=True)
+        state.enemy_picks, state.enemy_pick_conf = scan(
+            self.layout.enemy_picks, "ep", self.enemy_library,
+            config.ENEMY_MATCH_THRESHOLD, lock_gate=True)
+        state.ally_bans, state.ally_ban_conf = scan(
+            self.layout.ally_bans, "ab", self.ban_library,
+            config.BAN_MATCH_THRESHOLD)
+        state.enemy_bans, state.enemy_ban_conf = scan(
+            self.layout.enemy_bans, "eb", self.ban_library,
+            config.BAN_MATCH_THRESHOLD)
 
         state.ally_lanes = assign_lanes(state.ally_picks, self.db)
         state.enemy_lanes = assign_lanes(state.enemy_picks, self.db)
