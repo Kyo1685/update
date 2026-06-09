@@ -2955,6 +2955,7 @@
       ],
       "owned": true,
       "lanes": [
+        "JUNGLE",
         "MID",
         "ROAM"
       ],
