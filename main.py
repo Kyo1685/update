@@ -153,6 +153,10 @@ class DraftAssistant:
         if len(ban_library) == 0:
             ban_library = None
         else:
+            # Backfill any hero the circular pack lacks (e.g. Sora) with the
+            # square portrait so bans never silently match the wrong hero.
+            if len(library):
+                ban_library.merge_missing(library)
             print(f"[templates] {len(library)} pick + {len(ban_library)} ban templates")
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, library=library, ban_library=ban_library,

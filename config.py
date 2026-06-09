@@ -84,14 +84,14 @@ LANE_ABBR: Dict[str, str] = {
     "ROAM": "ROA",
 }
 
-# base_role -> ordered lane preference.  Index 0 is the most natural lane.
-# The role-prediction optimiser (detector.assign_lanes) turns this into a
-# numeric preference matrix and finds the globally optimal 1-to-1 assignment.
+# base_role -> ordered lane preference.  This is only a FALLBACK now: heroes.json
+# carries each hero's real ``lanes`` (data-driven), which the optimiser uses
+# first.  Kept tight so the fallback doesn't put e.g. a Fighter into ROAM.
 ROLE_LANE_PRIORITY: Dict[str, List[str]] = {
-    "Fighter":  ["EXP", "JUNGLE", "ROAM"],
-    "Assassin": ["JUNGLE", "MID", "EXP"],
-    "Mage":     ["MID", "ROAM", "GOLD"],
-    "Marksman": ["GOLD", "MID"],
+    "Fighter":  ["EXP", "JUNGLE"],
+    "Assassin": ["JUNGLE", "MID"],
+    "Mage":     ["MID", "ROAM"],
+    "Marksman": ["GOLD"],
     "Tank":     ["ROAM", "EXP"],
     "Support":  ["ROAM", "MID"],
 }
@@ -135,6 +135,8 @@ BAN_MATCH_THRESHOLD: float = 0.50           # bans are tiny/circular -> lower ba
 HISTOGRAM_MATCH_THRESHOLD: float = 0.55     # fallback correlation accept
 EMPTY_SLOT_STDDEV: float = 11.0             # below this a slot is treated empty
 SIGNATURE_DELTA: int = 6                    # per-slot change threshold for cache
+LOCKED_MIN_SATURATION: int = 28             # below this mean HSV saturation a slot
+                                            # is treated as un-locked/grayed (0=off)
 
 # ---------------------------------------------------------------------------
 # 4b. LIVE STATS SOURCE (consumed by stats_provider.py / main.py)

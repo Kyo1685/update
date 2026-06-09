@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "heroes": [
     {
       "name": "Aamon",
@@ -27,7 +27,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Akai",
@@ -55,7 +58,27 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Aldous",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Alice",
@@ -81,7 +104,46 @@
         "Sustain",
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Alpha",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE",
+        "EXP"
+      ]
+    },
+    {
+      "name": "Alucard",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Angela",
@@ -106,7 +168,27 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Argus",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Arlott",
@@ -130,7 +212,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Atlas",
@@ -158,7 +243,116 @@
         "Utility",
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Aulus",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Aurora",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Badang",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Balmond",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE",
+        "EXP"
+      ]
+    },
+    {
+      "name": "Bane",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE",
+        "EXP"
+      ]
+    },
+    {
+      "name": "Barats",
+      "base_role": "Tank",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Baxia",
@@ -185,7 +379,10 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Beatrix",
@@ -212,7 +409,28 @@
         "Burst",
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Belerick",
+      "base_role": "Tank",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Benedetta",
@@ -237,7 +455,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Brody",
@@ -263,7 +484,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "Bruno",
@@ -288,7 +512,10 @@
         "Sustain",
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "Carmilla",
@@ -311,7 +538,10 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Cecilion",
@@ -337,7 +567,44 @@
         "Burst",
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Chang'e",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Chip",
+      "base_role": "Support",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Chou",
@@ -362,7 +629,28 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Cici",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Claude",
@@ -388,7 +676,10 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "Clint",
@@ -411,7 +702,27 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Cyclops",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Diggie",
@@ -437,7 +748,47 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Dyrroth",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Edith",
+      "base_role": "Tank",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "ROAM"
+      ]
     },
     {
       "name": "Esmeralda",
@@ -462,7 +813,10 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Estes",
@@ -491,7 +845,10 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Eudora",
@@ -515,7 +872,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Fanny",
@@ -542,7 +902,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false
+      "owned": false,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Faramis",
@@ -568,7 +931,10 @@
         "Utility",
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Floryn",
@@ -590,7 +956,10 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Franco",
@@ -615,7 +984,10 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Fredrinn",
@@ -643,7 +1015,47 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Freya",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Gatotkaca",
+      "base_role": "Tank",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM",
+        "EXP"
+      ]
     },
     {
       "name": "Gloo",
@@ -668,7 +1080,11 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "ROAM"
+      ]
     },
     {
       "name": "Gord",
@@ -696,7 +1112,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Granger",
@@ -722,7 +1141,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "Grock",
@@ -745,7 +1167,11 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM",
+        "EXP"
+      ]
     },
     {
       "name": "Guinevere",
@@ -771,7 +1197,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Gusion",
@@ -798,7 +1227,11 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE",
+        "MID"
+      ]
     },
     {
       "name": "Hanabi",
@@ -826,7 +1259,45 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Hanzo",
+      "base_role": "Assassin",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Harith",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "GOLD",
+        "MID"
+      ]
     },
     {
       "name": "Harley",
@@ -851,7 +1322,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Hayabusa",
@@ -877,7 +1351,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Helcurt",
@@ -904,7 +1381,63 @@
         "Burst",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Hilda",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM",
+        "EXP"
+      ]
+    },
+    {
+      "name": "Hylos",
+      "base_role": "Tank",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Irithel",
+      "base_role": "Marksman",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "Ixia",
@@ -929,7 +1462,46 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Jawhead",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM",
+        "EXP"
+      ]
+    },
+    {
+      "name": "Johnson",
+      "base_role": "Tank",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Joy",
@@ -955,7 +1527,27 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false
+      "owned": false,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Julian",
+      "base_role": "Assassin",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Kadita",
@@ -981,7 +1573,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Kagura",
@@ -1005,7 +1600,44 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Kaja",
+      "base_role": "Support",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Kalea",
+      "base_role": "Support",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Karina",
@@ -1030,7 +1662,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Karrie",
@@ -1059,7 +1694,28 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Khaleed",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "ROAM"
+      ]
     },
     {
       "name": "Khufra",
@@ -1088,7 +1744,28 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Kimmy",
+      "base_role": "Marksman",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "GOLD",
+        "MID"
+      ]
     },
     {
       "name": "Lancelot",
@@ -1117,7 +1794,27 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Lapu-Lapu",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Layla",
@@ -1141,7 +1838,10 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "Leomord",
@@ -1169,7 +1869,27 @@
         "Burst",
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Lesley",
+      "base_role": "Marksman",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "Ling",
@@ -1196,7 +1916,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false
+      "owned": false,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Lolita",
@@ -1222,7 +1945,28 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Lukas",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "JUNGLE"
+      ]
     },
     {
       "name": "Lunox",
@@ -1248,7 +1992,44 @@
         "Burst",
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Luo Yi",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Lylia",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Marcel",
@@ -1275,7 +2056,27 @@
         "Burst",
         "Sustain"
       ],
-      "owned": false
+      "owned": false,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Martis",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
     },
     {
       "name": "Masha",
@@ -1301,7 +2102,10 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Mathilda",
@@ -1327,7 +2131,10 @@
         "Utility",
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Melissa",
@@ -1353,7 +2160,28 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Minotaur",
+      "base_role": "Tank",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain",
+        "Utility"
+      ],
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Minsithar",
@@ -1380,7 +2208,43 @@
         "Utility",
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": []
+    },
+    {
+      "name": "Minsitthar",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Miya",
+      "base_role": "Marksman",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "Moskov",
@@ -1404,7 +2268,45 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Nana",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Natalia",
+      "base_role": "Assassin",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE",
+        "ROAM"
+      ]
     },
     {
       "name": "Natan",
@@ -1431,7 +2333,78 @@
         "Sustain",
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Nolan",
+      "base_role": "Assassin",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Novaria",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Obsidia",
+      "base_role": "Marksman",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
+    },
+    {
+      "name": "Odette",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Paquito",
@@ -1456,7 +2429,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Pharsa",
@@ -1484,7 +2460,10 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Phoveus",
@@ -1510,7 +2489,28 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
+    },
+    {
+      "name": "Popol and Kupa",
+      "base_role": "Marksman",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE",
+        "GOLD"
+      ]
     },
     {
       "name": "Rafaela",
@@ -1532,7 +2532,44 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Roger",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Ruby",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Saber",
@@ -1560,7 +2597,46 @@
         "Burst",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE",
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Selena",
+      "base_role": "Assassin",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID",
+        "ROAM"
+      ]
+    },
+    {
+      "name": "Silvanna",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Sora",
@@ -1588,7 +2664,62 @@
         "Sustain",
         "Burst"
       ],
-      "owned": false
+      "owned": false,
+      "lanes": [
+        "EXP"
+      ]
+    },
+    {
+      "name": "Sun",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP",
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Suyou",
+      "base_role": "Assassin",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Terizla",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Thamuz",
@@ -1612,7 +2743,10 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Tigreal",
@@ -1641,7 +2775,10 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "ROAM"
+      ]
     },
     {
       "name": "Uranus",
@@ -1667,7 +2804,27 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
+    },
+    {
+      "name": "Vale",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Valentina",
@@ -1694,7 +2851,27 @@
         "Burst",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Valir",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Vexana",
@@ -1720,7 +2897,10 @@
         "Burst",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Wanwan",
@@ -1748,7 +2928,10 @@
         "Sustain",
         "Burst"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "GOLD"
+      ]
     },
     {
       "name": "X.Borg",
@@ -1773,7 +2956,10 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Xavier",
@@ -1800,7 +2986,10 @@
         "Burst",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Yi Sun-shin",
@@ -1826,7 +3015,28 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "JUNGLE"
+      ]
+    },
+    {
+      "name": "Yin",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "JUNGLE",
+        "EXP"
+      ]
     },
     {
       "name": "Yu Zhong",
@@ -1850,7 +3060,10 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     },
     {
       "name": "Yve",
@@ -1876,7 +3089,10 @@
         "Burst",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Zetian",
@@ -1905,7 +3121,27 @@
         "Burst",
         "Utility"
       ],
-      "owned": false
+      "owned": false,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Zhask",
+      "base_role": "Mage",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Magical",
+      "archetypes": [
+        "Burst"
+      ],
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
     },
     {
       "name": "Zhuxin",
@@ -1933,7 +3169,27 @@
         "Burst",
         "Utility"
       ],
-      "owned": true
+      "owned": true,
+      "lanes": [
+        "MID"
+      ]
+    },
+    {
+      "name": "Zilong",
+      "base_role": "Fighter",
+      "win_rate": 50.0,
+      "ban_rate": 0.0,
+      "counters": [],
+      "countered_by": [],
+      "synergies": [],
+      "damage_type": "Physical",
+      "archetypes": [
+        "Sustain"
+      ],
+      "owned": true,
+      "lanes": [
+        "EXP"
+      ]
     }
   ]
 }
