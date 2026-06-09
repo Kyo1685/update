@@ -271,11 +271,15 @@ class TemplateLibrary:
         target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
                             (self.CANON + self.PAD, self.CANON + self.PAD),
                             interpolation=cv2.INTER_AREA)
+        # Mirror-invariant: some icon packs are horizontally flipped vs the live
+        # avatar, which kills correlation - so also test the mirrored target.
+        target_flip = cv2.flip(target, 1)
 
         best_name, best_score = None, -1.0
         for name, tmpl in self._tmpl.items():
-            res = cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED)
-            score = float(res.max())
+            score = max(
+                float(cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED).max()),
+                float(cv2.matchTemplate(target_flip, tmpl, cv2.TM_CCOEFF_NORMED).max()))
             if score > best_score:
                 best_name, best_score = name, score
         if best_score >= threshold:
