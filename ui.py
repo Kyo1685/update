@@ -263,8 +263,6 @@ class OverlayCanvas(QWidget):
 
         self._font = QFont(THEME.font_family, 11, QFont.Bold)
         self._font.setStyleHint(QFont.Monospace)
-        self._ban_font = QFont(THEME.font_family, 8, QFont.Bold)   # small: ban tags
-        self._ban_font.setStyleHint(QFont.Monospace)
 
     def set_state(self, state: DraftState) -> None:
         self._state = state
@@ -281,8 +279,8 @@ class OverlayCanvas(QWidget):
                           self._state.ally_lanes, THEME.ally_box)
         self._paint_picks(p, self.layout.enemy_picks, self._state.enemy_picks,
                           self._state.enemy_lanes, THEME.enemy_box)
-        self._paint_bans(p, self.layout.ally_bans, self._state.ally_bans)
-        self._paint_bans(p, self.layout.enemy_bans, self._state.enemy_bans)
+        # Bans are listed inside the control dock (like the reference video),
+        # so we don't draw anything over the game's tiny ban icons here.
 
     def _paint_picks(self, p, boxes, names, lanes, color) -> None:
         pen = QPen(qcolor(color), THEME.box_thickness)
@@ -313,20 +311,6 @@ class OverlayCanvas(QWidget):
         p.setPen(QPen(qcolor(THEME.label_fg), 1))
         p.drawText(lx + 6, ly + fm.ascent() + 2, text)
         p.setFont(self._font)
-
-    def _paint_bans(self, p, boxes, names) -> None:
-        pen = QPen(qcolor(THEME.ban_box), 2, Qt.DashLine)
-        for box, name in zip(boxes, names):
-            if not name:
-                continue
-            p.setPen(pen)
-            p.setBrush(Qt.NoBrush)
-            p.drawRect(box.x, box.y, box.w, box.h)
-            # red strike-through to read as "banned"
-            p.setPen(QPen(qcolor(THEME.warn), 2))
-            p.drawLine(box.x, box.y, box.x2, box.y2)
-            # name label so you can see WHICH heroes are banned
-            self._paint_label(p, box, name.upper(), THEME.warn, self._ban_font)
 
 
 # ===========================================================================
@@ -446,6 +430,16 @@ QLabel#build {{ color: {THEME.rgba(THEME.accent)};
                border: 1px solid {THEME.rgba(THEME.accent_dim)};
                border-radius: 4px; }}
 QLabel#toggleLabel {{ color: {THEME.rgba(THEME.text_dim)}; }}
+QLabel#banTitleAlly {{ color: {THEME.rgba(THEME.accent)}; font-weight: bold; letter-spacing: 1px; }}
+QLabel#banTitleEnemy {{ color: {THEME.rgba(THEME.warn)}; font-weight: bold; letter-spacing: 1px; }}
+QLabel#banCellAlly {{ color: {THEME.rgba(THEME.text)}; font-size: 11px;
+    border: 1px solid {THEME.rgba(THEME.accent_dim)}; border-radius: 3px;
+    padding: 2px 1px; background: rgba(18,40,30,0.45); }}
+QLabel#banCellEnemy {{ color: {THEME.rgba(THEME.text)}; font-size: 11px;
+    border: 1px solid rgba(150,60,60,0.9); border-radius: 3px;
+    padding: 2px 1px; background: rgba(44,20,22,0.45); }}
+QLabel#banCellAlly[empty="true"], QLabel#banCellEnemy[empty="true"] {{
+    color: #4a554f; background: rgba(255,255,255,0.02); }}
 QPushButton#chevron {{
     color: {THEME.rgba(THEME.accent)};
     background: rgba(20,40,34,0.6);
@@ -466,11 +460,12 @@ class ControlDock(QWidget):
     settingsChanged = pyqtSignal(object)        # emits Settings
     closed = pyqtSignal()
 
-    def __init__(self, db, geometry=config.DOCK_GEOMETRY):
+    def __init__(self, db, geometry=None):
         super().__init__()
         self.db = db
         self.settings = Settings()
         self._drag_pos: Optional[QPoint] = None
+        geometry = geometry if geometry is not None else config.DOCK_GEOMETRY
 
         self.setWindowFlags(Qt.FramelessWindowHint
                             | Qt.WindowStaysOnTopHint
@@ -514,6 +509,10 @@ class ControlDock(QWidget):
         root.addLayout(self._toggle_row("LANE COUNTER MODE", self.tg_lane))
         root.addLayout(self._toggle_row("DARK SYSTEM MODE", self.tg_dark))
         root.addLayout(self._toggle_row("HERO POOL FILTER", self.tg_pool))
+
+        # --- ban rows (like the reference: names listed inside the panel) ---
+        self.ally_ban_cells = self._ban_row(root, "ALLY BANS", "Ally")
+        self.enemy_ban_cells = self._ban_row(root, "ENEMY BANS", "Enemy")
 
         root.addWidget(self._section(">> OPTIMAL PICK VECTORS <<"))
 
@@ -560,6 +559,25 @@ class ControlDock(QWidget):
         lbl.setAlignment(Qt.AlignCenter)
         return lbl
 
+    def _ban_row(self, root, title: str, side: str) -> List[QLabel]:
+        """A 'ALLY BANS'/'ENEMY BANS' label + five name cells, like the video."""
+        row = QHBoxLayout()
+        row.setSpacing(4)
+        t = QLabel(title)
+        t.setObjectName(f"banTitle{side}")
+        t.setFixedWidth(124)
+        row.addWidget(t)
+        cells: List[QLabel] = []
+        for _ in range(5):
+            c = QLabel("—")
+            c.setObjectName(f"banCell{side}")
+            c.setAlignment(Qt.AlignCenter)
+            c.setProperty("empty", "true")
+            cells.append(c)
+            row.addWidget(c, 1)
+        root.addLayout(row)
+        return cells
+
     # ----- behaviour ------------------------------------------------------
     def _emit_settings(self) -> None:
         self.settings = Settings(
@@ -579,10 +597,21 @@ class ControlDock(QWidget):
                 row.set_filled(result.filled_lanes[lane])     # picked -> grayed
             else:
                 row.set_suggestions(result.suggestions.get(lane, []))
+        self._fill_bans(self.ally_ban_cells, result.ally_bans)
+        self._fill_bans(self.enemy_ban_cells, result.enemy_bans)
         self.prob.set_values(result.ally_win_pct, result.enemy_win_pct)
         self.lbl_ally.setText(f"{result.ally_win_pct:.1f}%")
         self.lbl_enemy.setText(f"{result.enemy_win_pct:.1f}%")
         self.build.setText(result.build_path)
+
+    @staticmethod
+    def _fill_bans(cells: List[QLabel], names: List[Optional[str]]) -> None:
+        for i, cell in enumerate(cells):
+            name = names[i] if i < len(names) else None
+            cell.setText((name or "—").upper())
+            cell.setProperty("empty", "false" if name else "true")
+            cell.style().unpolish(cell)        # re-apply the [empty] QSS rule
+            cell.style().polish(cell)
 
     # ----- frameless window: paint background + allow dragging ------------
     def paintEvent(self, _) -> None:

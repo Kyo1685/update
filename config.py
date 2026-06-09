@@ -276,11 +276,20 @@ def apply_region(region: Dict[str, int], layout: Optional[Layout] = None) -> Non
     """Set the active capture region (and layout) once at startup.  When no
     explicit layout is supplied the fractional fallback is rebuilt at the
     region's size so the boxes are at least proportionally placed."""
-    global ACTIVE_REGION, LAYOUT
+    global ACTIVE_REGION, LAYOUT, DOCK_GEOMETRY
     ACTIVE_REGION = {"left": int(region["left"]), "top": int(region["top"]),
                      "width": int(region["width"]), "height": int(region["height"])}
     LAYOUT = layout if layout is not None else build_layout(
         ACTIVE_REGION["width"], ACTIVE_REGION["height"])
+    # Size + centre the control dock to the ACTUAL screen (not the 2712x1220
+    # reference) so it never overflows a smaller PC monitor.
+    dw = min(round(ACTIVE_REGION["width"] * 0.55), 780)
+    dh = min(round(ACTIVE_REGION["height"] * 0.86), 700)
+    DOCK_GEOMETRY = (
+        ACTIVE_REGION["left"] + (ACTIVE_REGION["width"] - dw) // 2,
+        ACTIVE_REGION["top"] + round(ACTIVE_REGION["height"] * 0.05),
+        dw, dh,
+    )
 
 # ---------------------------------------------------------------------------
 # 6. UI THEME  (consumed by ui.py) -- neon "terminal" aesthetic

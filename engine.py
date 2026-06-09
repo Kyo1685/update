@@ -245,6 +245,8 @@ class DraftResult:
     enemy_win_pct: float
     build_path: str
     filled_lanes: Dict[str, str] = field(default_factory=dict)   # lane -> ally hero
+    ally_bans: List[Optional[str]] = field(default_factory=list)
+    enemy_bans: List[Optional[str]] = field(default_factory=list)
 
 
 # ===========================================================================
@@ -422,6 +424,8 @@ class ScoringEngine:
             enemy_win_pct=enemy_pct,
             build_path=self.build_path(comp, len(state.enemy_names())),
             filled_lanes=filled,
+            ally_bans=list(state.ally_bans),
+            enemy_bans=list(state.enemy_bans),
         )
 
 
