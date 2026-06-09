@@ -178,15 +178,19 @@ class TemplateLibrary:
     CANON = 96          # canonical avatar size used for correlation
     PAD = 10            # search slack so small mis-alignment still matches
 
-    def __init__(self):
+    def __init__(self, circular: bool = False):
         _require_cv()
+        # ``circular`` libs centre-crop to the inscribed square before matching
+        # so the avatar's ring/background corners don't pollute the score.
+        self.circular = circular
         self._tmpl: Dict[str, "np.ndarray"] = {}      # colour canonical (BGR)
         self._hist: Dict[str, "np.ndarray"] = {}
 
     # ----- loading ---------------------------------------------------------
     @classmethod
-    def from_dir(cls, path: str = config.TEMPLATE_DIR) -> "TemplateLibrary":
-        lib = cls()
+    def from_dir(cls, path: str = config.TEMPLATE_DIR,
+                 circular: bool = False) -> "TemplateLibrary":
+        lib = cls(circular=circular)
         if not os.path.isdir(path):
             return lib                                   # empty but valid
         patterns = ("*.png", "*.jpg", "*.jpeg", "*.webp")
@@ -224,16 +228,27 @@ class TemplateLibrary:
         return added
 
     # ----- preprocessing ---------------------------------------------------
-    @classmethod
-    def _prep_tmpl(cls, bgr: "np.ndarray") -> "np.ndarray":
+    def _inscribe(self, bgr: "np.ndarray") -> "np.ndarray":
+        """For circular libs, take the largest square inside the circle (pure
+        face, no ring / background corners).  No-op for square libs."""
+        if not self.circular:
+            return bgr
+        h, w = bgr.shape[:2]
+        side = int(min(h, w) / 1.41421356)
+        cy, cx = h // 2, w // 2
+        half = max(1, side // 2)
+        return bgr[cy - half:cy + half, cx - half:cx + half]
+
+    def _prep_tmpl(self, bgr: "np.ndarray") -> "np.ndarray":
         # Keep COLOUR: many heroes share a silhouette but differ in palette
         # (e.g. Helcurt vs Gord), so grayscale matching confuses them.
         img = bgr[:, :, :3] if bgr.ndim == 3 else cv2.cvtColor(bgr, cv2.COLOR_GRAY2BGR)
-        return cv2.resize(img, (cls.CANON, cls.CANON), interpolation=cv2.INTER_AREA)
+        img = self._inscribe(img)
+        return cv2.resize(img, (self.CANON, self.CANON), interpolation=cv2.INTER_AREA)
 
-    @staticmethod
-    def _prep_hist(bgr: "np.ndarray") -> "np.ndarray":
-        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    def _prep_hist(self, bgr: "np.ndarray") -> "np.ndarray":
+        img = bgr[:, :, :3] if bgr.ndim == 3 else cv2.cvtColor(bgr, cv2.COLOR_GRAY2BGR)
+        hsv = cv2.cvtColor(self._inscribe(img), cv2.COLOR_BGR2HSV)
         hist = cv2.calcHist([hsv], [0, 1], None, [50, 60], [0, 180, 0, 256])
         cv2.normalize(hist, hist, 0, 1, cv2.NORM_MINMAX)
         return hist
@@ -253,7 +268,7 @@ class TemplateLibrary:
 
         # Primary: COLOUR normalised cross-correlation with a small search
         # window so a few px of calibration drift does not tank the score.
-        target = cv2.resize(crop_bgr[:, :, :3],
+        target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
                             (self.CANON + self.PAD, self.CANON + self.PAD),
                             interpolation=cv2.INTER_AREA)
 
@@ -266,19 +281,19 @@ class TemplateLibrary:
         if best_score >= threshold:
             return best_name, best_score, "template"
 
-        # Fallback: HSV histogram correlation (robust to small shape changes,
-        # picks up the dominant colour signature of the splash art).
-        crop_hist = self._prep_hist(crop_bgr)
-        h_name, h_score = None, -1.0
-        for name, hist in self._hist.items():
-            score = float(cv2.compareHist(crop_hist, hist, cv2.HISTCMP_CORREL))
-            if score > h_score:
-                h_name, h_score = name, score
-        if h_score >= hist_threshold:
-            return h_name, h_score, "histogram"
+        # Optional colour-histogram fallback (off by default - strict matching).
+        if config.USE_HISTOGRAM_FALLBACK:
+            crop_hist = self._prep_hist(crop_bgr)
+            h_name, h_score = None, -1.0
+            for name, hist in self._hist.items():
+                score = float(cv2.compareHist(crop_hist, hist, cv2.HISTCMP_CORREL))
+                if score > h_score:
+                    h_name, h_score = name, score
+            if h_score >= hist_threshold:
+                return h_name, h_score, "histogram"
 
-        # Nothing crossed threshold - return the best template guess but flag
-        # it as low confidence so callers can choose to ignore it.
+        # No confident match.  Return the best guess flagged "low" so only
+        # --accept-low callers use it; by default this becomes "no hero".
         return best_name, max(best_score, 0.0), "low"
 
 
@@ -295,16 +310,20 @@ class _SlotCache:
 class DraftDetector:
     def __init__(self, db: HeroDB,
                  library: Optional[TemplateLibrary] = None,
+                 ally_library: Optional[TemplateLibrary] = None,
+                 enemy_library: Optional[TemplateLibrary] = None,
                  ban_library: Optional[TemplateLibrary] = None,
                  layout: Optional[config.Layout] = None,
                  accept_low: bool = False):
         self.db = db
         # Resolve at call time so a calibrated config.LAYOUT is picked up.
         self.layout = layout if layout is not None else config.LAYOUT
-        self.library = library if library is not None else TemplateLibrary()
-        # Separate templates for the ban row (small circular icons match those
-        # far better than square portraits); falls back to the main library.
-        self.ban_library = ban_library if ban_library is not None else self.library
+        base = library if library is not None else TemplateLibrary()
+        # Ally picks + bans are circular; enemy picks are square splash art - so
+        # each slot group matches against its own template set.
+        self.ally_library = ally_library if ally_library is not None else base
+        self.enemy_library = enemy_library if enemy_library is not None else base
+        self.ban_library = ban_library if ban_library is not None else base
         self.accept_low = accept_low
         # One cache entry per slot, keyed by a stable slot id.
         self._cache: Dict[str, _SlotCache] = {}
@@ -330,6 +349,10 @@ class DraftDetector:
         # slots are comparatively flat.
         g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
         return float(g.std()) < config.EMPTY_SLOT_STDDEV
+
+    @staticmethod
+    def _mean_value(crop: "np.ndarray") -> float:
+        return float(cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)[:, :, 2].mean())
 
     @staticmethod
     def _is_grayed(crop: "np.ndarray") -> bool:
@@ -382,16 +405,30 @@ class DraftDetector:
         _require_cv()
         state = DraftState()
 
-        def scan(boxes, prefix, library, threshold=None):
+        def scan(boxes, prefix, library, threshold=None, lock_gate=False):
+            crops = [self._crop(frame, b) for b in boxes]
+            # Relative-brightness lock gate (picks only): a slot much dimmer
+            # than the brightest non-empty slot in the group reads as an
+            # un-locked hover, not a confirmed pick.
+            ref = 0.0
+            if lock_gate and config.LOCKED_REL_BRIGHTNESS > 0:
+                vals = [self._mean_value(c) for c, b in zip(crops, boxes)
+                        if not self._is_empty(c)]
+                ref = max(vals) if vals else 0.0
             out: List[Optional[str]] = []
-            for i, box in enumerate(boxes):
+            for i, (box, crop) in enumerate(zip(boxes, crops)):
                 name, _ = self._classify_slot(frame, box, f"{prefix}{i}",
                                               library, threshold)
+                if (name and ref > 0
+                        and self._mean_value(crop) < config.LOCKED_REL_BRIGHTNESS * ref):
+                    name = None                       # too dim => un-locked
                 out.append(name)
             return out
 
-        state.ally_picks = scan(self.layout.ally_picks, "ap", self.library)
-        state.enemy_picks = scan(self.layout.enemy_picks, "ep", self.library)
+        state.ally_picks = scan(self.layout.ally_picks, "ap", self.ally_library,
+                                config.TEMPLATE_MATCH_THRESHOLD, lock_gate=True)
+        state.enemy_picks = scan(self.layout.enemy_picks, "ep", self.enemy_library,
+                                 config.ENEMY_MATCH_THRESHOLD, lock_gate=True)
         state.ally_bans = scan(self.layout.ally_bans, "ab",
                                self.ban_library, config.BAN_MATCH_THRESHOLD)
         state.enemy_bans = scan(self.layout.enemy_bans, "eb",
@@ -460,10 +497,17 @@ if __name__ == "__main__":
     }
 
     def paint(box, seed_name):
-        # deterministic noisy texture per hero so matchTemplate has signal
-        s = abs(hash(seed_name)) % (2**32)
-        r = np.random.default_rng(s)
-        patch = r.integers(0, 255, (box.h, box.w, 3), dtype=np.uint8)
+        # Deterministic SMOOTH, colourful patch per hero (low-frequency so it
+        # survives the resize-correlation, like real hero art does).
+        r = np.random.default_rng(abs(hash(seed_name)) % (2**32))
+        hsv = np.zeros((box.h, box.w, 3), np.uint8)
+        hsv[:, :, 0] = int(r.integers(0, 180)); hsv[:, :, 1] = 200; hsv[:, :, 2] = 190
+        patch = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        for _ in range(3):
+            col = tuple(int(x) for x in r.integers(0, 255, (3,)))
+            x0, y0 = int(r.integers(0, box.w // 2)), int(r.integers(0, box.h // 2))
+            cv2.rectangle(patch, (x0, y0),
+                          (x0 + int(box.w * 0.4), y0 + int(box.h * 0.4)), col, -1)
         frame[box.y:box.y2, box.x:box.x2] = patch
         return patch
 

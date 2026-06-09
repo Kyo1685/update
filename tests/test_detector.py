@@ -24,8 +24,17 @@ def _have_cv():
 
 
 def _patch(seed, h, w):
+    # Smooth, colourful, low-frequency patch (survives resize-correlation, like
+    # real hero art - unlike pure noise once the histogram fallback is off).
     r = np.random.default_rng(abs(hash(seed)) % (2 ** 32))
-    return r.integers(0, 255, (h, w, 3), dtype=np.uint8)
+    hsv = np.zeros((h, w, 3), np.uint8)
+    hsv[:, :, 0] = int(r.integers(0, 180)); hsv[:, :, 1] = 200; hsv[:, :, 2] = 190
+    img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    for _ in range(3):
+        col = tuple(int(x) for x in r.integers(0, 255, (3,)))
+        x0, y0 = int(r.integers(0, w // 2)), int(r.integers(0, h // 2))
+        cv2.rectangle(img, (x0, y0), (x0 + int(w * 0.4), y0 + int(h * 0.4)), col, -1)
+    return img
 
 
 def test_lane_assignment_one_per_role():
