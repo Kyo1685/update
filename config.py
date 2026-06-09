@@ -151,7 +151,7 @@ LOCKED_REL_BRIGHTNESS: float = 0.0            # relative-brightness gate (0=off)
 # Show the match % on each overlay label (so detection quality is visible and
 # tunable from a screenshot).  Hide any match below MIN_DISPLAY_CONFIDENCE so
 # un-picked / uncertain slots stay blank (raise it once you see real numbers).
-SHOW_CONFIDENCE: bool = True
+SHOW_CONFIDENCE: bool = False                 # don't draw the match % on labels
 MIN_DISPLAY_CONFIDENCE: float = 0.0           # 0 = show everything detected
 
 # ---------------------------------------------------------------------------
