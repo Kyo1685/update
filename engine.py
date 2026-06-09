@@ -62,10 +62,12 @@ class Hero:
     archetypes: Tuple[str, ...]        # subset of Sustain | Burst | Utility
     owned: bool = True
     lanes: Tuple[str, ...] = ()        # actual lanes this hero plays (data-driven)
+    roles: Tuple[str, ...] = ()        # all roles (dual-role heroes keep both)
 
     @property
     def is_frontline(self) -> bool:
-        return self.base_role in config.FRONTLINE_ROLES
+        roles = self.roles or (self.base_role,)
+        return any(r in config.FRONTLINE_ROLES for r in roles)
 
     @property
     def is_magic(self) -> bool:
@@ -98,6 +100,7 @@ class HeroDB:
                 archetypes=tuple(d.get("archetypes", [])),
                 owned=bool(d.get("owned", True)),
                 lanes=tuple(d.get("lanes", [])),
+                roles=tuple(d.get("roles") or ([d["base_role"]] if d.get("base_role") else [])),
             ))
         return cls(heroes)
 

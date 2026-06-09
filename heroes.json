@@ -30,6 +30,9 @@
       "owned": true,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -60,8 +63,10 @@
       ],
       "owned": true,
       "lanes": [
-        "ROAM",
-        "JUNGLE"
+        "ROAM"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -78,13 +83,15 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "ROAM"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
       "name": "Alice",
-      "base_role": "Mage",
+      "base_role": "Tank",
       "win_rate": 51.6,
       "ban_rate": 12.0,
       "counters": [
@@ -109,8 +116,11 @@
       "owned": true,
       "lanes": [
         "EXP",
-        "ROAM",
-        "MID"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Tank",
+        "Mage"
       ]
     },
     {
@@ -129,6 +139,9 @@
       "lanes": [
         "JUNGLE",
         "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -145,8 +158,11 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "EXP"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Fighter",
+        "Assassin"
       ]
     },
     {
@@ -175,6 +191,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support"
       ]
     },
     {
@@ -191,8 +210,10 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -219,8 +240,11 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Assassin"
       ]
     },
     {
@@ -252,6 +276,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -268,8 +295,10 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "EXP"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -286,8 +315,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -304,7 +335,11 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP"
+        "EXP",
+        "ROAM"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -323,6 +358,9 @@
       "lanes": [
         "JUNGLE",
         "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -339,8 +377,12 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "GOLD"
+        "JUNGLE",
+        "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Mage"
       ]
     },
     {
@@ -358,8 +400,11 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "ROAM"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Tank",
+        "Fighter"
       ]
     },
     {
@@ -389,8 +434,10 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "ROAM"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -421,6 +468,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -439,6 +489,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -466,8 +519,11 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Assassin",
+        "Fighter"
       ]
     },
     {
@@ -497,6 +553,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -525,6 +584,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -551,6 +613,10 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support",
+        "Tank"
       ]
     },
     {
@@ -580,6 +646,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -597,6 +666,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -614,6 +686,10 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support",
+        "Tank"
       ]
     },
     {
@@ -643,6 +719,9 @@
       "lanes": [
         "EXP",
         "ROAM"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -659,8 +738,10 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "MID"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -690,6 +771,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -716,6 +800,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -732,8 +819,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "JUNGLE"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -763,6 +852,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support"
       ]
     },
     {
@@ -781,6 +873,9 @@
       "lanes": [
         "EXP",
         "JUNGLE"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -798,13 +893,17 @@
       ],
       "owned": true,
       "lanes": [
-        "ROAM",
-        "EXP"
+        "EXP",
+        "ROAM"
+      ],
+      "roles": [
+        "Tank",
+        "Marksman"
       ]
     },
     {
       "name": "Esmeralda",
-      "base_role": "Fighter",
+      "base_role": "Tank",
       "win_rate": 51.3,
       "ban_rate": 12.0,
       "counters": [
@@ -827,8 +926,11 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Tank",
+        "Mage"
       ]
     },
     {
@@ -861,6 +963,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support"
       ]
     },
     {
@@ -888,6 +993,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -918,11 +1026,14 @@
       "owned": false,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
       "name": "Faramis",
-      "base_role": "Mage",
+      "base_role": "Support",
       "win_rate": 51.6,
       "ban_rate": 13.0,
       "counters": [
@@ -946,8 +1057,11 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Support",
+        "Mage"
       ]
     },
     {
@@ -973,6 +1087,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support"
       ]
     },
     {
@@ -1001,6 +1118,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -1031,8 +1151,11 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "ROAM"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Fighter",
+        "Tank"
       ]
     },
     {
@@ -1051,6 +1174,9 @@
       "lanes": [
         "EXP",
         "JUNGLE"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -1070,6 +1196,10 @@
       "lanes": [
         "ROAM",
         "EXP"
+      ],
+      "roles": [
+        "Tank",
+        "Fighter"
       ]
     },
     {
@@ -1099,6 +1229,9 @@
       "lanes": [
         "EXP",
         "ROAM"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -1130,6 +1263,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -1158,8 +1294,10 @@
       ],
       "owned": true,
       "lanes": [
-        "GOLD",
-        "JUNGLE"
+        "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -1187,6 +1325,10 @@
       "lanes": [
         "ROAM",
         "EXP"
+      ],
+      "roles": [
+        "Tank",
+        "Fighter"
       ]
     },
     {
@@ -1215,8 +1357,10 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "MID"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -1248,6 +1392,9 @@
       "lanes": [
         "JUNGLE",
         "MID"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -1279,6 +1426,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -1296,6 +1446,9 @@
       "owned": true,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -1314,11 +1467,14 @@
       "lanes": [
         "GOLD",
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
       "name": "Harley",
-      "base_role": "Mage",
+      "base_role": "Assassin",
       "win_rate": 50.4,
       "ban_rate": 21.0,
       "counters": [
@@ -1341,8 +1497,11 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin",
+        "Mage"
       ]
     },
     {
@@ -1372,6 +1531,9 @@
       "owned": true,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -1402,6 +1564,9 @@
       "owned": true,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -1420,6 +1585,10 @@
       "lanes": [
         "ROAM",
         "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Tank"
       ]
     },
     {
@@ -1438,6 +1607,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -1455,6 +1627,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -1483,6 +1658,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -1501,6 +1679,9 @@
       "lanes": [
         "ROAM",
         "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -1519,6 +1700,10 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Tank",
+        "Support"
       ]
     },
     {
@@ -1548,11 +1733,14 @@
       "owned": false,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
       "name": "Julian",
-      "base_role": "Fighter",
+      "base_role": "Assassin",
       "win_rate": 50.0,
       "ban_rate": 0.0,
       "counters": [],
@@ -1564,8 +1752,11 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "EXP"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Assassin",
+        "Fighter"
       ]
     },
     {
@@ -1594,8 +1785,11 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Mage",
+        "Assassin"
       ]
     },
     {
@@ -1623,6 +1817,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -1640,6 +1837,10 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support",
+        "Fighter"
       ]
     },
     {
@@ -1657,6 +1858,10 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support",
+        "Fighter"
       ]
     },
     {
@@ -1685,6 +1890,9 @@
       "owned": true,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -1717,6 +1925,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -1734,7 +1945,10 @@
       "owned": true,
       "lanes": [
         "EXP",
-        "JUNGLE"
+        "ROAM"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -1767,6 +1981,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -1785,6 +2002,10 @@
       "lanes": [
         "GOLD",
         "MID"
+      ],
+      "roles": [
+        "Marksman",
+        "Mage"
       ]
     },
     {
@@ -1817,6 +2038,9 @@
       "owned": true,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -1833,8 +2057,10 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -1862,6 +2088,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -1892,8 +2121,10 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "EXP"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -1911,6 +2142,10 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman",
+        "Assassin"
       ]
     },
     {
@@ -1941,11 +2176,14 @@
       "owned": false,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
       "name": "Lolita",
-      "base_role": "Tank",
+      "base_role": "Support",
       "win_rate": 50.2,
       "ban_rate": 4.0,
       "counters": [
@@ -1970,6 +2208,10 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support",
+        "Tank"
       ]
     },
     {
@@ -1986,8 +2228,11 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "EXP"
+        "EXP",
+        "JUNGLE"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -2017,6 +2262,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2033,8 +2281,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2052,11 +2302,14 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
       "name": "Marcel",
-      "base_role": "Fighter",
+      "base_role": "Support",
       "win_rate": 51.9,
       "ban_rate": 23.0,
       "counters": [
@@ -2081,8 +2334,10 @@
       ],
       "owned": false,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "ROAM"
+      ],
+      "roles": [
+        "Support"
       ]
     },
     {
@@ -2099,8 +2354,10 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "EXP"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -2129,8 +2386,11 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Tank"
       ]
     },
     {
@@ -2160,6 +2420,10 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support",
+        "Assassin"
       ]
     },
     {
@@ -2189,6 +2453,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -2207,6 +2474,10 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Tank",
+        "Support"
       ]
     },
     {
@@ -2236,8 +2507,11 @@
       ],
       "owned": true,
       "lanes": [
-        "ROAM",
-        "EXP"
+        "EXP",
+        "ROAM"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -2255,6 +2529,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -2282,6 +2559,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -2298,8 +2578,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2318,6 +2600,9 @@
       "lanes": [
         "JUNGLE",
         "ROAM"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -2348,6 +2633,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -2365,6 +2653,9 @@
       "owned": true,
       "lanes": [
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -2382,6 +2673,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2399,6 +2693,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -2416,6 +2713,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2443,8 +2743,11 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Assassin"
       ]
     },
     {
@@ -2476,6 +2779,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2505,6 +2811,9 @@
       "owned": true,
       "lanes": [
         "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -2521,8 +2830,11 @@
       ],
       "owned": true,
       "lanes": [
-        "GOLD",
-        "JUNGLE"
+        "JUNGLE",
+        "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -2548,6 +2860,9 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Support"
       ]
     },
     {
@@ -2564,8 +2879,11 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "GOLD"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Fighter",
+        "Marksman"
       ]
     },
     {
@@ -2582,8 +2900,10 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "ROAM"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -2614,7 +2934,11 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE"
+        "JUNGLE",
+        "ROAM"
+      ],
+      "roles": [
+        "Assassin"
       ]
     },
     {
@@ -2631,8 +2955,12 @@
       ],
       "owned": true,
       "lanes": [
-        "ROAM",
-        "MID"
+        "MID",
+        "ROAM"
+      ],
+      "roles": [
+        "Assassin",
+        "Mage"
       ]
     },
     {
@@ -2649,13 +2977,15 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
       "name": "Sora",
-      "base_role": "Marksman",
+      "base_role": "Fighter",
       "win_rate": 52.3,
       "ban_rate": 27.0,
       "counters": [
@@ -2681,7 +3011,11 @@
       ],
       "owned": false,
       "lanes": [
-        "GOLD"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Assassin"
       ]
     },
     {
@@ -2700,6 +3034,9 @@
       "lanes": [
         "EXP",
         "JUNGLE"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -2716,8 +3053,11 @@
       ],
       "owned": true,
       "lanes": [
-        "JUNGLE",
-        "EXP"
+        "JUNGLE"
+      ],
+      "roles": [
+        "Assassin",
+        "Fighter"
       ]
     },
     {
@@ -2735,6 +3075,10 @@
       "owned": true,
       "lanes": [
         "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Tank"
       ]
     },
     {
@@ -2761,8 +3105,10 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -2795,11 +3141,14 @@
       "owned": true,
       "lanes": [
         "ROAM"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
       "name": "Uranus",
-      "base_role": "Fighter",
+      "base_role": "Tank",
       "win_rate": 52.2,
       "ban_rate": 6.0,
       "counters": [
@@ -2824,6 +3173,9 @@
       "owned": true,
       "lanes": [
         "EXP"
+      ],
+      "roles": [
+        "Tank"
       ]
     },
     {
@@ -2841,6 +3193,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2870,8 +3225,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2888,8 +3245,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2918,8 +3277,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -2951,6 +3312,9 @@
       "owned": true,
       "lanes": [
         "GOLD"
+      ],
+      "roles": [
+        "Marksman"
       ]
     },
     {
@@ -2979,6 +3343,9 @@
       "owned": true,
       "lanes": [
         "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -3008,13 +3375,15 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "GOLD"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
       "name": "Yi Sun-shin",
-      "base_role": "Marksman",
+      "base_role": "Assassin",
       "win_rate": 51.6,
       "ban_rate": 15.0,
       "counters": [
@@ -3038,8 +3407,11 @@
       ],
       "owned": true,
       "lanes": [
-        "GOLD",
         "JUNGLE"
+      ],
+      "roles": [
+        "Assassin",
+        "Marksman"
       ]
     },
     {
@@ -3058,6 +3430,10 @@
       "lanes": [
         "JUNGLE",
         "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Assassin"
       ]
     },
     {
@@ -3085,6 +3461,9 @@
       "owned": true,
       "lanes": [
         "EXP"
+      ],
+      "roles": [
+        "Fighter"
       ]
     },
     {
@@ -3114,6 +3493,9 @@
       "owned": true,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -3146,6 +3528,9 @@
       "owned": false,
       "lanes": [
         "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -3162,8 +3547,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "GOLD"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -3194,8 +3581,10 @@
       ],
       "owned": true,
       "lanes": [
-        "MID",
-        "ROAM"
+        "MID"
+      ],
+      "roles": [
+        "Mage"
       ]
     },
     {
@@ -3212,8 +3601,11 @@
       ],
       "owned": true,
       "lanes": [
-        "EXP",
-        "JUNGLE"
+        "EXP"
+      ],
+      "roles": [
+        "Fighter",
+        "Assassin"
       ]
     }
   ]
