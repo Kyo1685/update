@@ -137,30 +137,28 @@ class DraftAssistant:
         self.overlay.update_result(result)
 
     # ----- lifecycle ------------------------------------------------------
-    def start_live(self, template_dir: str, ban_dir: str, accept_low: bool) -> None:
+    def start_live(self, square_dir: str, circle_dir: str, accept_low: bool) -> None:
         # Imported lazily so --mock works on machines without the CV stack.
         from detector import ScreenCapturer, TemplateLibrary, DraftDetector
 
-        library = TemplateLibrary.from_dir(template_dir)
-        if len(library) == 0:
+        # Square splash -> ENEMY picks; circular icons -> ALLY picks + bans.
+        square = TemplateLibrary.from_dir(square_dir)
+        circle = TemplateLibrary.from_dir(circle_dir, circular=True)
+        if len(circle) and len(square):
+            circle.merge_missing(square)      # backfill heroes missing from circle
+        if len(circle) == 0 and len(square) == 0:
             sys.stderr.write(
-                f"[warn] no templates found in '{template_dir}'. "
-                "Detection will rely on the histogram fallback only - drop "
-                "cropped hero avatars (e.g. guinevere.png) into that folder.\n")
-        # Circular ban-row templates (optional): better matches for the small
-        # circular ban icons.  Falls back to the main library if absent.
-        ban_library = TemplateLibrary.from_dir(ban_dir)
-        if len(ban_library) == 0:
-            ban_library = None
-        else:
-            # Backfill any hero the circular pack lacks (e.g. Sora) with the
-            # square portrait so bans never silently match the wrong hero.
-            if len(library):
-                ban_library.merge_missing(library)
-            print(f"[templates] {len(library)} pick + {len(ban_library)} ban templates")
+                "[warn] no templates found. Put circular icons in "
+                f"'{circle_dir}' (ally+bans) and square portraits in "
+                f"'{square_dir}' (enemy).\n")
+        ally = circle if len(circle) else square
+        enemy = square if len(square) else circle
+        ban = circle if len(circle) else square
+        print(f"[templates] {len(circle)} circular (ally+bans) + "
+              f"{len(square)} square (enemy)")
         capturer = ScreenCapturer()
-        detector = DraftDetector(self.db, library=library, ban_library=ban_library,
-                                 accept_low=accept_low)
+        detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
+                                 ban_library=ban, accept_low=accept_low)
 
         self.worker = DetectorWorker(detector, capturer)
         self.worker.state_ready.connect(self.on_state)
@@ -223,9 +221,9 @@ def main() -> int:
     global _DB
     parser = argparse.ArgumentParser(description="MLBB real-time draft overlay")
     parser.add_argument("--templates", default=config.TEMPLATE_DIR,
-                        help="folder of cropped hero avatar PNGs (picks)")
-    parser.add_argument("--ban-templates", default=config.TEMPLATE_BAN_DIR,
-                        help="folder of circular ban-icon templates (ban row)")
+                        help="square/splash portraits -> ENEMY picks")
+    parser.add_argument("--circle-templates", default=config.TEMPLATE_CIRCLE_DIR,
+                        help="circular icons -> ALLY picks + bans")
     parser.add_argument("--heroes", default="heroes.json",
                         help="hero database json")
     parser.add_argument("--stats-url", default=config.STATS_URL,
@@ -319,7 +317,7 @@ def main() -> int:
         assistant.start_mock()
     else:
         try:
-            assistant.start_live(args.templates, args.ban_templates, args.accept_low)
+            assistant.start_live(args.templates, args.circle_templates, args.accept_low)
         except Exception as exc:
             sys.stderr.write(
                 f"[fatal] could not start live capture: {exc}\n"

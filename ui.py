@@ -227,10 +227,12 @@ class RoleRow(QWidget):
             parts = []
             for i, s in enumerate(window):
                 rank = self._page + i + 1
-                parts.append(f"<b>{rank}.</b>&nbsp;{s.name}"
-                             f"<span style='color:{THEME.rgba(THEME.text_dim)}'>"
-                             f"&nbsp;{s.score:g}</span>")
-            self.value.setText("&nbsp;&nbsp;".join(parts))
+                parts.append(
+                    f"<span style='color:{THEME.rgba(THEME.accent)}'><b>{rank}.</b></span>"
+                    f"&nbsp;<b style='color:{THEME.rgba(THEME.text)}'>{s.name}</b>"
+                    f"<span style='color:{THEME.rgba(THEME.text_dim)}'>"
+                    f"&nbsp;{s.score:g}</span>")
+            self.value.setText("&nbsp;&nbsp;&nbsp;".join(parts))
         # chevron availability
         self.prev.setEnabled(self._page > 0)
         self.next.setEnabled(self._page < self._max_page())
@@ -423,8 +425,10 @@ QLabel {{ color: {THEME.rgba(THEME.text)}; }}
 QLabel#title {{ color: {THEME.rgba(THEME.accent)};
                font-weight: bold; letter-spacing: 3px; }}
 QLabel#section {{ color: {THEME.rgba(THEME.accent_dim)}; letter-spacing: 2px; }}
-QLabel#laneTag {{ color: {THEME.rgba(THEME.accent)}; font-weight: bold; }}
-QLabel#suggestion {{ color: {THEME.rgba(THEME.text)}; }}
+QLabel#laneTag {{ color: {THEME.rgba(THEME.accent)}; font-weight: bold;
+                  font-size: 16px; }}
+QLabel#suggestion {{ color: {THEME.rgba(THEME.text)}; font-size: 15px; }}
+QLabel#section {{ font-size: 14px; }}
 QLabel#build {{ color: {THEME.rgba(THEME.accent)};
                background: rgba(0,0,0,0.35); padding: 6px;
                border: 1px solid {THEME.rgba(THEME.accent_dim)};
@@ -565,7 +569,7 @@ class ControlDock(QWidget):
         row.setSpacing(4)
         t = QLabel(title)
         t.setObjectName(f"banTitle{side}")
-        t.setFixedWidth(124)
+        t.setFixedWidth(134)
         row.addWidget(t)
         cells: List[QLabel] = []
         for _ in range(5):

@@ -116,13 +116,20 @@ Filenames already being hero names (`Luo Yi.png`, `X.Borg.png`) just work.
 Mix freely with `fetch_templates.py` to backfill any hero the pack is missing
 (run it without `--overwrite` and it only grabs the gaps).
 
-**Ban row uses separate circular templates.** In-game ban icons are small
-circles, so the ban slots match against `templates_bans/` (a bundled circular
-set) instead of the square portraits — far more reliable. Regenerate it from a
-circular icon pack with:
+**Two template sets (this matters).** The in-game **ally avatars and ban icons
+are circular**, while **enemy picks are square splash art** — so each is matched
+against its own set:
+
+- `templates_circle/` — circular icons → **ally picks + bans** (matched on the
+  inscribed face, so the ring/background doesn't throw it off).
+- `templates/` — square portraits → **enemy picks**.
+
+Both are bundled. Matching is **strict**: a slot must clear its threshold or it
+shows nothing — no nearest-guess fallback (so Sora won't be mislabeled Ling).
+Regenerate the circular set from an icon pack with:
 
 ```bash
-python import_icons.py --src /path/to/circular_icons --out templates_bans
+python import_icons.py --src /path/to/circular_icons --out templates_circle
 ```
 
 ## Calibration (works at ANY PC resolution)
