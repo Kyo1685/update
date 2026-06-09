@@ -244,6 +244,7 @@ class DraftResult:
     ally_win_pct: float
     enemy_win_pct: float
     build_path: str
+    filled_lanes: Dict[str, str] = field(default_factory=dict)   # lane -> ally hero
 
 
 # ===========================================================================
@@ -404,10 +405,15 @@ class ScoringEngine:
     # ---------------------------------------------------------- top-level
     def evaluate(self, state: DraftState, settings: Settings) -> DraftResult:
         comp = self.analyze_comp(state)
-        suggestions = {
-            lane: self.suggest_for_lane(lane, state, settings, comp)
-            for lane in config.LANES
-        }
+        # Lanes already taken by an ally pick are "filled" - we don't recommend
+        # for them (only open lanes get optimal-pick vectors).
+        filled = dict(state.ally_lanes)
+        suggestions = {}
+        for lane in config.LANES:
+            if lane in filled:
+                suggestions[lane] = []                  # picked -> no suggestions
+            else:
+                suggestions[lane] = self.suggest_for_lane(lane, state, settings, comp)
         ally_pct, enemy_pct = self.matchup_probability(state)
         return DraftResult(
             suggestions=suggestions,
@@ -415,6 +421,7 @@ class ScoringEngine:
             ally_win_pct=ally_pct,
             enemy_win_pct=enemy_pct,
             build_path=self.build_path(comp, len(state.enemy_names())),
+            filled_lanes=filled,
         )
 
 
@@ -432,7 +439,7 @@ if __name__ == "__main__":
         enemy_picks=["Alice", "Khufra", "Akai", "Gord", None],
         ally_bans=["Harley", "Karrie", "Sora", "Gloo", "Freya"],
         enemy_bans=["Freya", "Gusion", "Yi Sun-shin", "Sora", "Zhuxin"],
-        ally_lanes={"EXP": "Guinevere", "MID": "Zetian"},
+        ally_lanes={"EXP": "Guinevere", "JUNGLE": "Minsithar"},   # MID left open
         enemy_lanes={"ROAM": "Khufra", "MID": "Gord", "EXP": "Akai", "JUNGLE": "Alice"},
     )
 

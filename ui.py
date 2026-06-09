@@ -191,9 +191,22 @@ class RoleRow(QWidget):
 
     # --- data -------------------------------------------------------------
     def set_suggestions(self, suggestions: List[Suggestion]) -> None:
+        self.prev.setVisible(True)
+        self.next.setVisible(True)
+        self.tag.setStyleSheet("")                     # revert to QSS accent
         self._suggestions = suggestions[: self.MAX_RANK]
         self._page = min(self._page, self._max_page())
         self._render()
+
+    def set_filled(self, hero_name: str) -> None:
+        """Lane already has an ally pick: gray it out, hide chevrons."""
+        self._suggestions = []
+        self.prev.setVisible(False)
+        self.next.setVisible(False)
+        self.tag.setStyleSheet(f"color:{THEME.rgba(THEME.text_dim)};")
+        self.value.setText(
+            f"<span style='color:{THEME.rgba(THEME.text_dim)}'>"
+            f"&#10003; {hero_name} &nbsp;<i>picked</i></span>")
 
     def _max_page(self) -> int:
         return max(0, len(self._suggestions) - self.PAGE_SIZE)
@@ -250,6 +263,8 @@ class OverlayCanvas(QWidget):
 
         self._font = QFont(THEME.font_family, 11, QFont.Bold)
         self._font.setStyleHint(QFont.Monospace)
+        self._ban_font = QFont(THEME.font_family, 8, QFont.Bold)   # small: ban tags
+        self._ban_font.setStyleHint(QFont.Monospace)
 
     def set_state(self, state: DraftState) -> None:
         self._state = state
@@ -281,10 +296,12 @@ class OverlayCanvas(QWidget):
             tag = predicted_role_label(name, lane, self.db)
             self._paint_label(p, box, f"{name.upper()} [{tag}]", color)
 
-    def _paint_label(self, p, box, text, color) -> None:
-        fm = QFontMetrics(self._font)
-        tw = fm.horizontalAdvance(text) + 14
-        th = fm.height() + 6
+    def _paint_label(self, p, box, text, color, font=None) -> None:
+        font = font or self._font
+        p.setFont(font)
+        fm = QFontMetrics(font)
+        tw = fm.horizontalAdvance(text) + 12
+        th = fm.height() + 4
         lx = box.x
         ly = box.y - th - 4 if box.y - th - 4 > 0 else box.y2 + 4
 
@@ -294,7 +311,8 @@ class OverlayCanvas(QWidget):
         p.setPen(QPen(qcolor(color), 1))
         p.drawPath(bg)
         p.setPen(QPen(qcolor(THEME.label_fg), 1))
-        p.drawText(lx + 7, ly + fm.ascent() + 3, text)
+        p.drawText(lx + 6, ly + fm.ascent() + 2, text)
+        p.setFont(self._font)
 
     def _paint_bans(self, p, boxes, names) -> None:
         pen = QPen(qcolor(THEME.ban_box), 2, Qt.DashLine)
@@ -307,6 +325,8 @@ class OverlayCanvas(QWidget):
             # red strike-through to read as "banned"
             p.setPen(QPen(qcolor(THEME.warn), 2))
             p.drawLine(box.x, box.y, box.x2, box.y2)
+            # name label so you can see WHICH heroes are banned
+            self._paint_label(p, box, name.upper(), THEME.warn, self._ban_font)
 
 
 # ===========================================================================
@@ -555,7 +575,10 @@ class ControlDock(QWidget):
 
     def apply_result(self, result: DraftResult) -> None:
         for lane, row in self.rows.items():
-            row.set_suggestions(result.suggestions.get(lane, []))
+            if lane in result.filled_lanes:
+                row.set_filled(result.filled_lanes[lane])     # picked -> grayed
+            else:
+                row.set_suggestions(result.suggestions.get(lane, []))
         self.prob.set_values(result.ally_win_pct, result.enemy_win_pct)
         self.lbl_ally.setText(f"{result.ally_win_pct:.1f}%")
         self.lbl_enemy.setText(f"{result.enemy_win_pct:.1f}%")
