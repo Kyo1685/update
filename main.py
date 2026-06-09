@@ -151,16 +151,16 @@ class DraftAssistant:
                 "[warn] no templates found. Put circular icons in "
                 f"'{circle_dir}' (ally+bans) and square portraits in "
                 f"'{square_dir}' (enemy).\n")
-        # Square portraits -> ally + enemy PICKS (they match avatars/splash
-        # well); circular icons -> the small circular BAN row only.
-        ally = square if len(square) else circle
-        enemy = square if len(square) else circle
-        ban = circle if len(circle) else square
-        print(f"[templates] {len(square)} square (picks) + "
-              f"{len(circle)} circular (bans)")
+        # Ally picks try BOTH square portraits and circular icons (best wins);
+        # enemy picks use square splash; bans use circular (then square).
+        ally_libs = [lib for lib in (square, circle) if len(lib)] or [square]
+        enemy_libs = [square] if len(square) else [circle]
+        ban_libs = [lib for lib in (circle, square) if len(lib)] or [square]
+        print(f"[templates] {len(square)} square + {len(circle)} circular")
         capturer = ScreenCapturer()
-        detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
-                                 ban_library=ban, accept_low=accept_low)
+        detector = DraftDetector(self.db, ally_libraries=ally_libs,
+                                 enemy_libraries=enemy_libs, ban_libraries=ban_libs,
+                                 accept_low=accept_low)
 
         self.worker = DetectorWorker(detector, capturer)
         self.worker.state_ready.connect(self.on_state)
