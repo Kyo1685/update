@@ -128,27 +128,25 @@ MATCHUP_K: float = 0.055
 # ---------------------------------------------------------------------------
 # 4. DETECTION TUNING (consumed by detector.py)
 # ---------------------------------------------------------------------------
-# The in-game ally avatars + ban icons are CIRCULAR, while enemy picks are
-# SQUARE splash art - so each is matched against its own template set.
-TEMPLATE_DIR: str = "templates"               # square/splash  -> ENEMY picks
-TEMPLATE_CIRCLE_DIR: str = "templates_circle" # circular icons -> ALLY picks + bans
+# Square portraits match the PICKS well (ally avatars + enemy splash); the
+# circular set is used only for the small circular BAN icons.
+TEMPLATE_DIR: str = "templates"               # square portraits -> ally+enemy PICKS
+TEMPLATE_CIRCLE_DIR: str = "templates_circle" # circular icons   -> BANS
 TEMPLATE_ROLE_DIR: str = "templates_roles"    # optional lane-medal icons (ally)
 
-# STRICT matching: a slot must clear its threshold or it shows NOTHING - we do
-# not fall back to the nearest-looking hero (that caused Sora->Ling etc.).
-TEMPLATE_MATCH_THRESHOLD: float = 0.60        # default / ally circular picks
-ENEMY_MATCH_THRESHOLD: float = 0.50           # enemy square splash (fuzzier)
-BAN_MATCH_THRESHOLD: float = 0.58             # circular ban icons
-HISTOGRAM_MATCH_THRESHOLD: float = 0.62       # only if USE_HISTOGRAM_FALLBACK
-USE_HISTOGRAM_FALLBACK: bool = False          # False = perfect-match-or-nothing
+# Detection must actually FIRE, so the fallback is on and thresholds are
+# moderate.  (Too strict + wrong templates earlier => nothing detected.)
+TEMPLATE_MATCH_THRESHOLD: float = 0.55        # ally picks (square)
+ENEMY_MATCH_THRESHOLD: float = 0.50           # enemy picks (square splash)
+BAN_MATCH_THRESHOLD: float = 0.45             # bans (small circular)
+HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback
+USE_HISTOGRAM_FALLBACK: bool = True           # keep detection robust
 
 EMPTY_SLOT_STDDEV: float = 11.0               # below this a slot is treated empty
 SIGNATURE_DELTA: int = 6                      # per-slot change threshold for cache
-LOCKED_MIN_SATURATION: int = 24               # below this mean HSV saturation a slot
-                                              # reads as un-locked/grayed (0=off)
-LOCKED_REL_BRIGHTNESS: float = 0.50           # a pick slot dimmer than this * the
-                                              # brightest locked slot reads as
-                                              # un-locked/hover (0=off)
+LOCKED_MIN_SATURATION: int = 0                # un-locked/grayed gate (0=off; was
+                                              # over-filtering real picks)
+LOCKED_REL_BRIGHTNESS: float = 0.0            # relative-brightness gate (0=off)
 
 # ---------------------------------------------------------------------------
 # 4b. LIVE STATS SOURCE (consumed by stats_provider.py / main.py)
