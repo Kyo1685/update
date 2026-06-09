@@ -151,11 +151,13 @@ class DraftAssistant:
                 "[warn] no templates found. Put circular icons in "
                 f"'{circle_dir}' (ally+bans) and square portraits in "
                 f"'{square_dir}' (enemy).\n")
-        ally = circle if len(circle) else square
+        # Square portraits -> ally + enemy PICKS (they match avatars/splash
+        # well); circular icons -> the small circular BAN row only.
+        ally = square if len(square) else circle
         enemy = square if len(square) else circle
         ban = circle if len(circle) else square
-        print(f"[templates] {len(circle)} circular (ally+bans) + "
-              f"{len(square)} square (enemy)")
+        print(f"[templates] {len(square)} square (picks) + "
+              f"{len(circle)} circular (bans)")
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
                                  ban_library=ban, accept_low=accept_low)

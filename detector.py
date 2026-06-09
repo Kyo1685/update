@@ -296,6 +296,19 @@ class TemplateLibrary:
         # --accept-low callers use it; by default this becomes "no hero".
         return best_name, max(best_score, 0.0), "low"
 
+    def top_matches(self, crop_bgr: "np.ndarray", n: int = 3):
+        """Top-n (name, score) template matches for a crop - for diagnostics."""
+        if not self._tmpl:
+            return []
+        target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
+                            (self.CANON + self.PAD, self.CANON + self.PAD),
+                            interpolation=cv2.INTER_AREA)
+        scores = [(name, float(cv2.matchTemplate(target, tmpl,
+                                                 cv2.TM_CCOEFF_NORMED).max()))
+                  for name, tmpl in self._tmpl.items()]
+        scores.sort(key=lambda kv: kv[1], reverse=True)
+        return scores[:n]
+
 
 # ===========================================================================
 #  DRAFT DETECTOR  (orchestrates capture -> slots -> state, with caching)
