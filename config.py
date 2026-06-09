@@ -110,6 +110,7 @@ W_BANRATE: float = 0.06             # points per ban-rate %  (contested == stron
 W_SYNERGY: float = 2.6              # per allied synergy hit
 W_COUNTER: float = 3.1              # per enemy this hero hard-counters
 W_COUNTERED: float = 3.6            # penalty per enemy that counters this hero
+W_BAN_RELIEF: float = 1.2          # bonus per hero that counters us being banned
 
 # "Lane Counter Mode": triple the weight of the DIRECT lane match-up and drop
 # broad team-comp synergies entirely.
@@ -128,7 +129,9 @@ MATCHUP_K: float = 0.055
 # 4. DETECTION TUNING (consumed by detector.py)
 # ---------------------------------------------------------------------------
 TEMPLATE_DIR: str = "templates"             # cropped hero avatars live here
+TEMPLATE_BAN_DIR: str = "templates_bans"    # circular icons for the ban row
 TEMPLATE_MATCH_THRESHOLD: float = 0.62      # TM_CCOEFF_NORMED accept threshold
+BAN_MATCH_THRESHOLD: float = 0.50           # bans are tiny/circular -> lower bar
 HISTOGRAM_MATCH_THRESHOLD: float = 0.55     # fallback correlation accept
 EMPTY_SLOT_STDDEV: float = 11.0             # below this a slot is treated empty
 SIGNATURE_DELTA: int = 6                    # per-slot change threshold for cache

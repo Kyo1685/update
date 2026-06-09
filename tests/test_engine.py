@@ -98,6 +98,18 @@ def test_build_path_reacts_to_enemy_profile():
     assert "MAGIC DEF" in res.build_path
 
 
+def test_ban_relief_boosts_threatened_hero():
+    # Lancelot is countered_by Khufra; banning Khufra should relieve Lancelot.
+    def lanc(state):
+        res = ENG.evaluate(state, Settings())
+        return next((s.score for s in res.suggestions["JUNGLE"]
+                     if s.name == "Lancelot"), None)
+    base = lanc(DraftState())
+    relieved = lanc(DraftState(enemy_bans=["Khufra", None, None, None, None]))
+    assert base is not None and relieved is not None
+    assert relieved > base
+
+
 def test_probability_is_complementary():
     res = ENG.evaluate(_state(), Settings())
     assert abs(res.ally_win_pct + res.enemy_win_pct - 100.0) < 0.2

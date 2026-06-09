@@ -116,6 +116,15 @@ Filenames already being hero names (`Luo Yi.png`, `X.Borg.png`) just work.
 Mix freely with `fetch_templates.py` to backfill any hero the pack is missing
 (run it without `--overwrite` and it only grabs the gaps).
 
+**Ban row uses separate circular templates.** In-game ban icons are small
+circles, so the ban slots match against `templates_bans/` (a bundled circular
+set) instead of the square portraits — far more reliable. Regenerate it from a
+circular icon pack with:
+
+```bash
+python import_icons.py --src /path/to/circular_icons --out templates_bans
+```
+
 ## Calibration (works at ANY PC resolution)
 
 Your phone is 2712×1220, but Scrcpy scales it to fit your PC (e.g. 1366×768),
@@ -163,6 +172,7 @@ Every candidate starts at a **baseline of 10**, then:
 | Synergy  | `+2.6` per allied synergy hit |
 | Counter  | `+3.1` per enemy this hero hard-counters |
 | Countered| `−3.6` per enemy that counters this hero |
+| Ban relief | `+1.2` per hero that counters this pick being **banned** (a threat is off the board) |
 | **Comp Balancer** | if the ally team lacks a frontline or magic damage, matching heroes get a **×1.25** multiplier |
 
 ### Toggles
