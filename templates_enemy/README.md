@@ -13,4 +13,5 @@ with **no** auto-flip — crop them exactly as they appear on your screen.
 
 The ally counterpart lives in [`../templates_ally/`](../templates_ally).
 
-Seeded with `helcurt.png` (a hand-cropped enemy Helcurt) as a worked example.
+Seeded with `helcurt.png` — the ally crop mirrored to face **left** — as a
+worked example.
