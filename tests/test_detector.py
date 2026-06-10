@@ -4,6 +4,7 @@ Vision parts need numpy+opencv (skipped cleanly if absent).
 
 Run:  python tests/test_detector.py   (or: pytest -q)
 """
+import contextlib
 import os
 import sys
 import zlib
@@ -52,6 +53,17 @@ def test_lane_assignment_one_per_role():
 
 def _lane_of(name, lanes):
     return next((ln for ln, hn in lanes.items() if hn == name), None)
+
+
+@contextlib.contextmanager
+def _grayed_gate(sat=0.60, val=0.75):
+    """Temporarily enable the 'NOT PICKED' gate (it ships OFF by default)."""
+    saved = (config.LOCKED_REL_SATURATION, config.LOCKED_REL_VALUE)
+    config.LOCKED_REL_SATURATION, config.LOCKED_REL_VALUE = sat, val
+    try:
+        yield
+    finally:
+        config.LOCKED_REL_SATURATION, config.LOCKED_REL_VALUE = saved
 
 
 def test_label_never_shows_a_lane_the_hero_cannot_play():
@@ -120,7 +132,8 @@ def test_grayed_slot_reads_as_not_picked():
     frame[b1.y:b1.y2, b1.x:b1.x2] = gray
 
     det = DraftDetector(DB, ally_library=lib)
-    state = det.detect(frame)
+    with _grayed_gate():                          # gate ships OFF; enable to test
+        state = det.detect(frame)
     assert state.ally_picks[0] == "Melissa"      # locked pick detected
     assert state.ally_pending[0] is False
     assert state.ally_pending[1] is True         # grayed slot flagged
@@ -260,7 +273,8 @@ def test_overlay_behaviors_helcurt_pending_and_sora_ban():
         _place(f, L.ally_picks[i], circ(n))
     _place(f, L.ally_picks[3], _grayed(circ("helcurt")))   # hovered, not locked
     _place(f, L.ally_bans[0], circ("sora"))
-    s = det.detect(f)
+    with _grayed_gate():                                    # gate ships OFF here
+        s = det.detect(f)
     assert s.ally_pending[3] is True and s.ally_picks[3] is None    # NOT PICKED
     assert s.ally_picks[:3] == ["Lukas", "Melissa", "Nana"]         # others fine
     assert not any(s.ally_pending[:3])                              # no false flags

@@ -172,14 +172,17 @@ LOCKED_REL_BRIGHTNESS: float = 0.0            # relative-brightness gate (0=off)
 
 # "Not picked yet" detection.  A confirmed pick renders in FULL colour; a hero
 # that is only being hovered / not yet locked renders GRAYED (desaturated AND
-# dimmed).  We flag a slot as un-locked when it is BOTH below this fraction of
-# the most-saturated AND below this fraction of the brightest pick in the same
-# column - a relative test, so a naturally dark hero (Helcurt) or a pale one
-# (Sora) that IS locked still reads as picked.  Such slots are labelled
-# "NOT PICKED" instead of being matched to a (wrong) hero.  Set either to 0 to
-# disable that half of the gate (set both to 0 to turn the feature off).
-LOCKED_REL_SATURATION: float = 0.60           # grayed if sat  < 0.60 * column max
-LOCKED_REL_VALUE: float = 0.75                # ...AND bright < 0.75 * column max
+# dimmed).  When enabled we flag a slot as un-locked when it is BOTH below this
+# fraction of the most-saturated AND below this fraction of the brightest pick
+# in the same column, and label it "NOT PICKED" instead of guessing a hero.
+#
+# OFF BY DEFAULT (both 0): on real portraits the per-hero saturation/brightness
+# varies so much that a relative gate can hide a genuine pick (e.g. a locked
+# Melissa reading as NOT PICKED).  It needs per-setup tuning, so opt in only
+# after checking the live sat/val numbers from `python tools/diagnose.py`
+# (set e.g. 0.55 / 0.65 and lower until your hovered slot - and ONLY it - trips).
+LOCKED_REL_SATURATION: float = 0.0            # grayed if sat  < frac * column max
+LOCKED_REL_VALUE: float = 0.0                 # ...AND bright < frac * column max
 
 # Show the match % on each overlay label (so detection quality is visible and
 # tunable from a screenshot).  Hide any match below MIN_DISPLAY_CONFIDENCE so
