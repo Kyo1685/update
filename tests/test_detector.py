@@ -11,7 +11,7 @@ import zlib
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import config
-from engine import HeroDB
+from engine import HeroDB, ScoringEngine, Settings
 from detector import (assign_lanes, predicted_role_label, DraftDetector,
                       TemplateLibrary, np, cv2)
 
@@ -221,6 +221,60 @@ def test_ally_circular_orientation_not_reflipped():
             continue
         name, score, _m = ally.match(crop, config.TEMPLATE_MATCH_THRESHOLD)
         assert name == h, f"ally {h} -> {name} ({score:.2f}); flip direction regressed?"
+
+
+def _place(frame, box, img):
+    frame[box.y:box.y2, box.x:box.x2] = cv2.resize(img, (box.w, box.h))
+
+
+def _grayed(img):
+    """Desaturate + dim a portrait to mimic an un-locked (hovered) avatar."""
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float32)
+    hsv[:, :, 1] *= 0.20
+    hsv[:, :, 2] *= 0.45
+    return cv2.cvtColor(np.clip(hsv, 0, 255).astype(np.uint8), cv2.COLOR_HSV2BGR)
+
+
+def test_overlay_behaviors_helcurt_pending_and_sora_ban():
+    """End-to-end on the REAL templates (the two behaviours asked about):
+      * a GRAYED Helcurt reads 'NOT PICKED' (not a wrong hero, not Gord),
+      * a LOCKED Helcurt reads Helcurt,
+      * a banned Sora is detected and reaches the overlay's ban row."""
+    if not _have_cv() or not _templates_present():
+        print("(skipped: cv2/templates absent)"); return
+    config.apply_region({"left": 0, "top": 0,
+                         "width": config.RES_W, "height": config.RES_H},
+                        config.build_layout())
+    L = config.LAYOUT
+    ally, enemy, ban = _build_side_libs()
+    det = DraftDetector(DB, ally_library=ally, enemy_library=enemy, ban_library=ban)
+    circ = lambda n: cv2.imread(
+        os.path.join(ROOT, "templates_circle", f"{n}.png"), cv2.IMREAD_COLOR)
+
+    def frame():
+        return np.full((config.RES_H, config.RES_W, 3), 18, np.uint8)
+
+    # --- grayed Helcurt among locked allies, Sora banned --------------------
+    f = frame()
+    for i, n in enumerate(["lukas", "melissa", "nana"]):
+        _place(f, L.ally_picks[i], circ(n))
+    _place(f, L.ally_picks[3], _grayed(circ("helcurt")))   # hovered, not locked
+    _place(f, L.ally_bans[0], circ("sora"))
+    s = det.detect(f)
+    assert s.ally_pending[3] is True and s.ally_picks[3] is None    # NOT PICKED
+    assert s.ally_picks[:3] == ["Lukas", "Melissa", "Nana"]         # others fine
+    assert not any(s.ally_pending[:3])                              # no false flags
+    assert "Sora" in s.ally_bans                                    # ban detected
+    res = ScoringEngine(DB).evaluate(s, Settings())
+    assert "Sora" in res.ally_bans                                  # reaches overlay
+
+    # --- locked (full-colour) Helcurt -> detected as Helcurt ---------------
+    f2 = frame()
+    for i, n in enumerate(["lukas", "melissa", "nana"]):
+        _place(f2, L.ally_picks[i], circ(n))
+    _place(f2, L.ally_picks[3], circ("helcurt"))
+    s2 = det.detect(f2)
+    assert s2.ally_pending[3] is False and s2.ally_picks[3] == "Helcurt"
 
 
 if __name__ == "__main__":
