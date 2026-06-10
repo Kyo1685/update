@@ -146,9 +146,9 @@ USE_HISTOGRAM_FALLBACK: bool = True           # keep detection robust
 # into an ally-oriented set and an enemy-oriented (flipped) set and match each
 # side against its own set (more precise than testing both flips per slot).
 SPLIT_BY_SIDE: bool = True                     # divide templates ally vs enemy
-PACK_FACES_ALLY: bool = True                    # the art faces the ALLY direction
-                                                # (flip to enemy). Set False if the
-                                                # ally side reads worse than enemy.
+PACK_FACES_ALLY: bool = False                   # the circular art faces the ENEMY
+                                                # direction; ally side is reversed.
+                                                # (flip to True if it's backwards)
 MIRROR_INVARIANT: bool = False                  # fallback: test both flips per slot
                                                 # (set True if the split is worse)
 
