@@ -144,13 +144,26 @@ TEMPLATE_ROLE_DIR: str = "templates_roles"    # optional lane-medal icons (ally)
 TEMPLATE_ALLY_DIR: str = "templates_ally"     # ally-side pick crops (override)
 TEMPLATE_ENEMY_DIR: str = "templates_enemy"   # enemy-side pick crops (override)
 
-# Detection must actually FIRE, so the fallback is on and thresholds are
-# moderate.  (Too strict + wrong templates earlier => nothing detected.)
-TEMPLATE_MATCH_THRESHOLD: float = 0.55        # ally picks (square)
+# Thresholds tuned on real screen crops (see tests/test_detector.py ground-
+# truth test): true heroes match 0.6-0.93 by template, impostor noise tops out
+# ~0.59, so 0.60 lets a wrong same-size art (e.g. a SKINNED avatar) fall
+# through to the colour-histogram instead of mislabelling by template.
+TEMPLATE_MATCH_THRESHOLD: float = 0.60        # ally picks (circular)
 ENEMY_MATCH_THRESHOLD: float = 0.50           # enemy picks (square splash)
 BAN_MATCH_THRESHOLD: float = 0.45             # bans (small circular)
 HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback
 USE_HISTOGRAM_FALLBACK: bool = True           # keep detection robust
+
+# ZOOM-TOLERANT MATCHING.  The live UI can frame the art slightly tighter or
+# looser than the source icon (ring borders, ban slash, calibration slop), so
+# each template is also tried as a mild centre-crop zoom-in and a mild
+# scale-down, best score wins.  Keep these MILD: sweeping the real screen crops
+# showed correctly-rendered heroes peak at native size (zoom 1.0), while deep
+# factors (<0.8) only inflate impostor noise (e.g. Ixia outscoring Nana).
+#   MATCH_ZOOM_CROPS  - centre-crop factors (target framed tighter than icon)
+#   MATCH_SCALES_DOWN - downscale factors (face smaller / slightly offset)
+MATCH_ZOOM_CROPS: tuple = (0.85,)
+MATCH_SCALES_DOWN: tuple = (0.9,)
 
 # Circular avatars: empirically the draft does NOT mirror them between sides -
 # the ally pick column and the ban row both show the pack art as-is (verified by

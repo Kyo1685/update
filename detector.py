@@ -197,6 +197,10 @@ class TemplateLibrary:
         self.flip = flip
         self._tmpl: Dict[str, "np.ndarray"] = {}      # colour canonical (BGR)
         self._hist: Dict[str, "np.ndarray"] = {}
+        # Per-hero zoom/scale variants (see config.MATCH_ZOOM_CROPS /
+        # MATCH_SCALES_DOWN): the live UI frames the same art at a different
+        # zoom than the icon, so the best score across variants is used.
+        self._vars: Dict[str, list] = {}
 
     # ----- loading ---------------------------------------------------------
     @classmethod
@@ -221,8 +225,29 @@ class TemplateLibrary:
         return stem.replace("_", " ").replace("-", "-").strip().title()
 
     def add(self, name: str, bgr: "np.ndarray") -> None:
-        self._tmpl[name] = self._prep_tmpl(bgr)
+        canon = self._prep_tmpl(bgr)
+        self._tmpl[name] = canon
+        self._vars[name] = self._make_variants(canon)
         self._hist[name] = self._prep_hist(bgr)
+
+    @classmethod
+    def _make_variants(cls, canon: "np.ndarray") -> list:
+        """Canonical template + zoomed-in centre-crops + scaled-down copies."""
+        out = [canon]
+        c = cls.CANON
+        for z in config.MATCH_ZOOM_CROPS:            # target framed TIGHTER
+            if not 0.3 < z < 1.0:
+                continue
+            m = int(c * z)
+            o = (c - m) // 2
+            out.append(cv2.resize(canon[o:o + m, o:o + m], (c, c),
+                                  interpolation=cv2.INTER_LINEAR))
+        for s in config.MATCH_SCALES_DOWN:           # face SMALLER in target
+            if not 0.3 < s < 1.0:
+                continue
+            m = max(24, int(c * s))
+            out.append(cv2.resize(canon, (m, m), interpolation=cv2.INTER_AREA))
+        return out
 
     def __len__(self) -> int:
         return len(self._tmpl)
@@ -235,6 +260,7 @@ class TemplateLibrary:
         for name, tmpl in other._tmpl.items():
             if name not in self._tmpl:
                 self._tmpl[name] = tmpl
+                self._vars[name] = other._vars[name]
                 self._hist[name] = other._hist[name]
                 added += 1
         return added
@@ -246,6 +272,7 @@ class TemplateLibrary:
         Returns how many entries it wrote."""
         for name, tmpl in other._tmpl.items():
             self._tmpl[name] = tmpl
+            self._vars[name] = other._vars[name]
             self._hist[name] = other._hist[name]
         return len(other._tmpl)
 
@@ -270,9 +297,20 @@ class TemplateLibrary:
             img = cv2.flip(img, 1)
         return cv2.resize(img, (self.CANON, self.CANON), interpolation=cv2.INTER_AREA)
 
+    @staticmethod
+    def _face_region(bgr: "np.ndarray") -> "np.ndarray":
+        """Central square (circle-inscribed size) regardless of library shape.
+        Histograms always use this so background corners - real art, composite
+        fill or the ban-slash overlay - can't skew the colour signature."""
+        h, w = bgr.shape[:2]
+        side = int(min(h, w) / 1.41421356)
+        cy, cx = h // 2, w // 2
+        half = max(1, side // 2)
+        return bgr[cy - half:cy + half, cx - half:cx + half]
+
     def _prep_hist(self, bgr: "np.ndarray") -> "np.ndarray":
         img = bgr[:, :, :3] if bgr.ndim == 3 else cv2.cvtColor(bgr, cv2.COLOR_GRAY2BGR)
-        hsv = cv2.cvtColor(self._inscribe(img), cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(self._face_region(img), cv2.COLOR_BGR2HSV)
         hist = cv2.calcHist([hsv], [0, 1], None, [50, 60], [0, 180, 0, 256])
         cv2.normalize(hist, hist, 0, 1, cv2.NORM_MINMAX)
         return hist
@@ -290,20 +328,18 @@ class TemplateLibrary:
         if not self._tmpl:
             return None, 0.0, "none"
 
-        # COLOUR normalised cross-correlation.  Templates are already oriented
-        # per side (ally vs enemy-flipped), so a direct match is enough; the
-        # optional MIRROR_INVARIANT fallback also tests the mirrored target.
+        # COLOUR normalised cross-correlation across each template's zoom/scale
+        # variants (the live UI frames the art at a different zoom than the
+        # icon).  Templates are already oriented per side; the optional
+        # MIRROR_INVARIANT fallback also tests the mirrored target.
         target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
                             (self.CANON + self.PAD, self.CANON + self.PAD),
                             interpolation=cv2.INTER_AREA)
         target_flip = cv2.flip(target, 1) if config.MIRROR_INVARIANT else None
 
         best_name, best_score = None, -1.0
-        for name, tmpl in self._tmpl.items():
-            score = float(cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED).max())
-            if target_flip is not None:
-                score = max(score, float(cv2.matchTemplate(
-                    target_flip, tmpl, cv2.TM_CCOEFF_NORMED).max()))
+        for name in self._tmpl:
+            score = self._best_score(target, name, target_flip)
             if score > best_score:
                 best_name, best_score = name, score
         if best_score >= threshold:
@@ -324,16 +360,30 @@ class TemplateLibrary:
         # --accept-low callers use it; by default this becomes "no hero".
         return best_name, max(best_score, 0.0), "low"
 
+    def _best_score(self, target: "np.ndarray", name: str,
+                    target_flip: "np.ndarray" = None) -> float:
+        """Best correlation of any variant of ``name`` against the target."""
+        best = -1.0
+        for tmpl in self._vars.get(name) or (self._tmpl[name],):
+            s = float(cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED).max())
+            if target_flip is not None:
+                s = max(s, float(cv2.matchTemplate(
+                    target_flip, tmpl, cv2.TM_CCOEFF_NORMED).max()))
+            if s > best:
+                best = s
+        return best
+
     def top_matches(self, crop_bgr: "np.ndarray", n: int = 3):
-        """Top-n (name, score) template matches for a crop - for diagnostics."""
+        """Top-n (name, score) template matches for a crop - for diagnostics.
+        Uses the same variant scoring as ``match`` so the numbers agree."""
         if not self._tmpl:
             return []
         target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
                             (self.CANON + self.PAD, self.CANON + self.PAD),
                             interpolation=cv2.INTER_AREA)
-        scores = [(name, float(cv2.matchTemplate(target, tmpl,
-                                                 cv2.TM_CCOEFF_NORMED).max()))
-                  for name, tmpl in self._tmpl.items()]
+        target_flip = cv2.flip(target, 1) if config.MIRROR_INVARIANT else None
+        scores = [(name, self._best_score(target, name, target_flip))
+                  for name in self._tmpl]
         scores.sort(key=lambda kv: kv[1], reverse=True)
         return scores[:n]
 

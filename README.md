@@ -116,24 +116,34 @@ Filenames already being hero names (`Luo Yi.png`, `X.Borg.png`) just work.
 Mix freely with `fetch_templates.py` to backfill any hero the pack is missing
 (run it without `--overwrite` and it only grabs the gaps).
 
-**Template sets.**
-- `templates/` — square portraits → **enemy PICKS** (splash art) and the base
-  for both sides.
-- `templates_circle/` — circular avatars → **ally PICKS** (auto-reversed to face
-  the ally direction) and the small **BAN row** (matched on the inscribed face).
-- `templates_ally/` + `templates_enemy/` — **optional per-side override packs.**
-  The ally avatar and enemy splash of the same hero face opposite ways and are
-  lit differently, so a single auto-flipped pack can misread a few heroes
-  (classic case: a dark hero like **Helcurt**). Drop a crop taken straight off
-  the **ally** side into `templates_ally/<hero>.png` and one off the **enemy**
-  side into `templates_enemy/<hero>.png`; each overrides the base template for
-  that hero **on that side only** (no auto-flip — crop exactly as it appears).
-  Add just the heroes that need fixing; the base sets cover the rest. Both ship
-  seeded with `helcurt.png` as a worked example. The enemy side is the mirror of
-  the ally side, so `python tools/mirror_templates.py` flips every
-  `templates_ally/*` crop into a left-facing `templates_enemy/*` one for you.
+**Template sets (one orientation policy).**
+- `templates/` — square base → **enemy PICKS** seed; art as-is (right-facing).
+- `templates_circle/` — circular → **ally PICKS + BAN rows**; art as-is (right).
+- `templates_ally/` — per-side override for ally picks; art as-is (right).
+- `templates_enemy/` — per-side override for enemy picks; **mirrored (left)**.
 
-All are bundled. If detection misreads or misses a hero, run the diagnostics:
+All four sets are regenerated together from the up-to-date community source by:
+
+```bash
+python tools/rebuild_templates.py        # nuke + rebuild every set, 1 hero = 1 file
+```
+
+It alpha-composites, centre-squares to 160×160, names files to your
+`heroes.json` spelling (kills stray duplicate spellings), and falls back to the
+existing local art for any hero the source lacks — so the sets can never drift
+apart. To hand-fix a single hero, drop a crop over
+`templates_ally/<hero>.png` / `templates_enemy/<hero>.png` (or grab it straight
+off a live draft with `python tools/learn_templates.py` — useful for **skinned
+avatars**, whose art no official source carries).
+
+Matching is **zoom-tolerant** (`MATCH_ZOOM_CROPS` / `MATCH_SCALES_DOWN`): each
+template is also tried slightly zoomed-in and scaled-down, so ring borders, the
+red ban-slash and small calibration slop don't sink the score. Detection is
+validated end-to-end against real 1366×768 screen crops in
+`tests/fixtures/real_draft/` (19/20 slots exact; the 20th documents a
+mis-calibrated box).
+
+If detection misreads or misses a hero, run the diagnostics:
 
 ```bash
 python tools/diagnose.py        # prints top-3 matches + scores per slot
