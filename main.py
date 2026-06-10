@@ -144,25 +144,21 @@ class DraftAssistant:
         if not os.path.isdir(square_dir) and not os.path.isdir(circle_dir):
             sys.stderr.write("[warn] no template folders found.\n")
 
-        # Ally avatars face one way, enemy avatars are mirrored. Build an
-        # ally-oriented set and an enemy-oriented (flipped) set; match each side
-        # against its own. flip_enemy follows PACK_FACES_ALLY.
-        flip_enemy = bool(config.PACK_FACES_ALLY)
-        sq_ally = TemplateLibrary.from_dir(square_dir, flip=not flip_enemy)
-        sq_enemy = TemplateLibrary.from_dir(square_dir, flip=flip_enemy)
-        ci_ally = TemplateLibrary.from_dir(circle_dir, circular=True, flip=not flip_enemy)
-        ci_enemy = TemplateLibrary.from_dir(circle_dir, circular=True, flip=flip_enemy)
+        # UI reality: ALLY picks are CIRCULAR avatars (and mirrored vs enemy),
+        # ENEMY picks are SQUARE splash, BANS are circular icons.
+        # Templates face the enemy direction, so the ally side is REVERSED.
+        ally_flip = not config.PACK_FACES_ALLY          # reverse circular for ally
+        sq = TemplateLibrary.from_dir(square_dir)                                 # enemy splash
+        ci_ally = TemplateLibrary.from_dir(circle_dir, circular=True, flip=ally_flip)
+        ci_enemy = TemplateLibrary.from_dir(circle_dir, circular=True, flip=not ally_flip)
 
-        # Picks: square portraits.  Bans: circular icons, enemy-oriented (the
-        # ban row matches the enemy facing, per your note).
-        ally = sq_ally if len(sq_ally) else ci_ally
-        enemy = sq_enemy if len(sq_enemy) else ci_enemy
-        ban = ci_enemy if len(ci_enemy) else sq_enemy
-        if not config.SPLIT_BY_SIDE:                    # fall back to one set
-            ally = enemy = sq_ally if len(sq_ally) else ci_ally
-        print(f"[templates] split-by-side={config.SPLIT_BY_SIDE} "
-              f"pack_faces_ally={config.PACK_FACES_ALLY} "
-              f"({len(sq_ally)} square, {len(ci_ally)} circular)")
+        ally = ci_ally if len(ci_ally) else (sq if len(sq) else ci_enemy)
+        enemy = sq if len(sq) else ci_enemy
+        ban = ci_enemy if len(ci_enemy) else sq
+        if not config.SPLIT_BY_SIDE:
+            ally = enemy = sq if len(sq) else ci_enemy
+        print(f"[templates] ally=circular(reversed={ally_flip}):{len(ci_ally)}  "
+              f"enemy=square:{len(sq)}  bans=circular:{len(ci_enemy)}")
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
                                  ban_library=ban, accept_low=accept_low)
