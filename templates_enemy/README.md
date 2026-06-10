@@ -8,8 +8,14 @@ Each file here **overrides** the auto-oriented base template for that hero on th
 the heroes the base set misreads; the rest keep using the bundled square splash
 art.
 
-The enemy picks are **square splash** art (not inscribed) and are matched as-is
-with **no** auto-flip — crop them exactly as they appear on your screen.
+The enemy picks are matched as-is with **no** auto-flip — crop them exactly as
+they appear on your screen. Since the enemy side is the **horizontal mirror** of
+the ally side, the easiest way to fill this folder is to mirror your ally crops:
+
+```bash
+python tools/mirror_templates.py            # mirror every templates_ally/* -> here
+python tools/mirror_templates.py --only helcurt
+```
 
 The ally counterpart lives in [`../templates_ally/`](../templates_ally).
 

@@ -155,7 +155,9 @@ class DraftAssistant:
 
         ally = ci_ally if len(ci_ally) else (sq if len(sq) else ci_enemy)
         enemy = sq if len(sq) else ci_enemy
-        ban = ci_enemy if len(ci_enemy) else sq
+        # Ban icons are NOT mirrored between sides, so they share the ally pack's
+        # (un-flipped) orientation rather than the enemy-mirrored one.
+        ban = ci_ally if len(ci_ally) else (ci_enemy if len(ci_enemy) else sq)
         if not config.SPLIT_BY_SIDE:
             ally = enemy = sq if len(sq) else ci_enemy
 

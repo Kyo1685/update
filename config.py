@@ -152,15 +152,17 @@ BAN_MATCH_THRESHOLD: float = 0.45             # bans (small circular)
 HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback
 USE_HISTOGRAM_FALLBACK: bool = True           # keep detection robust
 
-# Ally avatars face one way, enemy avatars are mirrored. We split the templates
-# into an ally-oriented set and an enemy-oriented (flipped) set and match each
-# side against its own set (more precise than testing both flips per slot).
-SPLIT_BY_SIDE: bool = True                     # divide templates ally vs enemy
-PACK_FACES_ALLY: bool = False                   # the circular art faces the ENEMY
-                                                # direction; ally side is reversed.
-                                                # (flip to True if it's backwards)
+# Circular avatars: empirically the draft does NOT mirror them between sides -
+# the ally pick column and the ban row both show the pack art as-is (verified by
+# self-match: flip=False scores 12/12 across heroes, flip=True scores 0/12).
+# So PACK_FACES_ALLY=True (the pack already faces the ally direction; don't flip
+# the ally library).  The enemy PICKS use the separate SQUARE splash set.
+SPLIT_BY_SIDE: bool = True                      # divide templates ally vs enemy
+PACK_FACES_ALLY: bool = True                    # circular pack faces ally -> don't
+                                                # flip ally picks (set False only if
+                                                # YOUR mirror reverses the avatars)
 MIRROR_INVARIANT: bool = False                  # fallback: test both flips per slot
-                                                # (set True if the split is worse)
+                                                # (set True if facing is inconsistent)
 
 EMPTY_SLOT_STDDEV: float = 11.0               # below this a slot is treated empty
 SIGNATURE_DELTA: int = 6                      # per-slot change threshold for cache

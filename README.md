@@ -129,7 +129,9 @@ Mix freely with `fetch_templates.py` to backfill any hero the pack is missing
   side into `templates_enemy/<hero>.png`; each overrides the base template for
   that hero **on that side only** (no auto-flip — crop exactly as it appears).
   Add just the heroes that need fixing; the base sets cover the rest. Both ship
-  seeded with `helcurt.png` as a worked example.
+  seeded with `helcurt.png` as a worked example. The enemy side is the mirror of
+  the ally side, so `python tools/mirror_templates.py` flips every
+  `templates_ally/*` crop into a left-facing `templates_enemy/*` one for you.
 
 All are bundled. If detection misreads or misses a hero, run the diagnostics:
 
