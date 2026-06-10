@@ -111,12 +111,21 @@ def assign_lanes(names: Sequence[Optional[str]], db: HeroDB) -> Dict[str, str]:
 
 
 def predicted_role_label(name: str, lane: Optional[str], db: HeroDB) -> str:
-    """Short tag shown next to a portrait, e.g. 'GUINEVERE [EXP]'."""
+    """Short tag shown next to a portrait, e.g. 'GUINEVERE [EXP]'.
+
+    The 1-to-1 lane optimiser must give every detected hero a UNIQUE lane, so
+    when two heroes share their only lane (e.g. two MID-only mages) one is
+    forced into a lane it cannot actually play.  Don't display that wrong lane:
+    if the assigned lane isn't one of the hero's real lanes, fall back to the
+    hero's own primary lane (so Nana stays [MID], never [JUG]).
+    """
+    hero = db.get(name)
+    if hero and hero.lanes and lane not in hero.lanes:
+        lane = hero.lanes[0]
     if lane:
         return config.LANE_ABBR.get(lane, lane[:3].upper())
-    hero = db.get(name)
     if hero:
-        order = config.ROLE_LANE_PRIORITY.get(hero.base_role, [])
+        order = list(hero.lanes) or config.ROLE_LANE_PRIORITY.get(hero.base_role, [])
         if order:
             return config.LANE_ABBR.get(order[0], order[0][:3].upper())
     return "???"
@@ -229,6 +238,16 @@ class TemplateLibrary:
                 self._hist[name] = other._hist[name]
                 added += 1
         return added
+
+    def overlay(self, other: "TemplateLibrary") -> int:
+        """Add OR replace every hero in ``other`` (a side-specific override
+        pack).  Unlike ``merge_missing`` this wins ties, so a hand-cropped
+        ally/enemy template takes precedence over the auto-oriented base one.
+        Returns how many entries it wrote."""
+        for name, tmpl in other._tmpl.items():
+            self._tmpl[name] = tmpl
+            self._hist[name] = other._hist[name]
+        return len(other._tmpl)
 
     # ----- preprocessing ---------------------------------------------------
     def _inscribe(self, bgr: "np.ndarray") -> "np.ndarray":
@@ -377,6 +396,10 @@ class DraftDetector:
         return float(cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)[:, :, 2].mean())
 
     @staticmethod
+    def _mean_saturation(crop: "np.ndarray") -> float:
+        return float(cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)[:, :, 1].mean())
+
+    @staticmethod
     def _is_grayed(crop: "np.ndarray") -> bool:
         # Un-locked / hovered slots render desaturated ("grayed"); a confirmed
         # pick is full colour.  Gate on mean HSV saturation so we only report
@@ -429,39 +452,59 @@ class DraftDetector:
 
         def scan(boxes, prefix, library, threshold=None, lock_gate=False):
             crops = [self._crop(frame, b) for b in boxes]
-            # Relative-brightness lock gate (picks only): a slot much dimmer
-            # than the brightest non-empty slot in the group reads as an
-            # un-locked hover, not a confirmed pick.
-            ref = 0.0
-            if lock_gate and config.LOCKED_REL_BRIGHTNESS > 0:
-                vals = [self._mean_value(c) for c, b in zip(crops, boxes)
-                        if not self._is_empty(c)]
-                ref = max(vals) if vals else 0.0
+            # Per-column reference levels for the relative gates (picks only):
+            # the brightest / most-saturated NON-EMPTY slot is a confirmed pick,
+            # so anything much dimmer + greyer than it is an un-locked hover.
+            vref = sref = 0.0
+            if lock_gate:
+                live = [c for c in crops if not self._is_empty(c)]
+                if live:
+                    vref = max(self._mean_value(c) for c in live)
+                    sref = max(self._mean_saturation(c) for c in live)
             names: List[Optional[str]] = []
             confs: List[float] = []
+            pending: List[bool] = []
             for i, (box, crop) in enumerate(zip(boxes, crops)):
-                name, conf = self._classify_slot(frame, box, f"{prefix}{i}",
-                                                 library, threshold)
-                if (name and ref > 0
-                        and self._mean_value(crop) < config.LOCKED_REL_BRIGHTNESS * ref):
-                    name, conf = None, 0.0             # too dim => un-locked
-                # Hide matches below the display floor (un-picked / uncertain).
-                if name and conf < config.MIN_DISPLAY_CONFIDENCE:
-                    name = None
+                slot_id = f"{prefix}{i}"
+                empty = self._is_empty(crop)
+                # "Grayed / not picked yet": occupied but BOTH desaturated and
+                # dimmed relative to the locked picks in this same column.
+                is_pending = bool(
+                    lock_gate and not empty and sref > 0 and vref > 0
+                    and config.LOCKED_REL_SATURATION > 0 and config.LOCKED_REL_VALUE > 0
+                    and self._mean_saturation(crop) < config.LOCKED_REL_SATURATION * sref
+                    and self._mean_value(crop) < config.LOCKED_REL_VALUE * vref)
+                if empty or is_pending:
+                    # Don't run (or trust) a match on a blank/greyed slot; keep
+                    # the slot cache coherent so a later lock-in re-detects.
+                    name, conf = None, 0.0
+                    self._cache[slot_id] = _SlotCache(
+                        signature=self._signature(crop), name=None, confidence=0.0)
+                else:
+                    name, conf = self._classify_slot(frame, box, slot_id,
+                                                     library, threshold)
+                    if (name and vref > 0 and config.LOCKED_REL_BRIGHTNESS > 0
+                            and self._mean_value(crop)
+                            < config.LOCKED_REL_BRIGHTNESS * vref):
+                        name, conf = None, 0.0         # too dim => un-locked
+                    # Hide matches below the display floor (un-picked/uncertain).
+                    if name and conf < config.MIN_DISPLAY_CONFIDENCE:
+                        name = None
                 names.append(name)
                 confs.append(round(conf, 3))
-            return names, confs
+                pending.append(is_pending)
+            return names, confs, pending
 
-        state.ally_picks, state.ally_pick_conf = scan(
+        state.ally_picks, state.ally_pick_conf, state.ally_pending = scan(
             self.layout.ally_picks, "ap", self.ally_library,
             config.TEMPLATE_MATCH_THRESHOLD, lock_gate=True)
-        state.enemy_picks, state.enemy_pick_conf = scan(
+        state.enemy_picks, state.enemy_pick_conf, state.enemy_pending = scan(
             self.layout.enemy_picks, "ep", self.enemy_library,
             config.ENEMY_MATCH_THRESHOLD, lock_gate=True)
-        state.ally_bans, state.ally_ban_conf = scan(
+        state.ally_bans, state.ally_ban_conf, _ = scan(
             self.layout.ally_bans, "ab", self.ban_library,
             config.BAN_MATCH_THRESHOLD)
-        state.enemy_bans, state.enemy_ban_conf = scan(
+        state.enemy_bans, state.enemy_ban_conf, _ = scan(
             self.layout.enemy_bans, "eb", self.ban_library,
             config.BAN_MATCH_THRESHOLD)
 
@@ -480,8 +523,21 @@ class DraftDetector:
             lane = next((ln for ln, hn in lanes.items() if hn == name), None)
             return f"{name.upper()} [{predicted_role_label(name, lane, self.db)}]"
 
-        def draw(boxes, names, color, lanes, is_ban=False):
-            for box, name in zip(boxes, names):
+        def draw(boxes, names, color, lanes, is_ban=False, pending=None):
+            pending = pending or [False] * len(boxes)
+            for box, name, pend in zip(boxes, names, pending):
+                if pend and not is_ban:
+                    cv2.rectangle(out, (box.x, box.y), (box.x2, box.y2),
+                                  config.THEME.ban_box[:3], config.THEME.box_thickness)
+                    text = "NOT PICKED"
+                    (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+                    ty = box.y - 8 if box.y > 24 else box.y2 + th + 8
+                    cv2.rectangle(out, (box.x, ty - th - 6), (box.x + tw + 10, ty + 4),
+                                  (8, 16, 14), -1)
+                    cv2.putText(out, text, (box.x + 5, ty),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (150, 150, 160), 1,
+                                cv2.LINE_AA)
+                    continue
                 if not name:
                     continue
                 cv2.rectangle(out, (box.x, box.y), (box.x2, box.y2),
@@ -498,8 +554,10 @@ class DraftDetector:
                             cv2.LINE_AA)
 
         c = config.THEME
-        draw(self.layout.ally_picks, state.ally_picks, c.ally_box[:3], state.ally_lanes)
-        draw(self.layout.enemy_picks, state.enemy_picks, c.enemy_box[:3], state.enemy_lanes)
+        draw(self.layout.ally_picks, state.ally_picks, c.ally_box[:3],
+             state.ally_lanes, pending=state.ally_pending)
+        draw(self.layout.enemy_picks, state.enemy_picks, c.enemy_box[:3],
+             state.enemy_lanes, pending=state.enemy_pending)
         draw(self.layout.ally_bans, state.ally_bans, c.ban_box[:3], {}, is_ban=True)
         draw(self.layout.enemy_bans, state.enemy_bans, c.ban_box[:3], {}, is_ban=True)
         return out

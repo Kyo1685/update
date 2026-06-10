@@ -279,17 +279,24 @@ class OverlayCanvas(QWidget):
 
         self._paint_picks(p, self.layout.ally_picks, self._state.ally_picks,
                           self._state.ally_lanes, THEME.ally_box,
-                          self._state.ally_pick_conf)
+                          self._state.ally_pick_conf, self._state.ally_pending)
         self._paint_picks(p, self.layout.enemy_picks, self._state.enemy_picks,
                           self._state.enemy_lanes, THEME.enemy_box,
-                          self._state.enemy_pick_conf)
+                          self._state.enemy_pick_conf, self._state.enemy_pending)
         # Bans are listed inside the control dock (like the reference video),
         # so we don't draw anything over the game's tiny ban icons here.
 
-    def _paint_picks(self, p, boxes, names, lanes, color, confs=None) -> None:
+    def _paint_picks(self, p, boxes, names, lanes, color, confs=None,
+                     pending=None) -> None:
         pen = QPen(qcolor(color), THEME.box_thickness)
         confs = confs or [0.0] * len(boxes)
-        for box, name, conf in zip(boxes, names, confs):
+        pending = pending or [False] * len(boxes)
+        for box, name, conf, pend in zip(boxes, names, confs, pending):
+            # Occupied but not locked in yet (grayed avatar): tell the user it's
+            # still being hovered rather than guessing a hero from faded colours.
+            if pend and not name:
+                self._paint_pending(p, box)
+                continue
             if not name:
                 continue
             p.setPen(pen)
@@ -301,6 +308,15 @@ class OverlayCanvas(QWidget):
             if config.SHOW_CONFIDENCE and conf:
                 label += f" {int(round(conf * 100))}%"
             self._paint_label(p, box, label, color)
+
+    def _paint_pending(self, p, box) -> None:
+        """Dashed grey box + 'NOT PICKED' tag for an un-locked (grayed) slot."""
+        pen = QPen(qcolor(THEME.ban_box), THEME.box_thickness)
+        pen.setStyle(Qt.DashLine)
+        p.setPen(pen)
+        p.setBrush(Qt.NoBrush)
+        p.drawRect(box.x, box.y, box.w, box.h)
+        self._paint_label(p, box, "NOT PICKED", THEME.ban_box)
 
     def _paint_label(self, p, box, text, color, font=None) -> None:
         font = font or self._font

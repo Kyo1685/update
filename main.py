@@ -69,7 +69,8 @@ class DetectorWorker(QThread):
     @staticmethod
     def _key(state: DraftState) -> Tuple:
         return (tuple(state.ally_picks), tuple(state.enemy_picks),
-                tuple(state.ally_bans), tuple(state.enemy_bans))
+                tuple(state.ally_bans), tuple(state.enemy_bans),
+                tuple(state.ally_pending), tuple(state.enemy_pending))
 
     def run(self) -> None:
         self._running = True
@@ -157,8 +158,19 @@ class DraftAssistant:
         ban = ci_enemy if len(ci_enemy) else sq
         if not config.SPLIT_BY_SIDE:
             ally = enemy = sq if len(sq) else ci_enemy
-        print(f"[templates] ally=circular(reversed={ally_flip}):{len(ci_ally)}  "
-              f"enemy=square:{len(sq)}  bans=circular:{len(ci_enemy)}")
+
+        # Side-specific OVERRIDE packs: crops taken straight off the ally / enemy
+        # side (already correctly oriented, so NO auto-flip).  Each hero present
+        # here wins over the auto-oriented base template for that side - this is
+        # the per-side "two template sets" knob (templates_ally / templates_enemy).
+        ally_ovr = TemplateLibrary.from_dir(config.TEMPLATE_ALLY_DIR, circular=True)
+        enemy_ovr = TemplateLibrary.from_dir(config.TEMPLATE_ENEMY_DIR)
+        n_ally_ovr = ally.overlay(ally_ovr) if len(ally_ovr) else 0
+        n_enemy_ovr = enemy.overlay(enemy_ovr) if len(enemy_ovr) else 0
+
+        print(f"[templates] ally=circular(reversed={ally_flip}):{len(ci_ally)}"
+              f"+{n_ally_ovr} override  enemy=square:{len(sq)}+{n_enemy_ovr} override  "
+              f"bans=circular:{len(ci_enemy)}")
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
                                  ban_library=ban, accept_low=accept_low)

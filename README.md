@@ -116,21 +116,51 @@ Filenames already being hero names (`Luo Yi.png`, `X.Borg.png`) just work.
 Mix freely with `fetch_templates.py` to backfill any hero the pack is missing
 (run it without `--overwrite` and it only grabs the gaps).
 
-**Two template sets.**
-- `templates/` — square portraits → **ally + enemy PICKS** (match the avatars
-  and splash art well).
-- `templates_circle/` — circular icons → the small **BAN row** (matched on the
-  inscribed face).
+**Template sets.**
+- `templates/` — square portraits → **enemy PICKS** (splash art) and the base
+  for both sides.
+- `templates_circle/` — circular avatars → **ally PICKS** (auto-reversed to face
+  the ally direction) and the small **BAN row** (matched on the inscribed face).
+- `templates_ally/` + `templates_enemy/` — **optional per-side override packs.**
+  The ally avatar and enemy splash of the same hero face opposite ways and are
+  lit differently, so a single auto-flipped pack can misread a few heroes
+  (classic case: a dark hero like **Helcurt**). Drop a crop taken straight off
+  the **ally** side into `templates_ally/<hero>.png` and one off the **enemy**
+  side into `templates_enemy/<hero>.png`; each overrides the base template for
+  that hero **on that side only** (no auto-flip — crop exactly as it appears).
+  Add just the heroes that need fixing; the base sets cover the rest. Both ship
+  seeded with `helcurt.png` as a worked example.
 
-Both are bundled. If detection misreads or misses a hero, run the diagnostics:
+All are bundled. If detection misreads or misses a hero, run the diagnostics:
 
 ```bash
 python tools/diagnose.py        # prints top-3 matches + scores per slot
 ```
 
 It saves each slot crop to `diag/` and shows why a hero matched (or didn't), so
-the thresholds in `config.py` can be tuned. Regenerate the circular set with
+the thresholds in `config.py` can be tuned. For pick slots it also prints
+`sat`/`val` and a **`NOT PICKED (grayed)`** verdict — the exact numbers behind
+the lock gate below. Regenerate the circular set with
 `python import_icons.py --src <icons> --out templates_circle`.
+
+### "Not picked yet" (grayed) detection
+
+A confirmed pick renders in **full colour**; a hero merely being *hovered* (not
+yet locked) renders **grayed** — desaturated **and** dimmed. The detector flags
+such a slot as un-locked (relative to the bright/saturated locked picks in the
+same column) and the overlay draws a dashed grey box labelled **`NOT PICKED`**
+instead of guessing a hero from faded colours. This stops a greyed avatar from
+being mis-read as the wrong hero (e.g. a hovered Helcurt matching Gord) and from
+polluting the lane assignment. Tune the two relative fractions in `config.py`:
+
+```python
+LOCKED_REL_SATURATION = 0.60   # grayed if saturation < 60% of the column's max
+LOCKED_REL_VALUE      = 0.75   # ...AND brightness  < 75% of the column's max
+```
+
+Set either to `0` to disable that half (both `0` turns the feature off). It's
+*relative*, so a hero who is naturally dark (Helcurt) or pale (Sora) but **is**
+locked still reads as picked.
 
 ## Calibration (works at ANY PC resolution)
 
