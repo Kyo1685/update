@@ -142,6 +142,16 @@ BAN_MATCH_THRESHOLD: float = 0.45             # bans (small circular)
 HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback
 USE_HISTOGRAM_FALLBACK: bool = True           # keep detection robust
 
+# Ally avatars face one way, enemy avatars are mirrored. We split the templates
+# into an ally-oriented set and an enemy-oriented (flipped) set and match each
+# side against its own set (more precise than testing both flips per slot).
+SPLIT_BY_SIDE: bool = True                     # divide templates ally vs enemy
+PACK_FACES_ALLY: bool = True                    # the art faces the ALLY direction
+                                                # (flip to enemy). Set False if the
+                                                # ally side reads worse than enemy.
+MIRROR_INVARIANT: bool = False                  # fallback: test both flips per slot
+                                                # (set True if the split is worse)
+
 EMPTY_SLOT_STDDEV: float = 11.0               # below this a slot is treated empty
 SIGNATURE_DELTA: int = 6                      # per-slot change threshold for cache
 LOCKED_MIN_SATURATION: int = 0                # un-locked/grayed gate (0=off; was

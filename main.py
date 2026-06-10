@@ -141,23 +141,28 @@ class DraftAssistant:
         # Imported lazily so --mock works on machines without the CV stack.
         from detector import ScreenCapturer, TemplateLibrary, DraftDetector
 
-        # Square splash -> ENEMY picks; circular icons -> ALLY picks + bans.
-        square = TemplateLibrary.from_dir(square_dir)
-        circle = TemplateLibrary.from_dir(circle_dir, circular=True)
-        if len(circle) and len(square):
-            circle.merge_missing(square)      # backfill heroes missing from circle
-        if len(circle) == 0 and len(square) == 0:
-            sys.stderr.write(
-                "[warn] no templates found. Put circular icons in "
-                f"'{circle_dir}' (ally+bans) and square portraits in "
-                f"'{square_dir}' (enemy).\n")
-        # Square portraits -> ally + enemy PICKS (they match avatars/splash
-        # well); circular icons -> the small circular BAN row only.
-        ally = square if len(square) else circle
-        enemy = square if len(square) else circle
-        ban = circle if len(circle) else square
-        print(f"[templates] {len(square)} square (picks) + "
-              f"{len(circle)} circular (bans)")
+        if not os.path.isdir(square_dir) and not os.path.isdir(circle_dir):
+            sys.stderr.write("[warn] no template folders found.\n")
+
+        # Ally avatars face one way, enemy avatars are mirrored. Build an
+        # ally-oriented set and an enemy-oriented (flipped) set; match each side
+        # against its own. flip_enemy follows PACK_FACES_ALLY.
+        flip_enemy = bool(config.PACK_FACES_ALLY)
+        sq_ally = TemplateLibrary.from_dir(square_dir, flip=not flip_enemy)
+        sq_enemy = TemplateLibrary.from_dir(square_dir, flip=flip_enemy)
+        ci_ally = TemplateLibrary.from_dir(circle_dir, circular=True, flip=not flip_enemy)
+        ci_enemy = TemplateLibrary.from_dir(circle_dir, circular=True, flip=flip_enemy)
+
+        # Picks: square portraits.  Bans: circular icons, enemy-oriented (the
+        # ban row matches the enemy facing, per your note).
+        ally = sq_ally if len(sq_ally) else ci_ally
+        enemy = sq_enemy if len(sq_enemy) else ci_enemy
+        ban = ci_enemy if len(ci_enemy) else sq_enemy
+        if not config.SPLIT_BY_SIDE:                    # fall back to one set
+            ally = enemy = sq_ally if len(sq_ally) else ci_ally
+        print(f"[templates] split-by-side={config.SPLIT_BY_SIDE} "
+              f"pack_faces_ally={config.PACK_FACES_ALLY} "
+              f"({len(sq_ally)} square, {len(ci_ally)} circular)")
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
                                  ban_library=ban, accept_low=accept_low)
