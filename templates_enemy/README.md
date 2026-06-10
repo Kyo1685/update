@@ -1,16 +1,38 @@
-# `templates_enemy/` — enemy-side pick override crops
+# Hero avatar templates
 
-Drop a hero portrait **cropped from the ENEMY (right) side of the draft** here as
-`<hero>.png` (lower-case, e.g. `helcurt.png`).
+One portrait per hero lives here. The detector matches these against the live
+draft slots with `cv2.matchTemplate` (with an HSV colour-histogram fallback).
 
-Each file here **overrides** the auto-oriented base template for that hero on the
-**enemy side only** — it does not affect the ally side or the ban row. Add only
-the heroes the base set misreads; the rest keep using the bundled square splash
-art.
+**A ready-to-use square set (160×160, ~130 heroes) is bundled** — you can run
+the app immediately. Regenerate or extend it any time with `fetch_templates.py`
+or `import_icons.py` (they just overwrite these files).
 
-The enemy picks are **square splash** art (not inscribed) and are matched as-is
-with **no** auto-flip — crop them exactly as they appear on your screen.
+## Fastest way: auto-download the whole roster
 
-The ally counterpart lives in [`../templates_ally/`](../templates_ally).
+```bash
+python fetch_templates.py            # ~130 portraits, named correctly
+python fetch_templates.py --only-db  # just heroes in heroes.json
+```
 
-Seeded with `helcurt.png` (a hand-cropped enemy Helcurt) as a worked example.
+That's it — skip the rest unless you want to hand-tune a few.
+
+## Naming (if you add files manually)
+The filename (minus extension) becomes the hero name, resolved against
+`heroes.json` case-insensitively:
+
+```
+guinevere.png        -> "Guinevere"
+yi_sun-shin.png      -> "Yi Sun-shin"
+x.borg.png           -> "X.Borg"
+```
+
+Underscores become spaces. Accepted extensions: `.png .jpg .jpeg .webp`.
+
+## Hand-cropping for max accuracy
+Auto-downloaded portraits match well via the histogram fallback (run the app
+with `--accept-low`). For a tighter, higher-confidence match on a specific
+hero, replace its file with a **square crop of the locked portrait** taken from
+a screenshot of your own 2712×1220 draft (≈152×152). Tight, centred crops score
+highest.
+
+> Templates are personal assets — none are committed to this repo.

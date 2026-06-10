@@ -1,17 +1,38 @@
-# `templates_ally/` — ally-side pick override crops
+# Hero avatar templates
 
-Drop a hero portrait **cropped from the ALLY (left) side of the draft** here as
-`<hero>.png` (lower-case, spaces → keep, e.g. `helcurt.png`, `yi sun-shin.png`).
+One portrait per hero lives here. The detector matches these against the live
+draft slots with `cv2.matchTemplate` (with an HSV colour-histogram fallback).
 
-Each file here **overrides** the auto-oriented base template for that hero on the
-**ally side only** — it does not affect the enemy side or the ban row. You only
-need to add the few heroes the base set misreads; everything else keeps using
-the bundled circular avatars.
+**A ready-to-use square set (160×160, ~130 heroes) is bundled** — you can run
+the app immediately. Regenerate or extend it any time with `fetch_templates.py`
+or `import_icons.py` (they just overwrite these files).
 
-The ally avatars are **circular** and face the opposite way to the enemy splash,
-so these crops are matched on the inscribed face (`circular=True`) and are **not**
-auto-flipped — crop them exactly as they appear on your screen.
+## Fastest way: auto-download the whole roster
 
-The enemy counterpart lives in [`../templates_enemy/`](../templates_enemy).
+```bash
+python fetch_templates.py            # ~130 portraits, named correctly
+python fetch_templates.py --only-db  # just heroes in heroes.json
+```
 
-Seeded with `helcurt.png` (the circular ally avatar) as a worked example.
+That's it — skip the rest unless you want to hand-tune a few.
+
+## Naming (if you add files manually)
+The filename (minus extension) becomes the hero name, resolved against
+`heroes.json` case-insensitively:
+
+```
+guinevere.png        -> "Guinevere"
+yi_sun-shin.png      -> "Yi Sun-shin"
+x.borg.png           -> "X.Borg"
+```
+
+Underscores become spaces. Accepted extensions: `.png .jpg .jpeg .webp`.
+
+## Hand-cropping for max accuracy
+Auto-downloaded portraits match well via the histogram fallback (run the app
+with `--accept-low`). For a tighter, higher-confidence match on a specific
+hero, replace its file with a **square crop of the locked portrait** taken from
+a screenshot of your own 2712×1220 draft (≈152×152). Tight, centred crops score
+highest.
+
+> Templates are personal assets — none are committed to this repo.
