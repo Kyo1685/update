@@ -178,19 +178,22 @@ class TemplateLibrary:
     CANON = 96          # canonical avatar size used for correlation
     PAD = 10            # search slack so small mis-alignment still matches
 
-    def __init__(self, circular: bool = False):
+    def __init__(self, circular: bool = False, flip: bool = False):
         _require_cv()
         # ``circular`` libs centre-crop to the inscribed square before matching
         # so the avatar's ring/background corners don't pollute the score.
+        # ``flip`` mirrors every template (for the enemy side, which faces the
+        # opposite way to ally).
         self.circular = circular
+        self.flip = flip
         self._tmpl: Dict[str, "np.ndarray"] = {}      # colour canonical (BGR)
         self._hist: Dict[str, "np.ndarray"] = {}
 
     # ----- loading ---------------------------------------------------------
     @classmethod
     def from_dir(cls, path: str = config.TEMPLATE_DIR,
-                 circular: bool = False) -> "TemplateLibrary":
-        lib = cls(circular=circular)
+                 circular: bool = False, flip: bool = False) -> "TemplateLibrary":
+        lib = cls(circular=circular, flip=flip)
         if not os.path.isdir(path):
             return lib                                   # empty but valid
         patterns = ("*.png", "*.jpg", "*.jpeg", "*.webp")
@@ -244,6 +247,8 @@ class TemplateLibrary:
         # (e.g. Helcurt vs Gord), so grayscale matching confuses them.
         img = bgr[:, :, :3] if bgr.ndim == 3 else cv2.cvtColor(bgr, cv2.COLOR_GRAY2BGR)
         img = self._inscribe(img)
+        if self.flip:                                  # enemy-oriented set
+            img = cv2.flip(img, 1)
         return cv2.resize(img, (self.CANON, self.CANON), interpolation=cv2.INTER_AREA)
 
     def _prep_hist(self, bgr: "np.ndarray") -> "np.ndarray":
@@ -266,20 +271,20 @@ class TemplateLibrary:
         if not self._tmpl:
             return None, 0.0, "none"
 
-        # Primary: COLOUR normalised cross-correlation with a small search
-        # window so a few px of calibration drift does not tank the score.
+        # COLOUR normalised cross-correlation.  Templates are already oriented
+        # per side (ally vs enemy-flipped), so a direct match is enough; the
+        # optional MIRROR_INVARIANT fallback also tests the mirrored target.
         target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
                             (self.CANON + self.PAD, self.CANON + self.PAD),
                             interpolation=cv2.INTER_AREA)
-        # Mirror-invariant: some icon packs are horizontally flipped vs the live
-        # avatar, which kills correlation - so also test the mirrored target.
-        target_flip = cv2.flip(target, 1)
+        target_flip = cv2.flip(target, 1) if config.MIRROR_INVARIANT else None
 
         best_name, best_score = None, -1.0
         for name, tmpl in self._tmpl.items():
-            score = max(
-                float(cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED).max()),
-                float(cv2.matchTemplate(target_flip, tmpl, cv2.TM_CCOEFF_NORMED).max()))
+            score = float(cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED).max())
+            if target_flip is not None:
+                score = max(score, float(cv2.matchTemplate(
+                    target_flip, tmpl, cv2.TM_CCOEFF_NORMED).max()))
             if score > best_score:
                 best_name, best_score = name, score
         if best_score >= threshold:
