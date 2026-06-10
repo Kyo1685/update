@@ -72,21 +72,37 @@ def main() -> int:
     os.makedirs(args.out, exist_ok=True)
     det = DraftDetector(HeroDB.load("heroes.json"))
 
-    def dump(title, boxes, lib, thr):
+    def dump(title, boxes, lib, thr, picks=False):
         print(f"== {title} (threshold {thr}) ==")
-        for i, b in enumerate(boxes):
-            crop = det._crop(frame, b)
+        crops = [det._crop(frame, b) for b in boxes]
+        # Column reference levels (same relative gate the live detector uses), so
+        # the "NOT PICKED" verdict + numbers here are exactly what you'd tune to.
+        live = [c for c in crops if not det._is_empty(c)]
+        sref = max((det._mean_saturation(c) for c in live), default=0.0)
+        vref = max((det._mean_value(c) for c in live), default=0.0)
+        for i, (b, crop) in enumerate(zip(boxes, crops)):
             cv2.imwrite(os.path.join(args.out, f"{title}_{i}.png"), crop)
-            sat = float(cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)[:, :, 1].mean())
+            sat = det._mean_saturation(crop)
+            val = det._mean_value(crop)
             empty = det._is_empty(crop)
-            tops = lib.top_matches(crop, 3) if not empty else []
-            shown = ", ".join(f"{n}:{s:.2f}" for n, s in tops) or "(empty)"
-            flag = "" if (tops and tops[0][1] >= thr) else "  <-- below threshold"
-            print(f"  [{i}] sat={sat:5.1f}  {shown}{flag}")
+            pending = bool(picks and not empty and sref > 0 and vref > 0
+                           and config.LOCKED_REL_SATURATION > 0
+                           and config.LOCKED_REL_VALUE > 0
+                           and sat < config.LOCKED_REL_SATURATION * sref
+                           and val < config.LOCKED_REL_VALUE * vref)
+            tops = lib.top_matches(crop, 3) if not (empty or pending) else []
+            shown = ", ".join(f"{n}:{s:.2f}" for n, s in tops)
+            if empty:
+                shown = "(empty)"
+            elif pending:
+                shown = "NOT PICKED (grayed)"
+            flag = "" if (empty or pending or (tops and tops[0][1] >= thr)) \
+                   else "  <-- below threshold"
+            print(f"  [{i}] sat={sat:5.1f} val={val:5.1f}  {shown}{flag}")
         print()
 
-    dump("ally_pick", L.ally_picks, square, config.TEMPLATE_MATCH_THRESHOLD)
-    dump("enemy_pick", L.enemy_picks, square, config.ENEMY_MATCH_THRESHOLD)
+    dump("ally_pick", L.ally_picks, square, config.TEMPLATE_MATCH_THRESHOLD, picks=True)
+    dump("enemy_pick", L.enemy_picks, square, config.ENEMY_MATCH_THRESHOLD, picks=True)
     dump("ally_ban", L.ally_bans, circle, config.BAN_MATCH_THRESHOLD)
     dump("enemy_ban", L.enemy_bans, circle, config.BAN_MATCH_THRESHOLD)
     print(f"slot crops saved to ./{args.out}/  - check a few for alignment.")

@@ -134,6 +134,16 @@ TEMPLATE_DIR: str = "templates"               # square portraits -> ally+enemy P
 TEMPLATE_CIRCLE_DIR: str = "templates_circle" # circular icons   -> BANS
 TEMPLATE_ROLE_DIR: str = "templates_roles"    # optional lane-medal icons (ally)
 
+# TWO SIDE-SPECIFIC TEMPLATE SETS (optional override packs).  The ally avatars
+# and the enemy splash art face opposite directions and are lit differently, so
+# a single auto-flipped pack mis-reads some heroes.  Drop a crop taken from the
+# ALLY side here -> templates_ally/<hero>.png, and one from the ENEMY side here
+# -> templates_enemy/<hero>.png; each OVERRIDES the auto-oriented base template
+# for that hero on that side only.  Folders may hold just the few heroes that
+# need fixing (or be empty) - the base sets cover the rest.
+TEMPLATE_ALLY_DIR: str = "templates_ally"     # ally-side pick crops (override)
+TEMPLATE_ENEMY_DIR: str = "templates_enemy"   # enemy-side pick crops (override)
+
 # Detection must actually FIRE, so the fallback is on and thresholds are
 # moderate.  (Too strict + wrong templates earlier => nothing detected.)
 TEMPLATE_MATCH_THRESHOLD: float = 0.55        # ally picks (square)
@@ -157,6 +167,17 @@ SIGNATURE_DELTA: int = 6                      # per-slot change threshold for ca
 LOCKED_MIN_SATURATION: int = 0                # un-locked/grayed gate (0=off; was
                                               # over-filtering real picks)
 LOCKED_REL_BRIGHTNESS: float = 0.0            # relative-brightness gate (0=off)
+
+# "Not picked yet" detection.  A confirmed pick renders in FULL colour; a hero
+# that is only being hovered / not yet locked renders GRAYED (desaturated AND
+# dimmed).  We flag a slot as un-locked when it is BOTH below this fraction of
+# the most-saturated AND below this fraction of the brightest pick in the same
+# column - a relative test, so a naturally dark hero (Helcurt) or a pale one
+# (Sora) that IS locked still reads as picked.  Such slots are labelled
+# "NOT PICKED" instead of being matched to a (wrong) hero.  Set either to 0 to
+# disable that half of the gate (set both to 0 to turn the feature off).
+LOCKED_REL_SATURATION: float = 0.60           # grayed if sat  < 0.60 * column max
+LOCKED_REL_VALUE: float = 0.75                # ...AND bright < 0.75 * column max
 
 # Show the match % on each overlay label (so detection quality is visible and
 # tunable from a screenshot).  Hide any match below MIN_DISPLAY_CONFIDENCE so

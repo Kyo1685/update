@@ -193,6 +193,11 @@ class DraftState:
     enemy_pick_conf: List[float] = field(default_factory=lambda: [0.0] * 5)
     ally_ban_conf: List[float] = field(default_factory=lambda: [0.0] * 5)
     enemy_ban_conf: List[float] = field(default_factory=lambda: [0.0] * 5)
+    # Per-slot "occupied but not locked in yet" flags (grayed/hovered portraits).
+    # The detector sets these so the overlay can label the slot "NOT PICKED"
+    # instead of guessing a hero from a desaturated avatar.
+    ally_pending: List[bool] = field(default_factory=lambda: [False] * 5)
+    enemy_pending: List[bool] = field(default_factory=lambda: [False] * 5)
 
     def ally_names(self) -> List[str]:
         return [n for n in self.ally_picks if n]
