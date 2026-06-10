@@ -449,6 +449,22 @@ class DraftDetector:
     def _mean_saturation(crop: "np.ndarray") -> float:
         return float(cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)[:, :, 1].mean())
 
+    def _is_preselect(self, crop: "np.ndarray", sref: float, vref: float) -> bool:
+        """A hovered/preselected (not locked) slot renders DIMMED (and sometimes
+        desaturated) vs the locked picks in the same column.  Each relative gate
+        is independent - a config fraction of 0 disables it; all ENABLED gates
+        must trip.  Value (dimming) is the reliable signal; saturation is opt-in
+        because pale heroes (e.g. Melissa) are low-saturation even when locked."""
+        sat_f = config.LOCKED_REL_SATURATION
+        val_f = config.LOCKED_REL_VALUE
+        if sat_f <= 0 and val_f <= 0:
+            return False
+        if sat_f > 0 and not (sref > 0 and self._mean_saturation(crop) < sat_f * sref):
+            return False
+        if val_f > 0 and not (vref > 0 and self._mean_value(crop) < val_f * vref):
+            return False
+        return True
+
     @staticmethod
     def _is_grayed(crop: "np.ndarray") -> bool:
         # Un-locked / hovered slots render desaturated ("grayed"); a confirmed
@@ -517,13 +533,9 @@ class DraftDetector:
             for i, (box, crop) in enumerate(zip(boxes, crops)):
                 slot_id = f"{prefix}{i}"
                 empty = self._is_empty(crop)
-                # "Grayed / not picked yet": occupied but BOTH desaturated and
-                # dimmed relative to the locked picks in this same column.
-                is_pending = bool(
-                    lock_gate and not empty and sref > 0 and vref > 0
-                    and config.LOCKED_REL_SATURATION > 0 and config.LOCKED_REL_VALUE > 0
-                    and self._mean_saturation(crop) < config.LOCKED_REL_SATURATION * sref
-                    and self._mean_value(crop) < config.LOCKED_REL_VALUE * vref)
+                # Occupied but only HOVERED (preselected, dimmed) -> not a pick.
+                is_pending = bool(lock_gate and not empty
+                                  and self._is_preselect(crop, sref, vref))
                 if empty or is_pending:
                     # Don't run (or trust) a match on a blank/greyed slot; keep
                     # the slot cache coherent so a later lock-in re-detects.

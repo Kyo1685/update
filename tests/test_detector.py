@@ -221,21 +221,26 @@ def test_real_templates_have_no_named_confusions():
 
 REAL_DRAFT_TRUTH = {
     # Ground truth for tests/fixtures/real_draft/ - genuine 1366x768 screen
-    # crops captured by tools/diagnose.py from a live draft (sat/val, skins,
-    # ban-slash overlay and all).  ally_pick_4 is EXCLUDED: that capture's
-    # calibration box sat too low (the crop contains the player-name bar, not
-    # the avatar), so no matcher can honestly resolve it - re-calibration is
-    # the fix, and the slot is kept here only to document the case.
-    "ally_pick": ["Nana", "Melissa", "Lukas", None, "EXCLUDED:Helcurt"],
+    # crops captured by tools/diagnose.py from a live draft (real skins, the
+    # red ban-slash overlay, tiny 51px ban icons and all).
+    #   - ally_pick[3] is a SQUAD-LOGO placeholder slot -> must stay blank.
+    #   - ally_pick[4] is EXCLUDED: that capture's box sat ~25px too low so the
+    #     crop is the player-name bar ("BD 'Walking Fanny'"), not Helcurt's
+    #     face.  No matcher can fix pixels that aren't in the box - the fix is
+    #     re-calibrating that one slot.  Kept here only to document it.
+    #   - "Sora" is a 2025 hero with NO portrait in any public DB, so its
+    #     template is the user's own ban crop (the only Sora image that exists).
+    "ally_pick": ["Nana", "Melissa", "Lukas", None, "EXCLUDED:miscalibrated"],
     "enemy_pick": ["Vexana", "Johnson", "Layla", None, None],
-    "ally_ban": ["Kalea", "Harley", "Gloo", "Hilda", "Minsithar"],
+    "ally_ban": ["Sora", "Harley", "Gloo", "Hilda", "Minsithar"],
     "enemy_ban": ["Chou", "Selena", "Saber", "Hayabusa", "Miya"],
 }
 
 
 def test_real_screen_crops_ground_truth():
-    """End-to-end on REAL screen crops: 19/20 slots must resolve exactly
-    (picks, bans, skinned heroes via histogram, empties suppressed)."""
+    """End-to-end on REAL screen crops: 19/20 slots resolve exactly (picks,
+    bans, skinned heroes via histogram, Sora's only-source crop, empties +
+    the squad-logo slot suppressed).  The 20th documents a mis-calibrated box."""
     if not _have_cv() or not _templates_present():
         print("(skipped: cv2/templates absent)"); return
     fdir = os.path.join(ROOT, "tests", "fixtures", "real_draft")
@@ -246,6 +251,7 @@ def test_real_screen_crops_ground_truth():
             "enemy_pick": (enemy, config.ENEMY_MATCH_THRESHOLD),
             "ally_ban": (ban, config.BAN_MATCH_THRESHOLD),
             "enemy_ban": (ban, config.BAN_MATCH_THRESHOLD)}
+    correct = 0
     for grp, truths in REAL_DRAFT_TRUTH.items():
         lib, thr = libs[grp]
         for i, want in enumerate(truths):
@@ -260,6 +266,8 @@ def test_real_screen_crops_ground_truth():
                 n, _s, m = lib.match(crop, thr)
                 got = None if m == "low" else n   # app suppresses low-confidence
             assert got == want, f"{grp}[{i}]: got {got}, want {want}"
+            correct += 1
+    assert correct == 19, f"expected 19 graded slots, got {correct}"
 
 
 def test_ally_circular_orientation_not_reflipped():
