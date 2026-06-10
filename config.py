@@ -144,13 +144,26 @@ TEMPLATE_ROLE_DIR: str = "templates_roles"    # optional lane-medal icons (ally)
 TEMPLATE_ALLY_DIR: str = "templates_ally"     # ally-side pick crops (override)
 TEMPLATE_ENEMY_DIR: str = "templates_enemy"   # enemy-side pick crops (override)
 
-# Detection must actually FIRE, so the fallback is on and thresholds are
-# moderate.  (Too strict + wrong templates earlier => nothing detected.)
-TEMPLATE_MATCH_THRESHOLD: float = 0.55        # ally picks (square)
+# Thresholds tuned on real screen crops (see tests/test_detector.py ground-
+# truth test): true heroes match 0.6-0.93 by template, impostor noise tops out
+# ~0.59, so 0.60 lets a wrong same-size art (e.g. a SKINNED avatar) fall
+# through to the colour-histogram instead of mislabelling by template.
+TEMPLATE_MATCH_THRESHOLD: float = 0.60        # ally picks (circular)
 ENEMY_MATCH_THRESHOLD: float = 0.50           # enemy picks (square splash)
 BAN_MATCH_THRESHOLD: float = 0.45             # bans (small circular)
 HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback
 USE_HISTOGRAM_FALLBACK: bool = True           # keep detection robust
+
+# ZOOM-TOLERANT MATCHING.  The live UI can frame the art slightly tighter or
+# looser than the source icon (ring borders, ban slash, calibration slop), so
+# each template is also tried as a mild centre-crop zoom-in and a mild
+# scale-down, best score wins.  Keep these MILD: sweeping the real screen crops
+# showed correctly-rendered heroes peak at native size (zoom 1.0), while deep
+# factors (<0.8) only inflate impostor noise (e.g. Ixia outscoring Nana).
+#   MATCH_ZOOM_CROPS  - centre-crop factors (target framed tighter than icon)
+#   MATCH_SCALES_DOWN - downscale factors (face smaller / slightly offset)
+MATCH_ZOOM_CROPS: tuple = (0.85,)
+MATCH_SCALES_DOWN: tuple = (0.9,)
 
 # Circular avatars: empirically the draft does NOT mirror them between sides -
 # the ally pick column and the ban row both show the pack art as-is (verified by
@@ -170,19 +183,21 @@ LOCKED_MIN_SATURATION: int = 0                # un-locked/grayed gate (0=off; wa
                                               # over-filtering real picks)
 LOCKED_REL_BRIGHTNESS: float = 0.0            # relative-brightness gate (0=off)
 
-# "Not picked yet" detection.  A confirmed pick renders in FULL colour; a hero
-# that is only being hovered / not yet locked renders GRAYED (desaturated AND
-# dimmed).  When enabled we flag a slot as un-locked when it is BOTH below this
-# fraction of the most-saturated AND below this fraction of the brightest pick
-# in the same column, and label it "NOT PICKED" instead of guessing a hero.
+# "Not picked yet" / PRESELECT detection.  A hovered (preselected, not locked)
+# slot is flagged when it falls below this fraction of the brightest (and/or
+# most-saturated) pick in the same column, and labelled "NOT PICKED".  Each
+# gate is independent: a fraction of 0 disables it.
 #
-# OFF BY DEFAULT (both 0): on real portraits the per-hero saturation/brightness
-# varies so much that a relative gate can hide a genuine pick (e.g. a locked
-# Melissa reading as NOT PICKED).  It needs per-setup tuning, so opt in only
-# after checking the live sat/val numbers from `python tools/diagnose.py`
-# (set e.g. 0.55 / 0.65 and lower until your hovered slot - and ONLY it - trips).
-LOCKED_REL_SATURATION: float = 0.0            # grayed if sat  < frac * column max
-LOCKED_REL_VALUE: float = 0.0                 # ...AND bright < frac * column max
+# OFF BY DEFAULT - and it CANNOT be made reliable from the portrait alone:
+# measured on real crops, a preselected Helcurt is val=87, but Helcurt's locked
+# art is val=83 (it is simply a DARK hero), and 51 of 132 heroes sit below
+# val=110.  So any value gate that catches the hover also wrongly hides those
+# dark heroes when they are genuinely locked.  The real preselect cue lives in
+# the slot BORDER/animation, not the face - leave this off and fix a hovered
+# slot by reading the right hero instead.  (Enable only if YOUR draft visibly
+# dims the whole portrait and you've checked diagnose's sat/val numbers.)
+LOCKED_REL_SATURATION: float = 0.0            # grayed if sat < frac * column max
+LOCKED_REL_VALUE: float = 0.0                 # preselect if val < frac*column max
 
 # Show the match % on each overlay label (so detection quality is visible and
 # tunable from a screenshot).  Hide any match below MIN_DISPLAY_CONFIDENCE so
