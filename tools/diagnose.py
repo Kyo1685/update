@@ -65,18 +65,29 @@ def main() -> int:
     config.apply_region(region, layout)
     L = config.LAYOUT
 
+    # Build the SAME ally / enemy / ban libraries the live app uses, so this
+    # diagnostic reflects exactly what the overlay decides (ally picks =
+    # circular un-flipped + overrides, enemy picks = square + overrides, bans =
+    # circular un-flipped).
+    ally_flip = not config.PACK_FACES_ALLY
     square = TemplateLibrary.from_dir(config.TEMPLATE_DIR)
-    circle = TemplateLibrary.from_dir(config.TEMPLATE_CIRCLE_DIR, circular=True)
+    circle = TemplateLibrary.from_dir(config.TEMPLATE_CIRCLE_DIR,
+                                      circular=True, flip=ally_flip)
+    a_ovr = TemplateLibrary.from_dir(config.TEMPLATE_ALLY_DIR, circular=True)
+    e_ovr = TemplateLibrary.from_dir(config.TEMPLATE_ENEMY_DIR)
+    n_a = circle.overlay(a_ovr) if len(a_ovr) else 0
+    n_e = square.overlay(e_ovr) if len(e_ovr) else 0
     print(f"region {region['width']}x{region['height']} | "
-          f"{len(square)} square + {len(circle)} circular templates\n")
+          f"ally/ban=circular:{len(circle)}(+{n_a} ovr)  "
+          f"enemy=square:{len(square)}(+{n_e} ovr)  "
+          f"PACK_FACES_ALLY={config.PACK_FACES_ALLY} histogram_fallback="
+          f"{config.USE_HISTOGRAM_FALLBACK}\n")
     os.makedirs(args.out, exist_ok=True)
     det = DraftDetector(HeroDB.load("heroes.json"))
 
     def dump(title, boxes, lib, thr, picks=False):
         print(f"== {title} (threshold {thr}) ==")
         crops = [det._crop(frame, b) for b in boxes]
-        # Column reference levels (same relative gate the live detector uses), so
-        # the "NOT PICKED" verdict + numbers here are exactly what you'd tune to.
         live = [c for c in crops if not det._is_empty(c)]
         sref = max((det._mean_saturation(c) for c in live), default=0.0)
         vref = max((det._mean_value(c) for c in live), default=0.0)
@@ -90,22 +101,26 @@ def main() -> int:
                            and config.LOCKED_REL_VALUE > 0
                            and sat < config.LOCKED_REL_SATURATION * sref
                            and val < config.LOCKED_REL_VALUE * vref)
-            tops = lib.top_matches(crop, 3) if not (empty or pending) else []
-            shown = ", ".join(f"{n}:{s:.2f}" for n, s in tops)
             if empty:
-                shown = "(empty)"
-            elif pending:
-                shown = "NOT PICKED (grayed)"
-            flag = "" if (empty or pending or (tops and tops[0][1] >= thr)) \
-                   else "  <-- below threshold"
-            print(f"  [{i}] sat={sat:5.1f} val={val:5.1f}  {shown}{flag}")
+                print(f"  [{i}] sat={sat:5.1f} val={val:5.1f}  (empty)")
+                continue
+            if pending:
+                print(f"  [{i}] sat={sat:5.1f} val={val:5.1f}  NOT PICKED (grayed)")
+                continue
+            tops = lib.top_matches(crop, 3)
+            # The ACTUAL decision the overlay would make (incl. histogram fallback).
+            name, score, method = lib.match(crop, thr)
+            decided = f"{name}:{score:.2f}({method})" if name else "(no match)"
+            top3 = ", ".join(f"{n}:{s:.2f}" for n, s in tops)
+            print(f"  [{i}] sat={sat:5.1f} val={val:5.1f}  ->{decided:24} | top3: {top3}")
         print()
 
-    dump("ally_pick", L.ally_picks, square, config.TEMPLATE_MATCH_THRESHOLD, picks=True)
+    dump("ally_pick", L.ally_picks, circle, config.TEMPLATE_MATCH_THRESHOLD, picks=True)
     dump("enemy_pick", L.enemy_picks, square, config.ENEMY_MATCH_THRESHOLD, picks=True)
     dump("ally_ban", L.ally_bans, circle, config.BAN_MATCH_THRESHOLD)
     dump("enemy_ban", L.enemy_bans, circle, config.BAN_MATCH_THRESHOLD)
-    print(f"slot crops saved to ./{args.out}/  - check a few for alignment.")
+    print(f"slot crops saved to ./{args.out}/  - check a few for alignment, "
+          f"and look for '(histogram)' decisions where a template should win.")
     return 0
 
 
