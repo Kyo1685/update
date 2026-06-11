@@ -127,6 +127,68 @@ def test_hist_confirmed_fallback_without_seeds():
             assert resolved[f"{grp}_{i}"] == want
 
 
+def test_full_screen_1366x768_end_to_end():
+    """THE user-setup test: a full 1366x768 desktop frame (their resolution,
+    100% scaling), a layout shaped like their calibration (ally column left,
+    enemy column right, ban rows top, native crop sizes), the REAL screen
+    crops pasted in, and the REAL DraftDetector + libraries exactly as
+    main.start_live builds them.  Every pick and ban must resolve - Johnson
+    included - and nothing may be mislabelled."""
+    if not _have_cv() or not _templates_present():
+        print("(skipped: cv2/templates absent)"); return
+    fdir = os.path.join(ROOT, "tests", "fixtures", "real_draft")
+    if not os.path.isdir(fdir):
+        print("(skipped: real_draft fixtures absent)"); return
+
+    W, H = 1366, 768                      # the user's exact display
+    frame = np.full((H, W, 3), 17, np.uint8)
+    img = {f"{g}_{i}": cv2.imread(os.path.join(fdir, f"{g}_{i}.png"))
+           for g in ("ally_pick", "enemy_pick", "ally_ban", "enemy_ban")
+           for i in range(5)}
+
+    def col(prefix, x, y0, pitch):
+        boxes = []
+        for i in range(5):
+            c = img[f"{prefix}_{i}"]
+            h, w = c.shape[:2]
+            y = y0 + i * pitch
+            frame[y:y + h, x:x + w] = c
+            boxes.append(config.Box(x, y, w, h))
+        return boxes
+
+    def row(prefix, y, x0, pitch):
+        boxes = []
+        for i in range(5):
+            c = img[f"{prefix}_{i}"]
+            h, w = c.shape[:2]
+            x = x0 + i * pitch
+            frame[y:y + h, x:x + w] = c
+            boxes.append(config.Box(x, y, w, h))
+        return boxes
+
+    layout = config.Layout(
+        ally_picks=col("ally_pick", 96, 168, 104),     # left column, 82px boxes
+        enemy_picks=col("enemy_pick", 1196, 168, 100),  # right column, 84px boxes
+        ally_bans=row("ally_ban", 100, 80, 60),         # top-left ban row
+        enemy_bans=row("enemy_ban", 100, 1000, 60),     # top-right ban row
+    )
+    ally, enemy, ban = _build_side_libs()
+    det = DraftDetector(DB, ally_library=ally, enemy_library=enemy,
+                        ban_library=ban, layout=layout)
+    s = det.detect(frame)
+
+    assert s.enemy_picks[1] == "Johnson", \
+        f"JOHNSON failed on the full-screen test: {s.enemy_picks}"
+    assert s.ally_picks == ["Nana", "Melissa", "Lukas", None, None], s.ally_picks
+    assert s.enemy_picks == ["Vexana", "Johnson", "Layla", None, None], s.enemy_picks
+    assert s.ally_bans == ["Sora", "Harley", "Gloo", "Hilda", "Minsithar"], s.ally_bans
+    assert s.enemy_bans == ["Chou", "Selena", "Saber", "Hayabusa", "Miya"], s.enemy_bans
+    # And the labels must SURVIVE a global animation pulse (sticky slots).
+    pulsed = np.clip(frame.astype(np.int16) + 12, 0, 255).astype(np.uint8)
+    s2 = det.detect(pulsed)
+    assert s2.enemy_picks[1] == "Johnson" and s2.ally_picks[:3] == s.ally_picks[:3]
+
+
 def test_auto_learn_persists_confident_match(tmp_path=None):
     if not _have_cv():
         return
