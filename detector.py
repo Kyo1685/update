@@ -202,6 +202,17 @@ class TemplateLibrary:
         # MATCH_SCALES_DOWN): the live UI frames the same art at a different
         # zoom than the icon, so the best score across variants is used.
         self._vars: Dict[str, list] = {}
+        # Tiny thumbnails for the coarse candidate pass (speed: stage 1 of 2).
+        self._coarse: Dict[str, "np.ndarray"] = {}
+        # PRIOR art per hero (canon-only, capped), kept when a learned/override
+        # crop replaces the primary: scoring takes the best across all sources,
+        # so a bad replacement can only ADD evidence, never destroy the
+        # structural anchors (a mis-cropped Johnson seed must not unmake him -
+        # his downloaded base AND side-override art both stay live).
+        self.ALT_KEEP = 2
+        self._vars_alt: Dict[str, list] = {}      # list of variant-lists
+        self._coarse_alt: Dict[str, list] = {}    # list of coarse thumbnails
+        self._hist_alt: Dict[str, list] = {}      # list of histograms
         # When set, confidently-matched crops are PERSISTED here (and added
         # live), so the same hero self-matches ~1.0 next time - the "memory".
         self.learn_dir: Optional[str] = None
@@ -210,13 +221,16 @@ class TemplateLibrary:
         # stricter per-group threshold for downloaded art.
         self._learned: set = set()
 
-    def maybe_learn(self, name: str, crop: "np.ndarray", score: float) -> bool:
-        """Persist a confidently TEMPLATE-matched crop as this hero's template,
-        so future appearances self-match.  An existing memory is REFRESHED when
+    def maybe_learn(self, name: str, crop: "np.ndarray", score: float,
+                    min_score: Optional[float] = None) -> bool:
+        """Persist a confidently-matched crop as this hero's template, so
+        future appearances self-match.  An existing memory is REFRESHED when
         the match is confident but imperfect (score below LEARN_REFRESH_BELOW:
         the screen drifted since it was saved), and left alone when it is
-        already near-identical.  Returns True if the file was (re)written."""
-        if not self.learn_dir or name is None or score < config.LEARN_MIN_SCORE:
+        already near-identical.  ``min_score`` overrides the default gate (used
+        by the confirmed-colour path).  Returns True if the file was written."""
+        gate = config.LEARN_MIN_SCORE if min_score is None else min_score
+        if not self.learn_dir or name is None or score < gate:
             return False
         path = os.path.join(self.learn_dir, f"{name.strip().lower()}.png")
         if os.path.exists(path) and score >= config.LEARN_REFRESH_BELOW:
@@ -224,7 +238,9 @@ class TemplateLibrary:
         try:
             os.makedirs(self.learn_dir, exist_ok=True)
             cv2.imwrite(path, crop)
-            self.add(name, crop)                      # refine the live library
+            # Refreshing an already-learned crop must not demote the obsolete
+            # one into the anchors; first-time learns preserve their predecessor.
+            self.add(name, crop, demote=(name not in self._learned))
             self._learned.add(name)
             return True
         except Exception:
@@ -252,11 +268,31 @@ class TemplateLibrary:
         stem = os.path.splitext(os.path.basename(fp))[0]
         return stem.replace("_", " ").replace("-", "-").strip().title()
 
-    def add(self, name: str, bgr: "np.ndarray") -> None:
+    def add(self, name: str, bgr: "np.ndarray", demote: bool = True) -> None:
+        if demote:
+            self._demote(name)                # keep prior art as an anchor
         canon = self._prep_tmpl(bgr)
         self._tmpl[name] = canon
         self._vars[name] = self._make_variants(canon)
+        self._coarse[name] = cv2.resize(canon, (config.COARSE_SIZE,) * 2,
+                                        interpolation=cv2.INTER_AREA)
         self._hist[name] = self._prep_hist(bgr)
+
+    def _demote(self, name: str) -> None:
+        """Before replacing a hero's primary art, append its FULL variant list
+        to the anchors (oldest kept first, capped at ALT_KEEP).  Affordable
+        because the fine stage only ever scores the coarse candidates."""
+        if name not in self._vars:
+            return
+        alts = self._vars_alt.setdefault(name, [])
+        if len(alts) < self.ALT_KEEP:
+            alts.append(self._vars[name])
+            self._coarse_alt.setdefault(name, []).append(self._coarse[name])
+            self._hist_alt.setdefault(name, []).append(self._hist[name])
+        else:                                  # keep first anchor, roll the rest
+            alts[-1] = self._vars[name]
+            self._coarse_alt[name][-1] = self._coarse[name]
+            self._hist_alt[name][-1] = self._hist[name]
 
     @classmethod
     def _make_variants(cls, canon: "np.ndarray") -> list:
@@ -289,7 +325,12 @@ class TemplateLibrary:
             if name not in self._tmpl:
                 self._tmpl[name] = tmpl
                 self._vars[name] = other._vars[name]
+                self._coarse[name] = other._coarse[name]
                 self._hist[name] = other._hist[name]
+                if name in other._vars_alt:
+                    self._vars_alt[name] = other._vars_alt[name]
+                    self._coarse_alt[name] = other._coarse_alt[name]
+                    self._hist_alt[name] = other._hist_alt[name]
                 added += 1
         return added
 
@@ -300,8 +341,10 @@ class TemplateLibrary:
         ``learned=True`` marks the entries as screen-native (accepted at the
         lower LEARNED_MATCH_THRESHOLD).  Returns how many entries it wrote."""
         for name, tmpl in other._tmpl.items():
+            self._demote(name)                # keep the original art as alt
             self._tmpl[name] = tmpl
             self._vars[name] = other._vars[name]
+            self._coarse[name] = other._coarse[name]
             self._hist[name] = other._hist[name]
             if learned:
                 self._learned.add(name)
@@ -360,17 +403,10 @@ class TemplateLibrary:
             return None, 0.0, "none"
 
         # COLOUR normalised cross-correlation across each template's zoom/scale
-        # variants (the live UI frames the art at a different zoom than the
-        # icon).  Templates are already oriented per side; the optional
-        # MIRROR_INVARIANT fallback also tests the mirrored target.
-        target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
-                            (self.CANON + self.PAD, self.CANON + self.PAD),
-                            interpolation=cv2.INTER_AREA)
-        target_flip = cv2.flip(target, 1) if config.MIRROR_INVARIANT else None
-
-        scores = [(name, self._best_score(target, name, target_flip))
-                  for name in self._tmpl]
-        scores.sort(key=lambda kv: kv[1], reverse=True)
+        # variants, in two stages: a cheap coarse pass over tiny thumbnails
+        # narrows 132 heroes to MATCH_CANDIDATES, then full-resolution variant
+        # matching runs only on those (plus every learned hero).
+        scores = self._fine_scores(crop_bgr)
         best_name, best_score = scores[0]
         # Screen-native (learned) art is near-certain even at a moderate score,
         # so it gets the lower acceptance bar; downloaded art keeps the strict one.
@@ -391,6 +427,9 @@ class TemplateLibrary:
             h_name, h_score = None, -1.0
             for name, hist in self._hist.items():
                 s = float(cv2.compareHist(crop_hist, hist, cv2.HISTCMP_CORREL))
+                for alt in self._hist_alt.get(name, ()):
+                    s = max(s, float(cv2.compareHist(crop_hist, alt,
+                                                     cv2.HISTCMP_CORREL)))
                 if s > h_score:
                     h_name, h_score = name, s
             plausible = {n for n, _ in scores[:config.HIST_CONFIRM_TOPK]}
@@ -412,11 +451,52 @@ class TemplateLibrary:
         # --accept-low callers use it; by default this becomes "no hero".
         return best_name, max(best_score, 0.0), "low"
 
+    def _target(self, crop_bgr: "np.ndarray") -> "np.ndarray":
+        return cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
+                          (self.CANON + self.PAD, self.CANON + self.PAD),
+                          interpolation=cv2.INTER_AREA)
+
+    def _fine_scores(self, crop_bgr: "np.ndarray"):
+        """Sorted (name, score) for a crop: coarse thumbnail pass selects the
+        candidates, full variant matching ranks them.  Learned heroes are
+        always fine-evaluated."""
+        target = self._target(crop_bgr)
+        target_flip = cv2.flip(target, 1) if config.MIRROR_INVARIANT else None
+        names = list(self._tmpl)
+        if config.MATCH_CANDIDATES and len(names) > config.MATCH_CANDIDATES:
+            ct = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
+                            (config.COARSE_SIZE + config.COARSE_PAD,) * 2,
+                            interpolation=cv2.INTER_AREA)
+            def cscore(n):
+                s = float(cv2.matchTemplate(ct, self._coarse[n],
+                                            cv2.TM_CCOEFF_NORMED).max())
+                for alt in self._coarse_alt.get(n, ()):
+                    s = max(s, float(cv2.matchTemplate(
+                        ct, alt, cv2.TM_CCOEFF_NORMED).max()))
+                return s
+            coarse = sorted(((cscore(n), n) for n in names), reverse=True)
+            keep = {n for _, n in coarse[:config.MATCH_CANDIDATES]}
+            keep |= (self._learned & set(names))
+            names = [n for n in names if n in keep]
+        scores = [(n, self._best_score(target, n, target_flip)) for n in names]
+        scores.sort(key=lambda kv: kv[1], reverse=True)
+        return scores
+
+    def score_one(self, crop_bgr: "np.ndarray", name: str) -> float:
+        """Score a single known hero against a crop (sticky-slot verification)."""
+        if name not in self._tmpl:
+            return 0.0
+        return self._best_score(self._target(crop_bgr), name)
+
     def _best_score(self, target: "np.ndarray", name: str,
                     target_flip: "np.ndarray" = None) -> float:
-        """Best correlation of any variant of ``name`` against the target."""
+        """Best correlation of any variant of ``name`` (primary AND preserved
+        original art) against the target."""
         best = -1.0
-        for tmpl in self._vars.get(name) or (self._tmpl[name],):
+        variants = list(self._vars.get(name) or (self._tmpl[name],))
+        for alt_vars in self._vars_alt.get(name, ()):   # prior-art anchors
+            variants += alt_vars
+        for tmpl in variants:
             s = float(cv2.matchTemplate(target, tmpl, cv2.TM_CCOEFF_NORMED).max())
             if target_flip is not None:
                 s = max(s, float(cv2.matchTemplate(
@@ -427,17 +507,10 @@ class TemplateLibrary:
 
     def top_matches(self, crop_bgr: "np.ndarray", n: int = 3):
         """Top-n (name, score) template matches for a crop - for diagnostics.
-        Uses the same variant scoring as ``match`` so the numbers agree."""
+        Uses the same two-stage scoring as ``match`` so the numbers agree."""
         if not self._tmpl:
             return []
-        target = cv2.resize(self._inscribe(crop_bgr[:, :, :3]),
-                            (self.CANON + self.PAD, self.CANON + self.PAD),
-                            interpolation=cv2.INTER_AREA)
-        target_flip = cv2.flip(target, 1) if config.MIRROR_INVARIANT else None
-        scores = [(name, self._best_score(target, name, target_flip))
-                  for name in self._tmpl]
-        scores.sort(key=lambda kv: kv[1], reverse=True)
-        return scores[:n]
+        return self._fine_scores(crop_bgr)[:n]
 
 
 # ===========================================================================
@@ -547,6 +620,11 @@ class DraftDetector:
         # and un-locked/hovered (grayed) slots so only confirmed picks show.
         if self._is_empty(crop) or self._is_grayed(crop):
             result_name, conf = None, 0.0
+        elif (config.STICKY_SLOTS and cache is not None and cache.name
+                and library.score_one(crop, cache.name) >= config.STICKY_FAST):
+            # Fast path: the held hero still clearly matches this (animated)
+            # crop - keep it without re-scanning the whole roster.
+            result_name, conf = cache.name, cache.confidence
         else:
             raw_name, conf, method = library.match(crop, threshold)
             if method == "low" and not self.accept_low:
@@ -556,11 +634,26 @@ class DraftDetector:
             else:
                 hero = self.db.get(raw_name)
                 result_name = hero.name if hero else raw_name
-                # REMEMBER: a confident TEMPLATE hit is trustworthy, so persist
-                # this exact on-screen crop as the hero's template for next time.
-                if (config.AUTO_LEARN and method == "template"
-                        and result_name and conf >= config.LEARN_MIN_SCORE):
-                    library.maybe_learn(result_name, crop, conf)
+                # REMEMBER: a confident hit is persisted as this hero's
+                # template for next time - template hits at the strict gate,
+                # confirmed-colour hits at theirs (so e.g. Johnson becomes
+                # template-solid after his first confirmed sighting).
+                if config.AUTO_LEARN and result_name:
+                    if method == "template" and conf >= config.LEARN_MIN_SCORE:
+                        library.maybe_learn(result_name, crop, conf)
+                    elif (method == "hist-confirmed"
+                          and conf >= config.LEARN_CONFIRMED_MIN):
+                        library.maybe_learn(result_name, crop, conf,
+                                            min_score=config.LEARN_CONFIRMED_MIN)
+            # STICKY: draft animations pulse the pixels, so a borderline hero
+            # flickers if every frame re-decides from scratch.  Hold the
+            # previous name while the slot stays occupied AND that hero still
+            # resembles the crop; a real content change (browsing another
+            # hero) or an emptied slot releases the hold.
+            if (result_name is None and config.STICKY_SLOTS
+                    and cache is not None and cache.name
+                    and library.score_one(crop, cache.name) >= config.STICKY_MIN):
+                result_name, conf = cache.name, cache.confidence
 
         self._cache[slot_id] = _SlotCache(signature=sig, name=result_name,
                                           confidence=conf)

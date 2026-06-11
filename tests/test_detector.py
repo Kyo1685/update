@@ -149,7 +149,10 @@ def test_auto_learn_persists_confident_match(tmp_path=None):
     assert lib2.maybe_learn("Helcurt", art, 0.99) is False
 
 
-def test_template_overlay_replaces_base():
+def test_template_overlay_adds_without_destroying():
+    """An override/learned crop becomes the primary art but the PRIOR art is
+    kept as an anchor: both the new and the old rendering of the hero must
+    still self-match strongly (a bad replacement can only add evidence)."""
     if not _have_cv():
         return
     base = TemplateLibrary()
@@ -159,11 +162,10 @@ def test_template_overlay_replaces_base():
     ovr = TemplateLibrary()
     ovr.add("Gord", b)
     assert base.overlay(ovr) == 1
-    assert len(base) == 1                    # replaced, not appended
-    # The override art now self-matches better than the old base art.
-    score_b = base.top_matches(b, 1)[0][1]
-    score_a = base.top_matches(a, 1)[0][1]
-    assert score_b > score_a
+    assert len(base) == 1                    # one hero entry, multi-source art
+    score_b = base.top_matches(b, 1)[0][1]   # new art self-matches...
+    score_a = base.top_matches(a, 1)[0][1]   # ...and the old art STILL does
+    assert score_b > 0.9 and score_a > 0.9
 
 
 def _vivid_patch(h, w, hue=110):
@@ -254,9 +256,12 @@ def _build_side_libs():
         ally.overlay(a_ovr)
     if len(e_ovr):
         enemy.overlay(e_ovr)
-    # Highest-priority learned memory (same order as main.start_live).
-    learned = TemplateLibrary.from_dir(f(config.TEMPLATE_LEARNED_DIR), circular=True)
-    learned_e = TemplateLibrary.from_dir(f(config.TEMPLATE_LEARNED_ENEMY_DIR))
+    # Highest-priority learned memory (same order as main.start_live), but
+    # from FROZEN fixture seeds: the live templates_learned/ folders are
+    # auto-refreshed during play, so tests must not depend on them.
+    learned = TemplateLibrary.from_dir(
+        f("tests/fixtures/learned_circle"), circular=True)
+    learned_e = TemplateLibrary.from_dir(f("tests/fixtures/learned_enemy"))
     if len(learned):
         ally.overlay(learned, learned=True)
     if len(learned_e):

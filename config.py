@@ -170,6 +170,30 @@ USE_HISTOGRAM_FALLBACK: bool = False          # True = allow fuzzy colour fallba
 HIST_CONFIRM_FALLBACK: bool = True
 HIST_CONFIRM_MIN: float = 0.60                # histogram winner must score this
 HIST_CONFIRM_TOPK: int = 3                    # ...and sit in template top-K
+# A hero recovered by the confirmed-colour path is memorised too (it then
+# matches by template forever after) when its histogram score is at least this.
+LEARN_CONFIRMED_MIN: float = 0.72
+
+# SPEED: coarse-to-fine matching.  Stage 1 scores every hero on tiny 32px
+# thumbnails (cheap) and keeps the best MATCH_CANDIDATES; stage 2 runs the
+# full-resolution variant matching only on those.  ~10x faster per slot with
+# identical decisions (learned heroes are always fine-evaluated).  0 = off.
+MATCH_CANDIDATES: int = 16
+COARSE_SIZE: int = 32                         # thumbnail edge for stage 1
+COARSE_PAD: int = 4                           # search slack for stage 1
+
+# REFINEMENT: sticky slots.  Draft animations pulse the portrait pixels, so a
+# borderline hero (e.g. Johnson) can flicker in and out as each frame re-
+# decides from scratch.  Once a slot has a confident name, HOLD it until the
+# slot empties - re-verified every frame: the held hero's own template must
+# still score STICKY_MIN on the current crop, so a real content change (hover
+# browsing a different hero) releases the hold immediately.
+STICKY_SLOTS: bool = True
+STICKY_MIN: float = 0.35
+# Fast path: when an identified slot's pixels change (animation pulse), first
+# re-verify just the held hero; at/above this score keep it WITHOUT re-scanning
+# all 132 heroes.  Below it, fall through to the full match.
+STICKY_FAST: float = 0.60
 
 # REMEMBER WHAT IT SEES.  Downloaded portraits don't match every on-screen
 # avatar (skins, ring borders, the exact in-game render), so the detector
