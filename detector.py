@@ -185,7 +185,8 @@ class ScreenCapturer:
 # ===========================================================================
 class TemplateLibrary:
     CANON = 96          # canonical avatar size used for correlation
-    PAD = 10            # search slack so small mis-alignment still matches
+    PAD = 12            # search slack so box drift between sessions still
+                        # matches (16+ lets impostors latch onto garbage crops)
 
     def __init__(self, circular: bool = False, flip: bool = False):
         _require_cv()
@@ -204,20 +205,27 @@ class TemplateLibrary:
         # When set, confidently-matched crops are PERSISTED here (and added
         # live), so the same hero self-matches ~1.0 next time - the "memory".
         self.learn_dir: Optional[str] = None
+        # Names whose template came off THIS screen (learned/seeded crops);
+        # they are accepted at config.LEARNED_MATCH_THRESHOLD instead of the
+        # stricter per-group threshold for downloaded art.
+        self._learned: set = set()
 
     def maybe_learn(self, name: str, crop: "np.ndarray", score: float) -> bool:
-        """Persist a confidently TEMPLATE-matched crop as this hero's template
-        (once), so future appearances self-match.  No-op without a learn_dir,
-        below the score gate, or if already remembered.  Returns True if saved."""
+        """Persist a confidently TEMPLATE-matched crop as this hero's template,
+        so future appearances self-match.  An existing memory is REFRESHED when
+        the match is confident but imperfect (score below LEARN_REFRESH_BELOW:
+        the screen drifted since it was saved), and left alone when it is
+        already near-identical.  Returns True if the file was (re)written."""
         if not self.learn_dir or name is None or score < config.LEARN_MIN_SCORE:
             return False
         path = os.path.join(self.learn_dir, f"{name.strip().lower()}.png")
-        if os.path.exists(path):
-            return False                              # already remembered
+        if os.path.exists(path) and score >= config.LEARN_REFRESH_BELOW:
+            return False                              # memory already fresh
         try:
             os.makedirs(self.learn_dir, exist_ok=True)
             cv2.imwrite(path, crop)
             self.add(name, crop)                      # refine the live library
+            self._learned.add(name)
             return True
         except Exception:
             return False
@@ -285,15 +293,18 @@ class TemplateLibrary:
                 added += 1
         return added
 
-    def overlay(self, other: "TemplateLibrary") -> int:
+    def overlay(self, other: "TemplateLibrary", learned: bool = False) -> int:
         """Add OR replace every hero in ``other`` (a side-specific override
         pack).  Unlike ``merge_missing`` this wins ties, so a hand-cropped
         ally/enemy template takes precedence over the auto-oriented base one.
-        Returns how many entries it wrote."""
+        ``learned=True`` marks the entries as screen-native (accepted at the
+        lower LEARNED_MATCH_THRESHOLD).  Returns how many entries it wrote."""
         for name, tmpl in other._tmpl.items():
             self._tmpl[name] = tmpl
             self._vars[name] = other._vars[name]
             self._hist[name] = other._hist[name]
+            if learned:
+                self._learned.add(name)
         return len(other._tmpl)
 
     # ----- preprocessing ---------------------------------------------------
@@ -362,7 +373,12 @@ class TemplateLibrary:
             score = self._best_score(target, name, target_flip)
             if score > best_score:
                 best_name, best_score = name, score
-        if best_score >= threshold:
+        # Screen-native (learned) art is near-certain even at a moderate score,
+        # so it gets the lower acceptance bar; downloaded art keeps the strict one.
+        eff_threshold = threshold
+        if best_name in self._learned:
+            eff_threshold = min(threshold, config.LEARNED_MATCH_THRESHOLD)
+        if best_score >= eff_threshold:
             return best_name, best_score, "template"
 
         # Optional colour-histogram fallback (off by default - strict matching).
