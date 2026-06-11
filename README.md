@@ -138,10 +138,33 @@ avatars**, whose art no official source carries).
 
 Matching is **zoom-tolerant** (`MATCH_ZOOM_CROPS` / `MATCH_SCALES_DOWN`): each
 template is also tried slightly zoomed-in and scaled-down, so ring borders, the
-red ban-slash and small calibration slop don't sink the score. Detection is
-validated end-to-end against real 1366×768 screen crops in
-`tests/fixtures/real_draft/` (19/20 slots exact; the 20th documents a
-mis-calibrated box).
+red ban-slash and small calibration slop don't sink the score.
+
+### No colour-guessing + a memory that learns your screen
+
+Downloaded portraits don't match every on-screen avatar — **skins, ring borders
+and the exact in-game render** differ — and the old HSV colour fallback, while
+it caught some, also *confidently mislabelled* look-alikes (Helcurt→Gord,
+skinned Melissa→Ixia). A wrong name is worse than a blank, so:
+
+- **`USE_HISTOGRAM_FALLBACK = False`** by default — a slot is named only by a
+  real **template** match; anything unsure stays **blank** (never wrong).
+- **Learned memory** (`templates_learned/`, `templates_learned_enemy/`): every
+  crop the detector recognises *confidently by template* (`AUTO_LEARN`,
+  ≥ `LEARN_MIN_SCORE`) is saved and reused as the **highest-priority** template,
+  so that hero self-matches ~1.0 forever after — it remembers your skins. These
+  folders are git-ignored (per-screen); a few seed crops are bundled.
+
+To teach it a hero it can't yet match (a brand-new or heavily-skinned one), grab
+it straight off the draft — no ranked grind, just name the slots once:
+
+```bash
+python tools/learn_templates.py --ally ,,,,helcurt        # learn slot 5 = Helcurt
+```
+
+Validated end-to-end against real 1366×768 crops in `tests/fixtures/real_draft/`:
+**20/20 match expected, 0 mislabelled** (skins + the new hero **Sora** resolve
+via learned memory; one mis-calibrated slot stays correctly blank).
 
 If detection misreads or misses a hero, run the diagnostics:
 

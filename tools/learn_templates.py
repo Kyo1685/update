@@ -101,12 +101,12 @@ def main() -> int:
             print(f"  saved {out}  ({crop.shape[1]}x{crop.shape[0]})")
             saved += 1
 
-    # Ally picks + BOTH ban rows share the circular library (templates_ally
-    # overrides feed it); enemy picks use the square splash library.
-    learn(L.ally_picks, _names(args.ally), config.TEMPLATE_ALLY_DIR)
-    learn(L.enemy_picks, _names(args.enemy), config.TEMPLATE_ENEMY_DIR)
-    learn(L.ally_bans, _names(args.ally_bans), config.TEMPLATE_ALLY_DIR)
-    learn(L.enemy_bans, _names(args.enemy_bans), config.TEMPLATE_ALLY_DIR)
+    # Write to the LEARNED memory (highest priority, what the app auto-saves to).
+    # Ally picks + BOTH ban rows are circular -> learned dir; enemy -> enemy dir.
+    learn(L.ally_picks, _names(args.ally), config.TEMPLATE_LEARNED_DIR)
+    learn(L.enemy_picks, _names(args.enemy), config.TEMPLATE_LEARNED_ENEMY_DIR)
+    learn(L.ally_bans, _names(args.ally_bans), config.TEMPLATE_LEARNED_DIR)
+    learn(L.enemy_bans, _names(args.enemy_bans), config.TEMPLATE_LEARNED_DIR)
 
     if saved:
         print(f"\nLearned {saved} template(s) from your draft. "

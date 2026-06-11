@@ -77,6 +77,11 @@ def main() -> int:
     e_ovr = TemplateLibrary.from_dir(config.TEMPLATE_ENEMY_DIR)
     n_a = circle.overlay(a_ovr) if len(a_ovr) else 0
     n_e = square.overlay(e_ovr) if len(e_ovr) else 0
+    # Highest-priority learned memory (same as main.start_live).
+    la = TemplateLibrary.from_dir(config.TEMPLATE_LEARNED_DIR, circular=True)
+    le = TemplateLibrary.from_dir(config.TEMPLATE_LEARNED_ENEMY_DIR)
+    n_a += circle.overlay(la) if len(la) else 0
+    n_e += square.overlay(le) if len(le) else 0
     print(f"region {region['width']}x{region['height']} | "
           f"ally/ban=circular:{len(circle)}(+{n_a} ovr)  "
           f"enemy=square:{len(square)}(+{n_e} ovr)  "
