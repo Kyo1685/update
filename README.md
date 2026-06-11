@@ -147,8 +147,14 @@ and the exact in-game render** differ — and the old HSV colour fallback, while
 it caught some, also *confidently mislabelled* look-alikes (Helcurt→Gord,
 skinned Melissa→Ixia). A wrong name is worse than a blank, so:
 
-- **`USE_HISTOGRAM_FALLBACK = False`** by default — a slot is named only by a
-  real **template** match; anything unsure stays **blank** (never wrong).
+- **`USE_HISTOGRAM_FALLBACK = False`** by default — colour alone never names a
+  slot; anything unsure stays **blank** (never wrong).
+- **Confirmed-colour fallback** (`HIST_CONFIRM_FALLBACK`): below the template
+  threshold, a hero is still accepted when **two independent signals agree** —
+  it is the histogram winner (≥ `HIST_CONFIRM_MIN`) *and* already in that
+  crop's template top-K. This recovers heroes with weak downloaded art (e.g.
+  Johnson) without reviving look-alike mislabels: a name-bar crop's Gord
+  colour match is rejected because Gord isn't structurally plausible there.
 - **Learned memory** (`templates_learned/`, `templates_learned_enemy/`): every
   crop the detector recognises *confidently by template* (`AUTO_LEARN`,
   ≥ `LEARN_MIN_SCORE`) is saved and reused as the **highest-priority** template,

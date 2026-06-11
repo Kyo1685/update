@@ -187,7 +187,7 @@ class DraftAssistant:
         print(f"[templates] ally=circular(reversed={ally_flip}):{len(ci_ally)}"
               f"+{n_ally_ovr}ovr+{n_learn}learned  enemy=square:{len(sq)}"
               f"+{n_enemy_ovr}ovr+{n_learn_e}learned  bans=circular:{len(ci_enemy)}  "
-              f"fallback={config.USE_HISTOGRAM_FALLBACK} auto_learn={config.AUTO_LEARN}")
+              f"fallback={config.USE_HISTOGRAM_FALLBACK} confirm={config.HIST_CONFIRM_FALLBACK} auto_learn={config.AUTO_LEARN}")
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
                                  ban_library=ban, accept_low=accept_low)
