@@ -147,12 +147,29 @@ TEMPLATE_ENEMY_DIR: str = "templates_enemy"   # enemy-side pick crops (override)
 # Thresholds tuned on real screen crops (see tests/test_detector.py ground-
 # truth test): true heroes match 0.6-0.93 by template, impostor noise tops out
 # ~0.59, so 0.60 lets a wrong same-size art (e.g. a SKINNED avatar) fall
-# through to the colour-histogram instead of mislabelling by template.
+# through rather than mislabelling by template.
 TEMPLATE_MATCH_THRESHOLD: float = 0.60        # ally picks (circular)
 ENEMY_MATCH_THRESHOLD: float = 0.50           # enemy picks (square splash)
 BAN_MATCH_THRESHOLD: float = 0.45             # bans (small circular)
-HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback
-USE_HISTOGRAM_FALLBACK: bool = True           # keep detection robust
+HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback (off by default)
+
+# NO COLOUR GUESSING by default.  The HSV-histogram fallback matched some heroes
+# but ALSO confidently MISLABELLED look-alikes (Helcurt->Gord, skinned
+# Melissa->Ixia) - a wrong name is worse than a blank.  Off, a slot only gets a
+# name from a real template match; anything unsure stays blank until LEARNED.
+USE_HISTOGRAM_FALLBACK: bool = False          # True = allow fuzzy colour fallback
+
+# REMEMBER WHAT IT SEES.  Downloaded portraits don't match every on-screen
+# avatar (skins, ring borders, the exact in-game render), so the detector
+# persists each crop it identifies CONFIDENTLY BY TEMPLATE and reuses it - the
+# hero then self-matches ~1.0 forever after.  These per-screen folders are the
+# highest-priority override (above templates_ally / templates_enemy) and are
+# also where `tools/learn_templates.py` writes.  Auto-learn only triggers on a
+# trustworthy template score, so it can't memorise a wrong guess.
+TEMPLATE_LEARNED_DIR: str = "templates_learned"        # circular: ally picks+bans
+TEMPLATE_LEARNED_ENEMY_DIR: str = "templates_learned_enemy"  # square: enemy picks
+AUTO_LEARN: bool = True                       # save confident template matches
+LEARN_MIN_SCORE: float = 0.80                 # only memorise at/above this score
 
 # ZOOM-TOLERANT MATCHING.  The live UI can frame the art slightly tighter or
 # looser than the source icon (ring borders, ban slash, calibration slop), so

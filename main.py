@@ -170,9 +170,24 @@ class DraftAssistant:
         n_ally_ovr = ally.overlay(ally_ovr) if len(ally_ovr) else 0
         n_enemy_ovr = enemy.overlay(enemy_ovr) if len(enemy_ovr) else 0
 
+        # LEARNED memory (highest priority): per-screen crops the detector has
+        # confidently recognised before - skins, ring borders, exact renders.
+        # These win over every downloaded template, and new ones are auto-saved
+        # here during play (config.AUTO_LEARN).
+        learned = TemplateLibrary.from_dir(config.TEMPLATE_LEARNED_DIR, circular=True)
+        learned_e = TemplateLibrary.from_dir(config.TEMPLATE_LEARNED_ENEMY_DIR)
+        n_learn = ally.overlay(learned) if len(learned) else 0
+        n_learn_e = enemy.overlay(learned_e) if len(learned_e) else 0
+        # Auto-learn targets: ally + bans (circular) -> learned dir; enemy -> enemy dir.
+        ally.learn_dir = config.TEMPLATE_LEARNED_DIR
+        enemy.learn_dir = config.TEMPLATE_LEARNED_ENEMY_DIR
+        if ban is not ally:
+            ban.learn_dir = config.TEMPLATE_LEARNED_DIR
+
         print(f"[templates] ally=circular(reversed={ally_flip}):{len(ci_ally)}"
-              f"+{n_ally_ovr} override  enemy=square:{len(sq)}+{n_enemy_ovr} override  "
-              f"bans=circular:{len(ci_enemy)}")
+              f"+{n_ally_ovr}ovr+{n_learn}learned  enemy=square:{len(sq)}"
+              f"+{n_enemy_ovr}ovr+{n_learn_e}learned  bans=circular:{len(ci_enemy)}  "
+              f"fallback={config.USE_HISTOGRAM_FALLBACK} auto_learn={config.AUTO_LEARN}")
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
                                  ban_library=ban, accept_low=accept_low)

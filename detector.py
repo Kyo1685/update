@@ -201,6 +201,26 @@ class TemplateLibrary:
         # MATCH_SCALES_DOWN): the live UI frames the same art at a different
         # zoom than the icon, so the best score across variants is used.
         self._vars: Dict[str, list] = {}
+        # When set, confidently-matched crops are PERSISTED here (and added
+        # live), so the same hero self-matches ~1.0 next time - the "memory".
+        self.learn_dir: Optional[str] = None
+
+    def maybe_learn(self, name: str, crop: "np.ndarray", score: float) -> bool:
+        """Persist a confidently TEMPLATE-matched crop as this hero's template
+        (once), so future appearances self-match.  No-op without a learn_dir,
+        below the score gate, or if already remembered.  Returns True if saved."""
+        if not self.learn_dir or name is None or score < config.LEARN_MIN_SCORE:
+            return False
+        path = os.path.join(self.learn_dir, f"{name.strip().lower()}.png")
+        if os.path.exists(path):
+            return False                              # already remembered
+        try:
+            os.makedirs(self.learn_dir, exist_ok=True)
+            cv2.imwrite(path, crop)
+            self.add(name, crop)                      # refine the live library
+            return True
+        except Exception:
+            return False
 
     # ----- loading ---------------------------------------------------------
     @classmethod
@@ -504,6 +524,11 @@ class DraftDetector:
             else:
                 hero = self.db.get(raw_name)
                 result_name = hero.name if hero else raw_name
+                # REMEMBER: a confident TEMPLATE hit is trustworthy, so persist
+                # this exact on-screen crop as the hero's template for next time.
+                if (config.AUTO_LEARN and method == "template"
+                        and result_name and conf >= config.LEARN_MIN_SCORE):
+                    library.maybe_learn(result_name, crop, conf)
 
         self._cache[slot_id] = _SlotCache(signature=sig, name=result_name,
                                           confidence=conf)

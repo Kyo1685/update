@@ -16,3 +16,13 @@ layout.json
 # A ready-to-use square template set is committed under templates/.
 # Re-running fetch_templates.py / import_icons.py just overwrites the tracked
 # files, so we no longer ignore them.
+
+# Learned per-screen templates: seeds are force-added; auto-learned ones stay local
+templates_learned/*
+templates_learned_enemy/*
+!templates_learned/nana.png
+!templates_learned/melissa.png
+!templates_learned/lukas.png
+!templates_learned_enemy/vexana.png
+!templates_learned_enemy/johnson.png
+!templates_learned_enemy/layla.png

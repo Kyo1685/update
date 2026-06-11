@@ -78,6 +78,26 @@ def test_label_never_shows_a_lane_the_hero_cannot_play():
     assert predicted_role_label("Lukas", _lane_of("Lukas", lanes), DB) in ("EXP", "JUG")
 
 
+def test_auto_learn_persists_confident_match(tmp_path=None):
+    if not _have_cv():
+        return
+    import tempfile
+    d = tempfile.mkdtemp(prefix="learned_")
+    lib = TemplateLibrary()
+    art = _patch("Helcurt", 96, 96)
+    lib.add("Helcurt", art)
+    lib.learn_dir = d
+    # A confident template hit must be remembered (saved + reusable).
+    assert lib.maybe_learn("Helcurt", art, 0.91) is True
+    assert os.path.exists(os.path.join(d, "helcurt.png"))
+    # ...but only once, and never below the score gate.
+    assert lib.maybe_learn("Helcurt", art, 0.91) is False      # already saved
+    assert lib.maybe_learn("Gord", art, 0.50) is False         # below LEARN_MIN_SCORE
+    # A library with no learn_dir never persists.
+    lib2 = TemplateLibrary()
+    assert lib2.maybe_learn("Helcurt", art, 0.99) is False
+
+
 def test_template_overlay_replaces_base():
     if not _have_cv():
         return
@@ -183,6 +203,13 @@ def _build_side_libs():
         ally.overlay(a_ovr)
     if len(e_ovr):
         enemy.overlay(e_ovr)
+    # Highest-priority learned memory (same order as main.start_live).
+    learned = TemplateLibrary.from_dir(f(config.TEMPLATE_LEARNED_DIR), circular=True)
+    learned_e = TemplateLibrary.from_dir(f(config.TEMPLATE_LEARNED_ENEMY_DIR))
+    if len(learned):
+        ally.overlay(learned)
+    if len(learned_e):
+        enemy.overlay(learned_e)
     return ally, enemy, ban
 
 
@@ -230,7 +257,10 @@ REAL_DRAFT_TRUTH = {
     #     re-calibrating that one slot.  Kept here only to document it.
     #   - "Sora" is a 2025 hero with NO portrait in any public DB, so its
     #     template is the user's own ban crop (the only Sora image that exists).
-    "ally_pick": ["Nana", "Melissa", "Lukas", None, "EXCLUDED:miscalibrated"],
+    #   - ally_pick[4] = None: Helcurt's box sits ~25px low so the crop is the
+    #     player-name bar, not the avatar.  With the colour fallback OFF it stays
+    #     BLANK (never mislabelled) - the fix is re-calibrating that one slot.
+    "ally_pick": ["Nana", "Melissa", "Lukas", None, None],
     "enemy_pick": ["Vexana", "Johnson", "Layla", None, None],
     "ally_ban": ["Sora", "Harley", "Gloo", "Hilda", "Minsithar"],
     "enemy_ban": ["Chou", "Selena", "Saber", "Hayabusa", "Miya"],
@@ -238,9 +268,10 @@ REAL_DRAFT_TRUTH = {
 
 
 def test_real_screen_crops_ground_truth():
-    """End-to-end on REAL screen crops: 19/20 slots resolve exactly (picks,
-    bans, skinned heroes via histogram, Sora's only-source crop, empties +
-    the squad-logo slot suppressed).  The 20th documents a mis-calibrated box."""
+    """End-to-end on REAL screen crops with the colour fallback OFF: every
+    pick/ban resolves exactly via TEMPLATE (skins/Sora via learned memory) and
+    NOTHING is mislabelled - the one hard slot (mis-calibrated Helcurt) stays
+    blank, never wrong."""
     if not _have_cv() or not _templates_present():
         print("(skipped: cv2/templates absent)"); return
     fdir = os.path.join(ROOT, "tests", "fixtures", "real_draft")
@@ -251,12 +282,10 @@ def test_real_screen_crops_ground_truth():
             "enemy_pick": (enemy, config.ENEMY_MATCH_THRESHOLD),
             "ally_ban": (ban, config.BAN_MATCH_THRESHOLD),
             "enemy_ban": (ban, config.BAN_MATCH_THRESHOLD)}
-    correct = 0
+    correct = wrong = 0
     for grp, truths in REAL_DRAFT_TRUTH.items():
         lib, thr = libs[grp]
         for i, want in enumerate(truths):
-            if isinstance(want, str) and want.startswith("EXCLUDED"):
-                continue
             crop = cv2.imread(os.path.join(fdir, f"{grp}_{i}.png"))
             assert crop is not None, f"missing fixture {grp}_{i}.png"
             g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
@@ -264,10 +293,14 @@ def test_real_screen_crops_ground_truth():
                 got = None
             else:
                 n, _s, m = lib.match(crop, thr)
-                got = None if m == "low" else n   # app suppresses low-confidence
-            assert got == want, f"{grp}[{i}]: got {got}, want {want}"
-            correct += 1
-    assert correct == 19, f"expected 19 graded slots, got {correct}"
+                got = None if m == "low" else n
+            if got == want:
+                correct += 1
+            elif got is not None:
+                wrong += 1
+                print(f"  WRONG {grp}[{i}]: got {got}, want {want}")
+    assert wrong == 0, f"{wrong} slots MISLABELLED (must be 0)"
+    assert correct == 20, f"expected 20/20 to match expected, got {correct}"
 
 
 def test_ally_circular_orientation_not_reflipped():
@@ -278,7 +311,9 @@ def test_ally_circular_orientation_not_reflipped():
     if not _templates_present():
         print("(skipped: bundled templates not present)"); return
     ally, _, _ = _build_side_libs()
-    for h in ["Sora", "Nana", "Melissa", "Lukas", "Vexana", "Layla", "Helcurt"]:
+    # Use heroes WITHOUT a learned override, so this tests the base pack's
+    # orientation (a learned crop deliberately differs from the downloaded one).
+    for h in ["Gord", "Harley", "Tigreal", "Eudora", "Aurora", "Balmond", "Helcurt"]:
         crop = cv2.imread(os.path.join(ROOT, "templates_circle", f"{h.lower()}.png"),
                           cv2.IMREAD_COLOR)
         if crop is None:
@@ -318,16 +353,18 @@ def test_overlay_behaviors_helcurt_pending_and_sora_ban():
     def frame():
         return np.full((config.RES_H, config.RES_W, 3), 18, np.uint8)
 
+    # Filler heroes WITHOUT a learned override (so the downloaded crop matches).
+    fill = ["tigreal", "eudora", "aurora"]
     # --- grayed Helcurt among locked allies, Sora banned --------------------
     f = frame()
-    for i, n in enumerate(["lukas", "melissa", "nana"]):
+    for i, n in enumerate(fill):
         _place(f, L.ally_picks[i], circ(n))
     _place(f, L.ally_picks[3], _grayed(circ("helcurt")))   # hovered, not locked
     _place(f, L.ally_bans[0], circ("sora"))
     with _grayed_gate():                                    # gate ships OFF here
         s = det.detect(f)
     assert s.ally_pending[3] is True and s.ally_picks[3] is None    # NOT PICKED
-    assert s.ally_picks[:3] == ["Lukas", "Melissa", "Nana"]         # others fine
+    assert s.ally_picks[:3] == ["Tigreal", "Eudora", "Aurora"]      # others fine
     assert not any(s.ally_pending[:3])                              # no false flags
     assert "Sora" in s.ally_bans                                    # ban detected
     res = ScoringEngine(DB).evaluate(s, Settings())
@@ -335,7 +372,7 @@ def test_overlay_behaviors_helcurt_pending_and_sora_ban():
 
     # --- locked (full-colour) Helcurt -> detected as Helcurt ---------------
     f2 = frame()
-    for i, n in enumerate(["lukas", "melissa", "nana"]):
+    for i, n in enumerate(fill):
         _place(f2, L.ally_picks[i], circ(n))
     _place(f2, L.ally_picks[3], circ("helcurt"))
     s2 = det.detect(f2)
