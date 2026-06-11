@@ -159,6 +159,18 @@ HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback (off by default)
 # name from a real template match; anything unsure stays blank until LEARNED.
 USE_HISTOGRAM_FALLBACK: bool = False          # True = allow fuzzy colour fallback
 
+# CONFIRMED-colour fallback (the safe middle ground).  Colour alone invents
+# names (a dark name-bar crop reads as Gord), but colour AGREEING with
+# structure is reliable: when the template path is below threshold, a hero is
+# still accepted if it is BOTH the histogram winner (>= HIST_CONFIRM_MIN) AND
+# already in the template top-K for that crop - two independent signals must
+# point at the same hero.  Measured on the real crops: every true hero passes
+# (Johnson 0.77 + tmpl#2), every garbage crop fails (Gord is hist#1 on the
+# name-bar but nowhere in its template top-K).
+HIST_CONFIRM_FALLBACK: bool = True
+HIST_CONFIRM_MIN: float = 0.60                # histogram winner must score this
+HIST_CONFIRM_TOPK: int = 3                    # ...and sit in template top-K
+
 # REMEMBER WHAT IT SEES.  Downloaded portraits don't match every on-screen
 # avatar (skins, ring borders, the exact in-game render), so the detector
 # persists each crop it identifies CONFIDENTLY BY TEMPLATE and reuses it - the
