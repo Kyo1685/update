@@ -90,8 +90,10 @@ def test_auto_learn_persists_confident_match(tmp_path=None):
     # A confident template hit must be remembered (saved + reusable).
     assert lib.maybe_learn("Helcurt", art, 0.91) is True
     assert os.path.exists(os.path.join(d, "helcurt.png"))
-    # ...but only once, and never below the score gate.
-    assert lib.maybe_learn("Helcurt", art, 0.91) is False      # already saved
+    # A near-identical re-sight skips the write; a drifted-but-confident one
+    # REFRESHES the memory so it tracks the screen.
+    assert lib.maybe_learn("Helcurt", art, 0.99) is False      # already fresh
+    assert lib.maybe_learn("Helcurt", art, 0.85) is True       # refreshed
     assert lib.maybe_learn("Gord", art, 0.50) is False         # below LEARN_MIN_SCORE
     # A library with no learn_dir never persists.
     lib2 = TemplateLibrary()
@@ -207,9 +209,9 @@ def _build_side_libs():
     learned = TemplateLibrary.from_dir(f(config.TEMPLATE_LEARNED_DIR), circular=True)
     learned_e = TemplateLibrary.from_dir(f(config.TEMPLATE_LEARNED_ENEMY_DIR))
     if len(learned):
-        ally.overlay(learned)
+        ally.overlay(learned, learned=True)
     if len(learned_e):
-        enemy.overlay(learned_e)
+        enemy.overlay(learned_e, learned=True)
     return ally, enemy, ban
 
 

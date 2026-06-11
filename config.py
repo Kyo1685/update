@@ -170,6 +170,16 @@ TEMPLATE_LEARNED_DIR: str = "templates_learned"        # circular: ally picks+ba
 TEMPLATE_LEARNED_ENEMY_DIR: str = "templates_learned_enemy"  # square: enemy picks
 AUTO_LEARN: bool = True                       # save confident template matches
 LEARN_MIN_SCORE: float = 0.80                 # only memorise at/above this score
+# A LEARNED template was captured from THIS screen, so even a moderate score is
+# near-certain - accept learned-name winners at this lower bar (downloaded art
+# keeps the stricter per-group threshold).  Live frames drift a few px between
+# sessions (lock-in glow, animation, re-calibration), which can drop a learned
+# self-match from ~1.0 to ~0.5x; without this the hero blinks out.
+LEARNED_MATCH_THRESHOLD: float = 0.50
+# Refresh the stored memory when a learned hero matches confidently but below
+# this (the screen drifted since the crop was saved); skip the write when the
+# match is already near-identical.
+LEARN_REFRESH_BELOW: float = 0.97
 
 # ZOOM-TOLERANT MATCHING.  The live UI can frame the art slightly tighter or
 # looser than the source icon (ring borders, ban slash, calibration slop), so

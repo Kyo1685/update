@@ -176,8 +176,8 @@ class DraftAssistant:
         # here during play (config.AUTO_LEARN).
         learned = TemplateLibrary.from_dir(config.TEMPLATE_LEARNED_DIR, circular=True)
         learned_e = TemplateLibrary.from_dir(config.TEMPLATE_LEARNED_ENEMY_DIR)
-        n_learn = ally.overlay(learned) if len(learned) else 0
-        n_learn_e = enemy.overlay(learned_e) if len(learned_e) else 0
+        n_learn = ally.overlay(learned, learned=True) if len(learned) else 0
+        n_learn_e = enemy.overlay(learned_e, learned=True) if len(learned_e) else 0
         # Auto-learn targets: ally + bans (circular) -> learned dir; enemy -> enemy dir.
         ally.learn_dir = config.TEMPLATE_LEARNED_DIR
         enemy.learn_dir = config.TEMPLATE_LEARNED_ENEMY_DIR

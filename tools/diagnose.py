@@ -80,8 +80,8 @@ def main() -> int:
     # Highest-priority learned memory (same as main.start_live).
     la = TemplateLibrary.from_dir(config.TEMPLATE_LEARNED_DIR, circular=True)
     le = TemplateLibrary.from_dir(config.TEMPLATE_LEARNED_ENEMY_DIR)
-    n_a += circle.overlay(la) if len(la) else 0
-    n_e += square.overlay(le) if len(le) else 0
+    n_a += circle.overlay(la, learned=True) if len(la) else 0
+    n_e += square.overlay(le, learned=True) if len(le) else 0
     print(f"region {region['width']}x{region['height']} | "
           f"ally/ban=circular:{len(circle)}(+{n_a} ovr)  "
           f"enemy=square:{len(square)}(+{n_e} ovr)  "
