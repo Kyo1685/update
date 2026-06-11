@@ -368,11 +368,10 @@ class TemplateLibrary:
                             interpolation=cv2.INTER_AREA)
         target_flip = cv2.flip(target, 1) if config.MIRROR_INVARIANT else None
 
-        best_name, best_score = None, -1.0
-        for name in self._tmpl:
-            score = self._best_score(target, name, target_flip)
-            if score > best_score:
-                best_name, best_score = name, score
+        scores = [(name, self._best_score(target, name, target_flip))
+                  for name in self._tmpl]
+        scores.sort(key=lambda kv: kv[1], reverse=True)
+        best_name, best_score = scores[0]
         # Screen-native (learned) art is near-certain even at a moderate score,
         # so it gets the lower acceptance bar; downloaded art keeps the strict one.
         eff_threshold = threshold
@@ -380,6 +379,23 @@ class TemplateLibrary:
             eff_threshold = min(threshold, config.LEARNED_MATCH_THRESHOLD)
         if best_score >= eff_threshold:
             return best_name, best_score, "template"
+
+        # CONFIRMED-colour fallback: colour may never invent a name, but when
+        # the histogram winner is ALSO one of the structurally plausible
+        # template candidates for this crop, two independent signals agree -
+        # that recovers heroes whose downloaded art is weak (e.g. Johnson)
+        # without reviving look-alike mislabels (a name-bar crop's Gord colour
+        # match is rejected because Gord isn't in its template top-K).
+        if config.HIST_CONFIRM_FALLBACK and self._hist:
+            crop_hist = self._prep_hist(crop_bgr)
+            h_name, h_score = None, -1.0
+            for name, hist in self._hist.items():
+                s = float(cv2.compareHist(crop_hist, hist, cv2.HISTCMP_CORREL))
+                if s > h_score:
+                    h_name, h_score = name, s
+            plausible = {n for n, _ in scores[:config.HIST_CONFIRM_TOPK]}
+            if h_score >= config.HIST_CONFIRM_MIN and h_name in plausible:
+                return h_name, h_score, "hist-confirmed"
 
         # Optional colour-histogram fallback (off by default - strict matching).
         if config.USE_HISTOGRAM_FALLBACK:

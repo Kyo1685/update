@@ -78,6 +78,55 @@ def test_label_never_shows_a_lane_the_hero_cannot_play():
     assert predicted_role_label("Lukas", _lane_of("Lukas", lanes), DB) in ("EXP", "JUG")
 
 
+def test_hist_confirmed_fallback_without_seeds():
+    """Two-signal fallback: with NO learned seeds (fresh install / right after
+    a re-calibration), a hero whose downloaded template is weak but whose
+    colour winner agrees with a template top-K candidate (Johnson) must still
+    resolve - while colour-only impostors (name-bar crop reading as Gord, the
+    squad-logo slot) stay BLANK.  Skinned heroes may blank; nothing may be
+    mislabelled."""
+    if not _have_cv() or not _templates_present():
+        print("(skipped: cv2/templates absent)"); return
+    fdir = os.path.join(ROOT, "tests", "fixtures", "real_draft")
+    if not os.path.isdir(fdir):
+        print("(skipped: real_draft fixtures absent)"); return
+    # Build libs exactly like main.start_live but WITHOUT the learned overlays.
+    f = lambda d: os.path.join(ROOT, d)
+    sq = TemplateLibrary.from_dir(f(config.TEMPLATE_DIR))
+    ci = TemplateLibrary.from_dir(f(config.TEMPLATE_CIRCLE_DIR), circular=True,
+                                  flip=not config.PACK_FACES_ALLY)
+    ci.overlay(TemplateLibrary.from_dir(f(config.TEMPLATE_ALLY_DIR), circular=True))
+    sq.overlay(TemplateLibrary.from_dir(f(config.TEMPLATE_ENEMY_DIR)))
+    libs = {"ally_pick": (ci, config.TEMPLATE_MATCH_THRESHOLD),
+            "enemy_pick": (sq, config.ENEMY_MATCH_THRESHOLD),
+            "ally_ban": (ci, config.BAN_MATCH_THRESHOLD),
+            "enemy_ban": (ci, config.BAN_MATCH_THRESHOLD)}
+    wrong = []
+    resolved = {}
+    for grp, truths in REAL_DRAFT_TRUTH.items():
+        lib, thr = libs[grp]
+        for i, want in enumerate(truths):
+            crop = cv2.imread(os.path.join(fdir, f"{grp}_{i}.png"))
+            g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+            if float(g.std()) < config.EMPTY_SLOT_STDDEV:
+                got = None
+            else:
+                n, _s, m = lib.match(crop, thr)
+                got = None if m == "low" else n
+            resolved[f"{grp}_{i}"] = got
+            if got is not None and got != want:
+                wrong.append(f"{grp}_{i}: got {got}, want {want}")
+    assert not wrong, f"mislabelled without seeds: {wrong}"
+    # The two-signal fallback must recover Johnson (weak downloaded template).
+    assert resolved["enemy_pick_1"] == "Johnson"
+    # Garbage crops must stay blank (colour-only Gord is rejected).
+    assert resolved["ally_pick_3"] is None and resolved["ally_pick_4"] is None
+    # All ten bans must still resolve seed-free.
+    for grp in ("ally_ban", "enemy_ban"):
+        for i, want in enumerate(REAL_DRAFT_TRUTH[grp]):
+            assert resolved[f"{grp}_{i}"] == want
+
+
 def test_auto_learn_persists_confident_match(tmp_path=None):
     if not _have_cv():
         return
