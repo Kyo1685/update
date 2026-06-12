@@ -333,7 +333,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP",
         "ROAM"
@@ -817,7 +817,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -990,7 +990,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -1783,7 +1783,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -1855,7 +1855,7 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -1887,7 +1887,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "JUNGLE"
       ],
@@ -1998,7 +1998,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "GOLD",
         "MID"
@@ -2139,7 +2139,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "GOLD"
       ],
@@ -2259,7 +2259,7 @@
         "Burst",
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -2710,7 +2710,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -3191,7 +3191,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -3276,7 +3276,7 @@
         "Burst",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -3374,7 +3374,7 @@
         "Burst",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
