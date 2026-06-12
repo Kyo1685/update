@@ -81,6 +81,11 @@ class DetectorWorker(QThread):
                 key = self._key(state)
                 if key != self._last_key:
                     self._last_key = key
+                    if config.DEBUG_DUMP:
+                        try:                       # never let logging kill detection
+                            self._detector.dump_debug(frame, state)
+                        except Exception:
+                            pass
                     self.state_ready.emit(state)
             except Exception as exc:                      # never kill the thread
                 # In production route this to logging; keep the loop alive.
