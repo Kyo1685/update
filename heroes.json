@@ -1023,7 +1023,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false,
+      "owned": true,
       "lanes": [
         "JUNGLE"
       ],
@@ -1730,7 +1730,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false,
+      "owned": true,
       "lanes": [
         "JUNGLE"
       ],
@@ -2173,7 +2173,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false,
+      "owned": true,
       "lanes": [
         "JUNGLE"
       ],
@@ -2576,7 +2576,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -3600,7 +3600,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
