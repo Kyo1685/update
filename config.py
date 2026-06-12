@@ -148,7 +148,7 @@ TEMPLATE_ENEMY_DIR: str = "templates_enemy"   # enemy-side pick crops (override)
 # truth test): true heroes match 0.6-0.93 by template, impostor noise tops out
 # ~0.59, so 0.60 lets a wrong same-size art (e.g. a SKINNED avatar) fall
 # through rather than mislabelling by template.
-TEMPLATE_MATCH_THRESHOLD: float = 0.60        # ally picks (circular)
+TEMPLATE_MATCH_THRESHOLD: float = 0.64        # ally picks (circular)
 ENEMY_MATCH_THRESHOLD: float = 0.50           # enemy picks (square splash)
 BAN_MATCH_THRESHOLD: float = 0.45             # bans (small circular)
 HISTOGRAM_MATCH_THRESHOLD: float = 0.48       # colour fallback (off by default)
@@ -168,8 +168,12 @@ USE_HISTOGRAM_FALLBACK: bool = False          # True = allow fuzzy colour fallba
 # (Johnson 0.77 + tmpl#2), every garbage crop fails (Gord is hist#1 on the
 # name-bar but nowhere in its template top-K).
 HIST_CONFIRM_FALLBACK: bool = True
-HIST_CONFIRM_MIN: float = 0.60                # histogram winner must score this
-HIST_CONFIRM_TOPK: int = 3                    # ...and sit in template top-K
+HIST_CONFIRM_MIN: float = 0.62                # histogram winner must score this
+HIST_CONFIRM_TOPK: int = 2                    # ...and sit in template top-K.
+# Measured on real crops: every TRUE confirm has its colour winner in the
+# template top-2, while "histogram magnets" (Wanwan scores 0.78 even on a
+# Lukas crop, 0.66 on Chou) only ever reach top-3 on the wrong hero - so top-2
+# keeps Johnson + all bans yet kills the Gusion-ban->Wanwan class of mislabel.
 # A hero recovered by the confirmed-colour path is memorised too (it then
 # matches by template forever after) when its histogram score is at least this.
 LEARN_CONFIRMED_MIN: float = 0.72
