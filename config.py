@@ -195,6 +195,13 @@ STICKY_MIN: float = 0.35
 # all 132 heroes.  Below it, fall through to the full match.
 STICKY_FAST: float = 0.60
 
+# SELF-DOCUMENTING DEBUG: whenever the detected board changes, write every slot
+# crop + a decisions log to DEBUG_DUMP_DIR (latest board only, overwritten).
+# After a draft where detection misbehaved, commit/push that folder - it shows
+# exactly what the detector saw and decided, no extra commands needed.
+DEBUG_DUMP: bool = True
+DEBUG_DUMP_DIR: str = "diag/live"
+
 # REMEMBER WHAT IT SEES.  Downloaded portraits don't match every on-screen
 # avatar (skins, ring borders, the exact in-game render), so the detector
 # persists each crop it identifies CONFIDENTLY BY TEMPLATE and reuses it - the

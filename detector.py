@@ -724,6 +724,33 @@ class DraftDetector:
         state.enemy_lanes = assign_lanes(state.enemy_picks, self.db)
         return state
 
+    # ----- self-documenting debug dump --------------------------------------
+    def dump_debug(self, frame: "np.ndarray", state: DraftState,
+                   out_dir: Optional[str] = None) -> str:
+        """Write every slot crop + a decisions log for the CURRENT board to
+        ``out_dir`` (overwrites - latest board only).  Lets a misbehaving draft
+        be reported by just committing the folder."""
+        out = out_dir or config.DEBUG_DUMP_DIR
+        os.makedirs(out, exist_ok=True)
+        lines = []
+        groups = (("ally_pick", self.layout.ally_picks, state.ally_picks,
+                   state.ally_pick_conf),
+                  ("enemy_pick", self.layout.enemy_picks, state.enemy_picks,
+                   state.enemy_pick_conf),
+                  ("ally_ban", self.layout.ally_bans, state.ally_bans,
+                   state.ally_ban_conf),
+                  ("enemy_ban", self.layout.enemy_bans, state.enemy_bans,
+                   state.enemy_ban_conf))
+        for tag, boxes, names, confs in groups:
+            for i, box in enumerate(boxes):
+                crop = self._crop(frame, box)
+                cv2.imwrite(os.path.join(out, f"{tag}_{i}.png"), crop)
+                lines.append(f"{tag}_{i}: {names[i] or '-'} "
+                             f"({confs[i]:.2f})  box={box.x},{box.y},{box.w},{box.h}")
+        with open(os.path.join(out, "decisions.txt"), "w", encoding="utf-8") as fh:
+            fh.write("\n".join(lines) + "\n")
+        return out
+
     # ----- debug visualisation --------------------------------------------
     def draw_debug(self, frame: "np.ndarray", state: DraftState) -> "np.ndarray":
         """Return a copy of ``frame`` annotated with boxes + labels (handy for
