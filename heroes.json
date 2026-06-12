@@ -81,7 +81,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -113,7 +113,7 @@
         "Sustain",
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP",
         "JUNGLE"
@@ -208,7 +208,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -238,7 +238,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -273,7 +273,7 @@
         "Utility",
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -293,7 +293,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "JUNGLE"
       ],
@@ -313,7 +313,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -398,7 +398,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "JUNGLE"
       ],
@@ -465,7 +465,7 @@
         "Burst",
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "GOLD"
       ],
@@ -486,7 +486,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -517,7 +517,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -550,7 +550,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "GOLD"
       ],
@@ -581,7 +581,7 @@
         "Sustain",
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "GOLD"
       ],
@@ -610,7 +610,7 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -683,7 +683,7 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -849,7 +849,7 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -891,7 +891,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP",
         "ROAM"
@@ -924,7 +924,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -960,7 +960,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -1023,7 +1023,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false,
+      "owned": true,
       "lanes": [
         "JUNGLE"
       ],
@@ -1055,7 +1055,7 @@
         "Utility",
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -1170,7 +1170,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP",
         "JUNGLE"
@@ -1192,7 +1192,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM",
         "EXP"
@@ -1260,7 +1260,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -1321,7 +1321,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM",
         "EXP"
@@ -1443,7 +1443,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "JUNGLE"
       ],
@@ -1581,7 +1581,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM",
         "EXP"
@@ -1604,7 +1604,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -1675,7 +1675,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM",
         "EXP"
@@ -1697,7 +1697,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -1730,7 +1730,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false,
+      "owned": true,
       "lanes": [
         "JUNGLE"
       ],
@@ -1814,7 +1814,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -1834,7 +1834,7 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -1942,7 +1942,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP",
         "ROAM"
@@ -1978,7 +1978,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -2055,7 +2055,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -2173,7 +2173,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": false,
+      "owned": true,
       "lanes": [
         "JUNGLE"
       ],
@@ -2205,7 +2205,7 @@
       "archetypes": [
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -2279,7 +2279,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -2299,7 +2299,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -2384,7 +2384,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -2417,7 +2417,7 @@
         "Utility",
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -2450,7 +2450,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "GOLD"
       ],
@@ -2471,7 +2471,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -2505,7 +2505,7 @@
         "Utility",
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP",
         "ROAM"
@@ -2556,7 +2556,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "GOLD"
       ],
@@ -2576,7 +2576,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -2596,7 +2596,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "JUNGLE",
         "ROAM"
@@ -2630,7 +2630,7 @@
         "Sustain",
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "GOLD"
       ],
@@ -2670,7 +2670,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -2828,7 +2828,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "JUNGLE",
         "GOLD"
@@ -2857,7 +2857,7 @@
         "Sustain",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "ROAM"
       ],
@@ -2877,7 +2877,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "JUNGLE"
       ],
@@ -2898,7 +2898,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -2953,7 +2953,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "JUNGLE",
         "MID",
@@ -2976,7 +2976,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -3031,7 +3031,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP",
         "JUNGLE"
@@ -3073,7 +3073,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -3171,7 +3171,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -3224,7 +3224,7 @@
         "Burst",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -3244,7 +3244,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -3341,7 +3341,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -3459,7 +3459,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
@@ -3491,7 +3491,7 @@
         "Burst",
         "Utility"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -3526,7 +3526,7 @@
         "Burst",
         "Utility"
       ],
-      "owned": false,
+      "owned": true,
       "lanes": [
         "MID"
       ],
@@ -3546,7 +3546,7 @@
       "archetypes": [
         "Burst"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "MID"
       ],
@@ -3600,7 +3600,7 @@
       "archetypes": [
         "Sustain"
       ],
-      "owned": true,
+      "owned": false,
       "lanes": [
         "EXP"
       ],
