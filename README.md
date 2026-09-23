@@ -21,8 +21,11 @@ in the style of the "Otev-" AI LINEUP DRAFTER.
 update/
 ├── main.py          # entry point: capture→detect QThread → engine → overlay
 ├── config.py        # resolution, PIXEL-PERFECT slot boxes, weights, theme
-├── detector.py      # OpenCV pipeline: template match + histogram fallback,
-│                    #   per-slot caching, lane-prediction optimiser
+├── detector.py      # capture → per-slot crops → recognition (DINOv2 or
+│                    #   templates), per-slot caching, lane-prediction optimiser
+├── recognizer.py    # optional DINOv2 recognition: fingerprints, double-check,
+│                    #   learn-from-screen memory
+├── requirements-ai.txt # optional AI stack for recognizer.py
 ├── engine.py        # the scoring brain (pure, testable maths)
 ├── ui.py            # PyQt5: click-through canvas + interactive control dock
 ├── stats_provider.py# pluggable live-stats overlay (HTTP/JSON + TTL cache)
@@ -68,6 +71,56 @@ python main.py --region 0,0,1366,614      # capture only a sub-region if you pre
 Position the Scrcpy window borderless at the top-left of the primary monitor
 (or set `config.CAPTURE_ORIGIN`). Drag the dock anywhere; press **Esc** or the
 ✕ to close.
+
+---
+
+## DINOv2 hero recognition (recommended)
+
+Recognition — which hero sits in which slot — is the hard part of the overlay.
+With the optional AI stack installed, the app names heroes with **DINOv2**, a
+small local vision model (~90 MB, runs offline after the first start). It turns
+every hero portrait into a feature "fingerprint" and matches each slot to the
+nearest one. Measured on real 1366×768 draft crops, using **downloaded art
+only** (no crops learned from your screen):
+
+| Recognizer | Heroes correct (of 15) | Wrong labels |
+|---|---|---|
+| Template matching | 13 (skins left blank) | 0 |
+| CLIP (the kind of encoder vision chatbots use) | 6 | 9 |
+| DINOv2 | 14 | 1 (an exact tie) |
+| **DINOv2 + double-check (what ships)** | **15**, every empty slot rejected | **0** |
+
+Install it once:
+
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements-ai.txt
+python main.py        # first start: downloads the model + fingerprints the roster (~20 s, once)
+```
+
+Without these packages — or with `python main.py --no-dino` — the app uses
+template matching exactly as before. The console says which engine is active.
+
+**The double-check.** A slot gets a name only when the best match is similar
+enough (`DINO_MIN_SIM`) **and** clearly ahead of the runner-up
+(`DINO_CLEAR_MARGIN`). On a near-tie the template matcher settles it, but it
+may only pick one of DINOv2's own top candidates. Anything else stays blank,
+never a guessed name.
+
+**Speed.** Changed slots are recognised in one batch (~0.9 s for a whole cold
+board on a laptop CPU). A slot whose pixels only pulse with the draft animation
+keeps its label without running the model (~5 ms per frame).
+
+**Memory.** A confident win is saved to `templates_learned_dino/` as an extra
+reference for that hero (several per hero, so a pick and a ban both stick), so
+your skins become near-certain matches over time.
+
+**Clean art vs screen crops.** Downloaded portraits live in `templates*/`;
+crops taken off your screen belong in `templates_learned*/`. A screen crop
+carries the slot's ring, badges or red ban slash, which every other slot of
+that type shares, so it only counts when it is a near-exact match
+(`DINO_SCREEN_MIN`). Heroes with no public art (currently **Sora**) are
+recognised from their screen crop this way.
 
 ---
 
@@ -318,6 +371,9 @@ buttons. So:
 
 ```bash
 python tests/test_engine.py     # or: pytest -q
+python tests/test_recognizer.py # DINOv2 rule/index/memory + real-crop end-to-end
 python engine.py                # scoring self-test across all 4 modes
 python detector.py              # synthetic-frame match + cache + lane test
 ```
+
+The real-crop DINOv2 test needs the optional AI stack and skips without it.

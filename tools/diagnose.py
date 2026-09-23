@@ -4,9 +4,9 @@ tools/diagnose.py
 Dump what the detector actually "sees" so detection can be tuned from real
 numbers instead of guesswork.
 
-For every slot it prints the top-3 template matches + scores (picks vs the
-square library, bans vs the circular library) and saves each slot crop to
-``diag/`` so you can eyeball alignment.
+For every slot it prints the DINOv2 decision (when the AI stack is installed)
+with its top-3 similarities, next to the template matcher's decision and top-3,
+and saves each slot crop to ``diag/`` so you can eyeball alignment.
 
 Run while the draft is on screen:
 
@@ -42,6 +42,8 @@ def main() -> int:
     p.add_argument("--image", default=None, help="diagnose a saved screenshot instead")
     p.add_argument("--layout", default=config.LAYOUT_FILE)
     p.add_argument("--out", default="diag")
+    p.add_argument("--no-dino", action="store_true",
+                   help="template matching only (skip the DINOv2 decision)")
     args = p.parse_args()
     if cv2 is None:
         sys.stderr.write("needs numpy + opencv-python\n"); return 2
@@ -89,6 +91,11 @@ def main() -> int:
           f"{config.USE_HISTOGRAM_FALLBACK}\n")
     os.makedirs(args.out, exist_ok=True)
     det = DraftDetector(HeroDB.load("heroes.json"))
+    rec = None
+    if config.USE_DINO and not args.no_dino:
+        from recognizer import DinoRecognizer
+        rec = DinoRecognizer.load()
+    print(f"engine: {'dino (' + rec.label + ')' if rec else 'templates'}\n")
 
     def dump(title, boxes, lib, thr, picks=False):
         print(f"== {title} (threshold {thr}) ==")
@@ -117,7 +124,15 @@ def main() -> int:
             name, score, method = lib.match(crop, thr)
             decided = f"{name}:{score:.2f}({method})" if name else "(no match)"
             top3 = ", ".join(f"{n}:{s:.2f}" for n, s in tops)
-            print(f"  [{i}] sat={sat:5.1f} val={val:5.1f}  ->{decided:24} | top3: {top3}")
+            head = f"  [{i}] sat={sat:5.1f} val={val:5.1f}  "
+            if rec is None:
+                print(f"{head}->{decided:24} | top3: {top3}")
+                continue
+            rank = rec.rank(rec.embed([crop])[0])
+            dn, ds, dm = rec.decide(rank, tiebreak=lambda: tops[0][0] if tops else None)
+            dino = f"{dn}:{ds:.2f}({dm})" if dn else f"-  ({dm} {ds:.2f})"
+            print(f"{head}DINO     ->{dino:26} | top3: {rec.format_rank(rank)}")
+            print(f"{' ' * len(head)}template ->{decided:26} | top3: {top3}")
         print()
 
     dump("ally_pick", L.ally_picks, circle, config.TEMPLATE_MATCH_THRESHOLD, picks=True)

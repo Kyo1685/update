@@ -15,6 +15,7 @@ so an idle draft costs almost nothing.
 Usage
 -----
     python main.py                      # live: capture the Scrcpy mirror
+    python main.py --no-dino            # template matching instead of DINOv2
     python main.py --templates ./templates
     python main.py --accept-low         # trust low-confidence guesses too
     python main.py --mock               # demo with a scripted draft (no game)
@@ -58,11 +59,16 @@ class DetectorWorker(QThread):
     the board changes (cheap idle, no UI stutter)."""
     state_ready = pyqtSignal(object)         # emits DraftState
 
-    def __init__(self, detector, capturer, interval: float = config.DETECT_INTERVAL):
+    def __init__(self, detector, capturer, interval: float = config.DETECT_INTERVAL,
+                 recognizer_factory=None):
         super().__init__()
         self._detector = detector
         self._capturer = capturer
         self._interval = interval
+        # Builds the DINOv2 recognizer (seconds: model + reference index).  It
+        # runs HERE, on the worker thread, so the overlay never freezes; it
+        # returns None when the AI stack is unavailable -> template matching.
+        self._recognizer_factory = recognizer_factory
         self._running = False
         self._last_key: Optional[Tuple] = None
 
@@ -74,6 +80,13 @@ class DetectorWorker(QThread):
 
     def run(self) -> None:
         self._running = True
+        if self._recognizer_factory is not None:
+            try:
+                self._detector.recognizer = self._recognizer_factory()
+            except Exception as exc:                      # never block detection
+                sys.stderr.write(f"[dino] failed to start ({exc}); "
+                                 "using template matching\n")
+                self._detector.recognizer = None
         while self._running:
             try:
                 frame = self._capturer.grab()
@@ -143,7 +156,8 @@ class DraftAssistant:
         self.overlay.update_result(result)
 
     # ----- lifecycle ------------------------------------------------------
-    def start_live(self, square_dir: str, circle_dir: str, accept_low: bool) -> None:
+    def start_live(self, square_dir: str, circle_dir: str, accept_low: bool,
+                   use_dino: bool = True) -> None:
         # Imported lazily so --mock works on machines without the CV stack.
         from detector import ScreenCapturer, TemplateLibrary, DraftDetector
 
@@ -197,7 +211,18 @@ class DraftAssistant:
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
                                  ban_library=ban, accept_low=accept_low)
 
-        self.worker = DetectorWorker(detector, capturer)
+        factory = None
+        if use_dino:
+            print("[recognition] DINOv2 loading on the detector thread "
+                  "(falls back to templates if unavailable)")
+
+            def factory():
+                from recognizer import DinoRecognizer    # imports torch lazily
+                return DinoRecognizer.load()
+        else:
+            print("[recognition] template matching (DINOv2 disabled)")
+
+        self.worker = DetectorWorker(detector, capturer, recognizer_factory=factory)
         self.worker.state_ready.connect(self.on_state)
         self.worker.start()
 
@@ -272,6 +297,8 @@ def main() -> int:
                         help="calibration JSON produced by calibrate.py")
     parser.add_argument("--accept-low", action="store_true",
                         help="accept low-confidence template guesses")
+    parser.add_argument("--no-dino", action="store_true",
+                        help="use template matching instead of DINOv2 recognition")
     parser.add_argument("--mock", action="store_true",
                         help="run a scripted demo without screen capture")
     parser.add_argument("--calibrate", action="store_true",
@@ -354,7 +381,8 @@ def main() -> int:
         assistant.start_mock()
     else:
         try:
-            assistant.start_live(args.templates, args.circle_templates, args.accept_low)
+            assistant.start_live(args.templates, args.circle_templates, args.accept_low,
+                                 use_dino=config.USE_DINO and not args.no_dino)
         except Exception as exc:
             sys.stderr.write(
                 f"[fatal] could not start live capture: {exc}\n"

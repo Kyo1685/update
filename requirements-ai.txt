@@ -1,0 +1,15 @@
+# Optional: DINOv2 hero recognition (much more accurate than template
+# matching - see README "DINOv2 hero recognition").  Without these the app
+# still runs, using template matching.
+#
+# CPU build (works on every PC, ~250 MB download):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements-ai.txt
+#
+# NVIDIA GPU (optional, faster): install torch + torchvision with the CUDA
+# command from https://pytorch.org/get-started/locally/ instead, then run
+# pip install -r requirements-ai.txt
+torch>=2.1
+torchvision>=0.16
+transformers>=4.40
+pillow>=10.0

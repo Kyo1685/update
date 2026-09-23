@@ -1,8 +1,7 @@
 """
 detector.py
 ===========
-Computer-vision pipeline that turns the 2712x1220 Scrcpy mirror into a
-``DraftState``.  No neural networks - just fast, deterministic OpenCV.
+Computer-vision pipeline that turns the Scrcpy mirror into a ``DraftState``.
 
 Stages
 ------
@@ -11,11 +10,17 @@ Stages
 2. For each of the 20 slot boxes defined in config.LAYOUT we crop the pixels.
 3. A cheap per-slot SIGNATURE (8x8 grey thumbnail) is compared to the previous
    frame.  Unchanged slots short-circuit straight to the cached result - this
-   is the single most important anti-stutter optimisation, because template
-   matching only runs on slots that actually changed.
-4. Changed slots are classified by TemplateLibrary:
-       a) primary  : multi-position ``cv2.matchTemplate`` (TM_CCOEFF_NORMED)
-       b) fallback : HSV colour-histogram correlation
+   is the single most important anti-stutter optimisation, because recognition
+   only runs on slots that actually changed.
+4. Changed slots are recognised by one of two engines:
+       DINOv2 (recognizer.py, when the optional AI stack is installed): every
+         changed slot is embedded in ONE batched forward pass, matched to the
+         nearest hero fingerprint and double-checked (clear win, or a near-tie
+         settled by the template matcher, else blank).  A slot whose pixels
+         only pulse with the draft animation keeps its answer without running
+         the model.
+       Templates (fallback): multi-position ``cv2.matchTemplate`` plus the
+         confirmed-colour check.
    Empty / locked-but-blank slots are rejected by a std-dev gate.
 5. assign_lanes() runs an optimal 1-to-1 role->lane assignment so every
    detected hero gets a predicted lane even when base roles collide.
@@ -521,6 +526,9 @@ class _SlotCache:
     signature: Optional["np.ndarray"] = None
     name: Optional[str] = None
     confidence: float = 0.0
+    # DINOv2 mode: thumbnail of the crop this slot was last recognised from
+    # (the "anchor" that animation frames are compared against).
+    thumb: Optional["np.ndarray"] = None
 
 
 class DraftDetector:
@@ -530,7 +538,8 @@ class DraftDetector:
                  enemy_library: Optional[TemplateLibrary] = None,
                  ban_library: Optional[TemplateLibrary] = None,
                  layout: Optional[config.Layout] = None,
-                 accept_low: bool = False):
+                 accept_low: bool = False,
+                 recognizer=None):
         self.db = db
         # Resolve at call time so a calibrated config.LAYOUT is picked up.
         self.layout = layout if layout is not None else config.LAYOUT
@@ -541,8 +550,13 @@ class DraftDetector:
         self.enemy_library = enemy_library if enemy_library is not None else base
         self.ban_library = ban_library if ban_library is not None else base
         self.accept_low = accept_low
+        # Optional recognizer.DinoRecognizer.  When set it names every slot and
+        # the template libraries only settle its near-ties; None = templates.
+        self.recognizer = recognizer
         # One cache entry per slot, keyed by a stable slot id.
         self._cache: Dict[str, _SlotCache] = {}
+        self._prefetch: Dict[str, "np.ndarray"] = {}   # slot id -> embedding
+        self._detail: Dict[str, str] = {}              # slot id -> why (debug dump)
 
     # ----- helpers ---------------------------------------------------------
     @staticmethod
@@ -600,6 +614,103 @@ class DraftDetector:
         hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
         return float(hsv[:, :, 1].mean()) < config.LOCKED_MIN_SATURATION
 
+    @staticmethod
+    def _unchanged(cache: Optional[_SlotCache], sig: "np.ndarray") -> bool:
+        if cache is None or cache.signature is None:
+            return False
+        delta = float(np.abs(sig.astype(np.int16)
+                             - cache.signature.astype(np.int16)).mean())
+        return delta < config.SIGNATURE_DELTA
+
+    @staticmethod
+    def _thumb(crop: "np.ndarray") -> "np.ndarray":
+        """Zero-mean, unit-norm 24x24 colour thumbnail.  The dot product of two
+        is their normalised correlation, which ignores brightness pulses."""
+        t = cv2.resize(crop[:, :, :3], (24, 24),
+                       interpolation=cv2.INTER_AREA).astype(np.float32).ravel()
+        t -= t.mean()
+        n = float(np.linalg.norm(t))
+        return t / n if n > 1e-6 else t
+
+    @staticmethod
+    def _continuous(cache: Optional[_SlotCache], thumb: "np.ndarray") -> bool:
+        """Is this the same content the slot was last recognised from?"""
+        return (cache is not None and cache.thumb is not None
+                and float(thumb @ cache.thumb) >= config.DINO_CONTINUITY_MIN)
+
+    def _slot_groups(self):
+        L = self.layout
+        return (("ap", L.ally_picks), ("ep", L.enemy_picks),
+                ("ab", L.ally_bans), ("eb", L.enemy_bans))
+
+    @staticmethod
+    def _template_pick(library: Optional[TemplateLibrary], crop) -> Optional[str]:
+        if library is None or len(library) == 0:
+            return None
+        tops = library.top_matches(crop, 1)
+        return tops[0][0] if tops else None
+
+    def _prefetch_embeddings(self, frame: "np.ndarray") -> None:
+        """Embed every slot that will need recognition this frame in ONE
+        batched forward pass (same skip rules as ``_classify_dino``)."""
+        ids, crops = [], []
+        for prefix, boxes in self._slot_groups():
+            for i, box in enumerate(boxes):
+                sid = f"{prefix}{i}"
+                crop = self._crop(frame, box)
+                cache = self._cache.get(sid)
+                if (self._unchanged(cache, self._signature(crop))
+                        or self._is_empty(crop) or self._is_grayed(crop)
+                        or self._continuous(cache, self._thumb(crop))):
+                    continue
+                ids.append(sid)
+                crops.append(crop)
+        self._prefetch = (dict(zip(ids, self.recognizer.embed(crops)))
+                          if crops else {})
+
+    def _classify_dino(self, crop: "np.ndarray", sig: "np.ndarray",
+                       cache: Optional[_SlotCache], slot_id: str,
+                       library: Optional[TemplateLibrary]
+                       ) -> Tuple[Optional[str], float]:
+        """DINOv2 decision for one changed slot."""
+        rec = self.recognizer
+        thumb = self._thumb(crop)
+        if self._is_empty(crop) or self._is_grayed(crop):
+            name, conf, anchor = None, 0.0, None
+            self._detail[slot_id] = "empty"
+        elif self._continuous(cache, thumb):
+            # Only the draft animation moved: keep the answer, skip the model.
+            name, conf, anchor = cache.name, cache.confidence, cache.thumb
+        else:
+            vec = self._prefetch.pop(slot_id, None)
+            if vec is None:
+                vec = rec.embed([crop])[0]
+            rank = rec.rank(vec)
+            name, conf, method = rec.decide(
+                rank, tiebreak=lambda: self._template_pick(library, crop))
+            anchor = thumb
+            if name is None and self.accept_low and rank:
+                conf, name = rank[0]
+                method += "(accept-low)"
+            if name:
+                hero = self.db.get(name)
+                name = hero.name if hero else name
+                if config.AUTO_LEARN and method == "dino":
+                    rec.maybe_learn(name, crop, vec, rank)
+            elif config.STICKY_SLOTS and cache is not None and cache.name:
+                held = rec.sim_of(rank, cache.name, config.DINO_TIE_TOPK)
+                if held is not None and held >= config.DINO_STICKY_MIN:
+                    # Transient blank while the held hero is still a top
+                    # candidate: keep it, and keep the OLD anchor so the next
+                    # frame is judged against the content it was named from.
+                    name, conf, anchor = cache.name, cache.confidence, cache.thumb
+                    method = "held"
+            self._detail[slot_id] = (f"{method} {conf:.2f} | top3 "
+                                     f"{rec.format_rank(rank)}")
+        self._cache[slot_id] = _SlotCache(signature=sig, name=name,
+                                          confidence=conf, thumb=anchor)
+        return name, conf
+
     def _classify_slot(self, frame: "np.ndarray", box: config.Box, slot_id: str,
                        library: "TemplateLibrary",
                        threshold: Optional[float] = None
@@ -610,11 +721,10 @@ class DraftDetector:
         sig = self._signature(crop)
         cache = self._cache.get(slot_id)
 
-        if cache is not None and cache.signature is not None:
-            delta = float(np.abs(sig.astype(np.int16)
-                                 - cache.signature.astype(np.int16)).mean())
-            if delta < config.SIGNATURE_DELTA:
-                return cache.name, cache.confidence       # cache hit
+        if self._unchanged(cache, sig):
+            return cache.name, cache.confidence       # cache hit
+        if self.recognizer is not None:
+            return self._classify_dino(crop, sig, cache, slot_id, library)
 
         # Slot changed (or first sight) - do the real work.  Skip empty slots
         # and un-locked/hovered (grayed) slots so only confirmed picks show.
@@ -664,6 +774,8 @@ class DraftDetector:
         """Scan every slot box and return a fully-populated DraftState
         (including predicted lanes for both teams)."""
         _require_cv()
+        if self.recognizer is not None:
+            self._prefetch_embeddings(frame)
         state = DraftState()
 
         def scan(boxes, prefix, library, threshold=None, lock_gate=False):
@@ -692,6 +804,7 @@ class DraftDetector:
                     name, conf = None, 0.0
                     self._cache[slot_id] = _SlotCache(
                         signature=self._signature(crop), name=None, confidence=0.0)
+                    self._detail[slot_id] = "empty" if empty else "not locked"
                 else:
                     name, conf = self._classify_slot(frame, box, slot_id,
                                                      library, threshold)
@@ -722,6 +835,7 @@ class DraftDetector:
 
         state.ally_lanes = assign_lanes(state.ally_picks, self.db)
         state.enemy_lanes = assign_lanes(state.enemy_picks, self.db)
+        self._prefetch = {}
         return state
 
     # ----- self-documenting debug dump --------------------------------------
@@ -732,21 +846,25 @@ class DraftDetector:
         be reported by just committing the folder."""
         out = out_dir or config.DEBUG_DUMP_DIR
         os.makedirs(out, exist_ok=True)
-        lines = []
-        groups = (("ally_pick", self.layout.ally_picks, state.ally_picks,
+        engine = (f"dino ({self.recognizer.label})" if self.recognizer is not None
+                  else "templates")
+        lines = [f"engine: {engine}"]
+        groups = (("ally_pick", "ap", self.layout.ally_picks, state.ally_picks,
                    state.ally_pick_conf),
-                  ("enemy_pick", self.layout.enemy_picks, state.enemy_picks,
+                  ("enemy_pick", "ep", self.layout.enemy_picks, state.enemy_picks,
                    state.enemy_pick_conf),
-                  ("ally_ban", self.layout.ally_bans, state.ally_bans,
+                  ("ally_ban", "ab", self.layout.ally_bans, state.ally_bans,
                    state.ally_ban_conf),
-                  ("enemy_ban", self.layout.enemy_bans, state.enemy_bans,
+                  ("enemy_ban", "eb", self.layout.enemy_bans, state.enemy_bans,
                    state.enemy_ban_conf))
-        for tag, boxes, names, confs in groups:
+        for tag, prefix, boxes, names, confs in groups:
             for i, box in enumerate(boxes):
                 crop = self._crop(frame, box)
                 cv2.imwrite(os.path.join(out, f"{tag}_{i}.png"), crop)
+                why = self._detail.get(f"{prefix}{i}", "")
                 lines.append(f"{tag}_{i}: {names[i] or '-'} "
-                             f"({confs[i]:.2f})  box={box.x},{box.y},{box.w},{box.h}")
+                             f"({confs[i]:.2f})  box={box.x},{box.y},{box.w},{box.h}"
+                             + (f"  [{why}]" if why else ""))
         with open(os.path.join(out, "decisions.txt"), "w", encoding="utf-8") as fh:
             fh.write("\n".join(lines) + "\n")
         return out

@@ -121,10 +121,13 @@ def test_hist_confirmed_fallback_without_seeds():
     assert resolved["enemy_pick_1"] == "Johnson"
     # Garbage crops must stay blank (colour-only Gord is rejected).
     assert resolved["ally_pick_3"] is None and resolved["ally_pick_4"] is None
-    # All ten bans must still resolve seed-free.
+    # Every ban with public art must still resolve seed-free.  Sora has none
+    # (his only reference is a screen crop in the learned memory), so without
+    # seeds he must stay blank - never a wrong name.
     for grp in ("ally_ban", "enemy_ban"):
         for i, want in enumerate(REAL_DRAFT_TRUTH[grp]):
-            assert resolved[f"{grp}_{i}"] == want
+            expect = None if want == "Sora" else want
+            assert resolved[f"{grp}_{i}"] == expect, (grp, i, resolved[f"{grp}_{i}"])
 
 
 def test_full_screen_1366x768_end_to_end():
@@ -347,10 +350,10 @@ def test_real_templates_have_no_named_confusions():
          "Helcurt", {"Gord"}),
         ("templates_enemy/helcurt.png", enemy, config.ENEMY_MATCH_THRESHOLD,
          "Helcurt", {"Gord"}),
-        ("templates_circle/sora.png",   ally,  config.TEMPLATE_MATCH_THRESHOLD,
-         "Sora", {"Ixia", "Kalea", "Ling"}),
-        ("templates_enemy/sora.png",    enemy, config.ENEMY_MATCH_THRESHOLD,
-         "Sora", {"Ixia", "Kalea", "Ling"}),
+        # Sora has no public art: his only reference is his ban crop, a
+        # screen crop kept with the learned memory.
+        ("tests/fixtures/real_draft/ally_ban_0.png", ally,
+         config.BAN_MATCH_THRESHOLD, "Sora", {"Ixia", "Kalea", "Ling"}),
     ]
     for path, lib, thr, want, confus in cases:
         crop = cv2.imread(os.path.join(ROOT, path), cv2.IMREAD_COLOR)
@@ -478,7 +481,8 @@ def test_overlay_behaviors_helcurt_pending_and_sora_ban():
     for i, n in enumerate(fill):
         _place(f, L.ally_picks[i], circ(n))
     _place(f, L.ally_picks[3], _grayed(circ("helcurt")))   # hovered, not locked
-    _place(f, L.ally_bans[0], circ("sora"))
+    _place(f, L.ally_bans[0], cv2.imread(os.path.join(       # Sora's real ban icon
+        ROOT, "tests", "fixtures", "real_draft", "ally_ban_0.png")))
     with _grayed_gate():                                    # gate ships OFF here
         s = det.detect(f)
     assert s.ally_pending[3] is True and s.ally_picks[3] is None    # NOT PICKED

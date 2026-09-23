@@ -280,6 +280,59 @@ SHOW_CONFIDENCE: bool = False                 # don't draw the match % on labels
 MIN_DISPLAY_CONFIDENCE: float = 0.0           # 0 = show everything detected
 
 # ---------------------------------------------------------------------------
+# 4d. DINOv2 RECOGNITION (consumed by recognizer.py / detector.py)
+# ---------------------------------------------------------------------------
+# A small local vision model (DINOv2-small, ~90 MB) turns every hero portrait
+# into a feature "fingerprint" and names a slot by its nearest reference.
+# Measured on real 1366x768 draft crops using DOWNLOADED art only: DINOv2 14/15
+# heroes (skins included), template matching 13/15, CLIP 6/15; with the
+# double-check below, 15/15 and every empty slot rejected.  Needs torch +
+# torchvision + transformers (requirements-ai.txt); without them, or when the
+# one-time model download fails, the app keeps using template matching.
+USE_DINO: bool = True
+DINO_MODEL: str = "facebook/dinov2-small"
+DINO_DEVICE: str = "auto"                     # "auto" | "cpu" | "cuda"
+DINO_THREADS: int = 4                         # CPU threads for inference (0 = torch default)
+DINO_BATCH: int = 32                          # images per forward pass
+
+# The double-check.  A slot is named only when the best match is similar
+# enough AND clearly ahead of the runner-up; on a near-tie the template matcher
+# breaks it, but only by picking one of DINOv2's own top candidates.  Anything
+# else stays blank - never a guessed name.
+DINO_MIN_SIM: float = 0.66                    # best match below this -> blank
+DINO_CLEAR_MARGIN: float = 0.02               # lead needed to trust DINOv2 alone
+DINO_TIE_TOPK: int = 3                        # tie-break must be one of these
+
+# Animation: a named slot keeps its label while its pixels stay near-identical
+# to the crop it was recognised from (normalised correlation), so pulsing
+# draft effects cost no inference.  A real change re-runs recognition, and a
+# transient blank is bridged only while the held hero is still a top candidate.
+DINO_CONTINUITY_MIN: float = 0.90
+DINO_STICKY_MIN: float = 0.55
+
+# Memory: a confident clear win saves the crop as an extra reference for that
+# hero (several per hero, so a pick and a ban of the same hero both stick).
+DINO_LEARN_DIR: str = "templates_learned_dino"
+DINO_LEARN_MIN: float = 0.80                  # similarity needed to remember
+DINO_LEARN_MARGIN: float = 0.05               # lead needed to remember
+DINO_LEARN_MAX_PER_HERO: int = 6
+DINO_LEARN_DUP_SIM: float = 0.97              # skip crops this close to a known ref
+
+# Reference art, in two classes.  CLEAN folders hold downloaded portraits.
+# SCREEN folders hold crops taken off the draft screen: those carry the slot's
+# overlay (ring, badges, the red ban slash) that every other slot of that type
+# shares, so a screen crop only counts as evidence at DINO_SCREEN_MIN or above
+# (measured: same hero re-sighted with a 4 px box shift >= 0.90; different
+# heroes sharing the overlay <= 0.79).  Put screen crops in a SCREEN folder,
+# never in a clean one.  Embeddings are cached by image content, so only new
+# or changed files are embedded on startup (the first run embeds the roster).
+DINO_CLEAN_DIRS: tuple = (TEMPLATE_DIR, TEMPLATE_CIRCLE_DIR, TEMPLATE_ALLY_DIR,
+                          TEMPLATE_ENEMY_DIR)
+DINO_SCREEN_DIRS: tuple = (TEMPLATE_LEARNED_DIR, TEMPLATE_LEARNED_ENEMY_DIR)
+DINO_SCREEN_MIN: float = 0.85
+DINO_CACHE_PATH: str = ".dino_cache.npz"
+
+# ---------------------------------------------------------------------------
 # 4b. LIVE STATS SOURCE (consumed by stats_provider.py / main.py)
 # ---------------------------------------------------------------------------
 # Leave STATS_URL = None to run purely from heroes.json.  Set it to a JSON
