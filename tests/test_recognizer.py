@@ -298,8 +298,8 @@ def _icons():
 
 
 def test_every_real_ban_icon_is_named_by_the_registered_art():
-    """30 real ban icons from three screenshots: every hero with public art is
-    named with a wide lead; Sora (no public art) stays blank, never wrong."""
+    """30 real ban icons from three screenshots - Sora included, whose art
+    comes from the official roster - each named with a wide lead."""
     if not _have_cv():
         return
     icons = _icons()
@@ -310,11 +310,18 @@ def test_every_real_ban_icon_is_named_by_the_registered_art():
                 match = icons.rank_ban(_crop(fixture_set, group, i), side)
                 hero, score, _method = decide_ban(match)
                 where = f"{fixture_set}/{group}_{i}"
-                if want == "Sora":
-                    assert hero is None, f"{where}: Sora read as {hero}"
-                    continue
                 assert hero == want, f"{where}: {hero} ({match.rank[:3]})"
                 assert match.margin >= 0.15, f"{where}: margin {match.margin:.2f}"
+
+
+def test_a_hero_without_public_art_is_blank_not_wrong():
+    """Without a hero's art (a brand-new release before tools/update_meta.py
+    fetches it) its ban icon must stay blank - never a look-alike's name."""
+    if not _have_cv():
+        return
+    art = {n: img for n, img in _icons().art.items() if n != "Sora"}
+    match = IconMatcher(art).rank_ban(_crop("real_draft", "ally_ban", 0), "ally")
+    assert decide_ban(match)[0] is None, match.rank[:3]
 
 
 def test_hovered_pick_is_not_a_locked_pick():
@@ -351,8 +358,8 @@ def test_template_mode_names_real_bans_by_the_registered_art():
 #  Real model, real screenshots, the real DraftDetector (optional AI stack)
 # ---------------------------------------------------------------------------
 def _real_recognizer(tmp):
-    """DINOv2 over DOWNLOADED art only; Sora's single reference is his ban
-    crop (no public art exists), kept as a crop remembered from the screen."""
+    """DINOv2 over DOWNLOADED art only, plus one remembered screen crop (Sora's
+    ban icon) to exercise the memory path."""
     if not _have_cv() or not recognizer.ai_stack_available():
         print("(skipped: torch/transformers not installed)")
         return None

@@ -32,3 +32,8 @@ templates_learned_enemy/*
 .dino_cache.npz
 .dino_cache.npz.tmp.npz
 templates_learned_dino/
+
+# Meta updater: backup of the previous heroes.json + the live-meta cache
+heroes.json.bak
+.meta_cache.json
+.meta_cache.json.tmp

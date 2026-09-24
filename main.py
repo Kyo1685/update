@@ -16,6 +16,7 @@ Usage
 -----
     python main.py                      # live: capture the Scrcpy mirror
     python main.py --no-dino            # template matching instead of DINOv2
+    python main.py --no-meta            # heroes.json only (no live meta refresh)
     python main.py --templates ./templates
     python main.py --accept-low         # trust low-confidence guesses too
     python main.py --mock               # demo with a scripted draft (no game)
@@ -110,6 +111,23 @@ class DetectorWorker(QThread):
         self.wait(2000)
 
 
+class StatsRefresher(QThread):
+    """Fetches live stats OFF the UI thread - a slow website must never freeze
+    the overlay.  Emits the fresh {hero: fields} (or nothing on failure)."""
+    fetched = pyqtSignal(object)
+
+    def __init__(self, provider):
+        super().__init__()
+        self._provider = provider
+
+    def run(self) -> None:
+        try:
+            self.fetched.emit(self._provider.fetch(force=True))
+        except Exception as exc:
+            sys.stderr.write(f"[meta] refresh failed ({exc}); keeping the "
+                             "current numbers\n")
+
+
 # ---------------------------------------------------------------------------
 # Application controller
 # ---------------------------------------------------------------------------
@@ -122,6 +140,8 @@ class DraftAssistant:
         self.worker: Optional[DetectorWorker] = None
         self.repo = None
         self._stats_timer: Optional[QTimer] = None
+        self._refresher: Optional[StatsRefresher] = None
+        self._told_new_heroes = False
 
         # Recompute whenever the board OR the toggles change.
         self.overlay.settingsChanged.connect(self._on_settings)
@@ -129,17 +149,33 @@ class DraftAssistant:
 
     # ----- live stats -----------------------------------------------------
     def enable_live_stats(self, repo, interval_sec: int) -> None:
-        """Periodically refresh hero stats from the StatsRepository in place.
-        The DB is mutated, so the engine immediately scores on fresh numbers."""
+        """Refresh hero stats now and periodically, in the background.  The DB
+        is mutated in place, so the engine immediately scores on fresh numbers."""
         self.repo = repo
         self._stats_timer = QTimer()
         self._stats_timer.timeout.connect(self._refresh_stats)
         self._stats_timer.start(max(30, interval_sec) * 1000)
+        self._refresh_stats()
 
     def _refresh_stats(self) -> None:
-        if self.repo is None:
+        if self.repo is None or self.repo.provider is None:
             return
-        if self.repo.refresh(self.db) > 0:
+        if self._refresher is not None and self._refresher.isRunning():
+            return
+        self._refresher = StatsRefresher(self.repo.provider)
+        self._refresher.fetched.connect(self._apply_stats)
+        self._refresher.start()
+
+    def _apply_stats(self, data) -> None:
+        n = self.db.apply_updates(data)
+        print(f"[meta] live stats applied to {n} heroes")
+        live = getattr(self.repo.provider, "inner", self.repo.provider)
+        new = getattr(live, "new_heroes", None)
+        if new and not self._told_new_heroes:
+            self._told_new_heroes = True
+            print(f"[meta] new heroes not in heroes.json yet: {', '.join(new)} - "
+                  "run:  python tools/update_meta.py")
+        if n:
             self._recompute()                     # re-score with new stats
 
     # ----- event handlers -------------------------------------------------
@@ -305,6 +341,9 @@ def main() -> int:
                         help="accept low-confidence template guesses")
     parser.add_argument("--no-dino", action="store_true",
                         help="use template matching instead of DINOv2 recognition")
+    parser.add_argument("--no-meta", action="store_true",
+                        help="don't refresh the meta (win/ban rates, counters) "
+                             "from the official hero rank; use heroes.json only")
     parser.add_argument("--mock", action="store_true",
                         help="run a scripted demo without screen capture")
     parser.add_argument("--calibrate", action="store_true",
@@ -375,6 +414,17 @@ def main() -> int:
                                        ttl=config.STATS_CACHE_TTL)
         repo = StatsRepository(args.heroes, provider)
         _DB = repo.build()
+    elif config.META_LIVE and not args.no_meta:
+        # The official hero rank (meta.py).  Start instantly from heroes.json +
+        # the last good copy; fresh numbers arrive in the background.
+        from stats_provider import StatsRepository, CachedStatsProvider
+        from meta import MoontonStatsProvider
+        live = MoontonStatsProvider(HeroDB.load(args.heroes).names())
+        repo = StatsRepository(args.heroes, CachedStatsProvider(
+            live, cache_path=config.META_CACHE_PATH, ttl=config.STATS_CACHE_TTL))
+        _DB = repo.build(network=False)
+        print(f"[meta] live meta: {live.describe()} - refreshing in the "
+              "background (--no-meta to use heroes.json only)")
     else:
         _DB = HeroDB.load(args.heroes)
 

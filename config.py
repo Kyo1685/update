@@ -384,6 +384,19 @@ STATS_CACHE_PATH: str = ".stats_cache.json"
 STATS_CACHE_TTL: float = 3600.0                     # serve cache for 1h
 STATS_REFRESH_SEC: int = 900                        # auto-refresh every 15 min
 
+# The live META (meta.py): Moonton's own hero-rank data - the numbers behind
+# the official Hero Rank page - refreshed in the background while the app runs
+# (win / ban / pick rates, counters, synergies).  Offline, the last good copy
+# (or heroes.json) is used.  `python tools/update_meta.py` writes the same data
+# into heroes.json and adds newly released heroes with their portraits.
+# Ignored when STATS_URL is set.  Disable with --no-meta.
+META_LIVE: bool = True
+META_API: str = "https://api.gms.moontontech.com/api/gms/source/2669606/"
+META_DAYS: int = 7                                  # 1 | 3 | 7 | 15 | 30 days
+META_RANK: str = "all"                              # all|epic|legend|mythic|honor|glory
+META_TOP: int = 5                                   # counters/synergies per hero
+META_CACHE_PATH: str = ".meta_cache.json"
+
 # ---------------------------------------------------------------------------
 # 4c. TEMPLATE AUTO-FETCH (consumed by fetch_templates.py)
 # ---------------------------------------------------------------------------

@@ -14,8 +14,18 @@ import config
 from engine import DraftState, HeroDB, ScoringEngine, Settings
 from detector import assign_lanes
 
-DB = HeroDB.load(os.path.join(os.path.dirname(__file__), "..", "heroes.json"))
+HEROES = os.path.join(os.path.dirname(__file__), "..", "heroes.json")
+DB = HeroDB.load(HEROES)
 ENG = ScoringEngine(DB)
+
+
+def _engine_with(relations):
+    """The real roster with the match-up under test pinned, so logic tests
+    don't depend on this week's meta (tools/update_meta.py rewrites the
+    counters in heroes.json from the official hero rank)."""
+    db = HeroDB.load(HEROES)
+    db.apply_updates(relations)
+    return ScoringEngine(db)
 
 
 def _state():
@@ -75,9 +85,10 @@ def test_lane_counter_amplifies_direct_matchup():
     # mode (3x on the direct match-up) must boost Joy hard.
     st = DraftState(enemy_picks=["Gord", None, None, None, None],
                     enemy_lanes={"JUNGLE": "Gord"})
+    eng = _engine_with({"Joy": {"counters": ["Gord"]}})
 
     def joy(settings):
-        res = ENG.evaluate(st, settings)
+        res = eng.evaluate(st, settings)
         return next((s.score for s in res.suggestions["JUNGLE"]
                      if s.name == "Joy"), None)
 
@@ -109,8 +120,10 @@ def test_build_path_reacts_to_enemy_profile():
 
 def test_ban_relief_boosts_threatened_hero():
     # Lancelot is countered_by Khufra; banning Khufra should relieve Lancelot.
+    eng = _engine_with({"Lancelot": {"countered_by": ["Khufra"]}})
+
     def lanc(state):
-        res = ENG.evaluate(state, Settings())
+        res = eng.evaluate(state, Settings())
         return next((s.score for s in res.suggestions["JUNGLE"]
                      if s.name == "Lancelot"), None)
     base = lanc(DraftState())
