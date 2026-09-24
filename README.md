@@ -25,6 +25,8 @@ update/
 │                    #   templates), per-slot caching, lane-prediction optimiser
 ├── recognizer.py    # optional DINOv2 recognition: fingerprints, double-check,
 │                    #   learn-from-screen memory
+├── icon_match.py    # the clean art registered into each slot (pure OpenCV):
+│                    #   names ban icons, referees picks, spots hovers
 ├── requirements-ai.txt # optional AI stack for recognizer.py
 ├── engine.py        # the scoring brain (pure, testable maths)
 ├── ui.py            # PyQt5: click-through canvas + interactive control dock
@@ -78,17 +80,39 @@ Position the Scrcpy window borderless at the top-left of the primary monitor
 
 Recognition — which hero sits in which slot — is the hard part of the overlay.
 With the optional AI stack installed, the app names heroes with **DINOv2**, a
-small local vision model (~90 MB, runs offline after the first start). It turns
-every hero portrait into a feature "fingerprint" and matches each slot to the
-nearest one. Measured on real 1366×768 draft crops, using **downloaded art
-only** (no crops learned from your screen):
+small local vision model (~90 MB, runs offline after the first start), and
+**double-checks every name with a second, independent method**: the hero's
+clean art is registered (scaled, shifted, mirrored) into the slot and
+correlated pixel by pixel (`icon_match.py`).
 
-| Recognizer | Heroes correct (of 15) | Wrong labels |
+Measured on **11 real 1366×768 screenshots of two drafts** (176 hero slots:
+skins, tiny ban icons, compression, the old overlay's labels drawn over the
+portraits, a hovered hero), using downloaded art only:
+
+| Recognizer | Correct | Wrong labels |
 |---|---|---|
-| Template matching | 13 (skins left blank) | 0 |
-| CLIP (the kind of encoder vision chatbots use) | 6 | 9 |
-| DINOv2 | 14 | 1 (an exact tie) |
-| **DINOv2 + double-check (what ships)** | **15**, every empty slot rejected | **0** |
+| Template matching (old, with its learned seeds) | 162 / 176 | 2 (Hanabi→Ixia, Miya→Layla) |
+| DINOv2 alone (first version) | 139 / 176 | 4 (Minsithar, Saber, Floryn, Hanabi) + a hovered Helcurt shown as picked |
+| **DINOv2 + registered art (what ships)** | **176 / 176** | **0** |
+
+**Bans** are the same portrait art at a fixed scale under the red ban badge,
+so the registered art decides: the true hero scores 0.91–0.99 and no other
+hero above 0.78, and DINOv2 — fed the same masked icon — must agree. Rendered
+for all 131 heroes as synthetic ban icons, every one is named correctly (the
+closest pair, Benedetta/Ixia, still 0.21 apart).
+
+**Picks** are named by DINOv2 (it copes with skins and the portraits'
+hero-specific framing); a near-tie goes to the registered art as referee.
+
+**Hover vs locked.** A pre-selected (hovered, not locked) hero is drawn at
+about half contrast: the art fit measures 0.50 for a hovered Helcurt against
+0.70–0.96 for every locked pick, so a hover reads **NOT PICKED** until it
+locks in.
+
+**The overlay never covers a slot.** The overlay is part of every screen
+capture, so boxes are drawn just outside the slots and labels go where they
+cover no slot (they used to sit on the portrait above and be read as part of
+that hero).
 
 Install it once:
 
@@ -99,21 +123,26 @@ python main.py        # first start: downloads the model + fingerprints the rost
 ```
 
 Without these packages — or with `python main.py --no-dino` — the app uses
-template matching exactly as before. The console says which engine is active.
+template matching for picks, and the registered art (pure OpenCV) still names
+the bans and flags hovers. The console says which engine is active.
 
-**The double-check.** A slot gets a name only when the best match is similar
-enough (`DINO_MIN_SIM`) **and** clearly ahead of the runner-up
-(`DINO_CLEAR_MARGIN`). On a near-tie the template matcher settles it, but it
-may only pick one of DINOv2's own top candidates. Anything else stays blank,
-never a guessed name.
+**The double-check.** A pick gets a name only when DINOv2's best match is
+similar enough (`DINO_MIN_SIM`) **and** clearly ahead of the runner-up
+(`DINO_CLEAR_MARGIN`); on a near-tie the registered art must pick one of the
+tied candidates. A ban needs the registered art to be sure (`BAN_NCC_MIN`,
+`BAN_NCC_MARGIN`) and DINOv2 not to disagree. Anything else stays blank, never
+a guessed name. `python tools/diagnose.py` prints both methods' evidence for
+every slot.
 
 **Speed.** Changed slots are recognised in one batch (~0.9 s for a whole cold
 board on a laptop CPU). A slot whose pixels only pulse with the draft animation
 keeps its label without running the model (~5 ms per frame).
 
-**Memory.** A confident win is saved to `templates_learned_dino/` as an extra
-reference for that hero (several per hero, so a pick and a ban both stick), so
-your skins become near-certain matches over time.
+**Memory.** A confident, locked pick is saved to `templates_learned_dino/` as
+an extra reference for that hero, so your skins become near-certain matches
+over time. Remembered crops are double-checked on every start: one that
+clearly shows a different hero than it is filed under (an old mislabel) is
+ignored, and the console says so.
 
 **Clean art vs screen crops.** Downloaded portraits live in `templates*/`;
 crops taken off your screen belong in `templates_learned*/`. A screen crop
@@ -371,7 +400,8 @@ buttons. So:
 
 ```bash
 python tests/test_engine.py     # or: pytest -q
-python tests/test_recognizer.py # DINOv2 rule/index/memory + real-crop end-to-end
+python tests/test_recognizer.py # double-check rules, memory, and 3 REAL screenshots
+                                # end-to-end (every slot, the hover, the bans)
 python engine.py                # scoring self-test across all 4 modes
 python detector.py              # synthetic-frame match + cache + lane test
 ```

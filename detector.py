@@ -14,13 +14,15 @@ Stages
    only runs on slots that actually changed.
 4. Changed slots are recognised by one of two engines:
        DINOv2 (recognizer.py, when the optional AI stack is installed): every
-         changed slot is embedded in ONE batched forward pass, matched to the
-         nearest hero fingerprint and double-checked (clear win, or a near-tie
-         settled by the template matcher, else blank).  A slot whose pixels
-         only pulse with the draft animation keeps its answer without running
-         the model.
+         changed slot is embedded in ONE batched forward pass and
+         double-checked by a second, independent recogniser - the hero's art
+         registered into the slot (icon_match.py).  Bans: the registered art
+         decides and DINOv2 must agree.  Picks: DINOv2 decides, the art
+         referees near-ties and tells a hovered hero (drawn at half contrast)
+         from a locked one.  A slot whose pixels only pulse with the draft
+         animation keeps its answer without running either.
        Templates (fallback): multi-position ``cv2.matchTemplate`` plus the
-         confirmed-colour check.
+         confirmed-colour check; bans still use the registered art when given.
    Empty / locked-but-blank slots are rejected by a std-dev gate.
 5. assign_lanes() runs an optimal 1-to-1 role->lane assignment so every
    detected hero gets a predicted lane even when base roles collide.
@@ -42,6 +44,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 import config
 from engine import DraftState, HeroDB
+from icon_match import decide_ban as decide_ban_ncc, is_hover
 
 # --- guarded heavy imports -------------------------------------------------
 try:
@@ -526,9 +529,16 @@ class _SlotCache:
     signature: Optional["np.ndarray"] = None
     name: Optional[str] = None
     confidence: float = 0.0
-    # DINOv2 mode: thumbnail of the crop this slot was last recognised from
-    # (the "anchor" that animation frames are compared against).
+    # DINOv2 mode: thumbnail + contrast of the crop this slot was last
+    # recognised from (the "anchor" that animation frames are compared against).
     thumb: Optional["np.ndarray"] = None
+    level: float = 0.0
+    locked: bool = True                 # False: a hovered (pre-selected) pick
+
+
+# slot-id prefix -> (slot kind, side)
+_KIND = {"ap": ("pick", "ally"), "ep": ("pick", "enemy"),
+         "ab": ("ban", "ally"), "eb": ("ban", "enemy")}
 
 
 class DraftDetector:
@@ -539,7 +549,7 @@ class DraftDetector:
                  ban_library: Optional[TemplateLibrary] = None,
                  layout: Optional[config.Layout] = None,
                  accept_low: bool = False,
-                 recognizer=None):
+                 recognizer=None, icons=None):
         self.db = db
         # Resolve at call time so a calibrated config.LAYOUT is picked up.
         self.layout = layout if layout is not None else config.LAYOUT
@@ -550,12 +560,16 @@ class DraftDetector:
         self.enemy_library = enemy_library if enemy_library is not None else base
         self.ban_library = ban_library if ban_library is not None else base
         self.accept_low = accept_low
-        # Optional recognizer.DinoRecognizer.  When set it names every slot and
-        # the template libraries only settle its near-ties; None = templates.
+        # Optional recognizer.DinoRecognizer.  When set it names every slot;
+        # None = the template libraries.
         self.recognizer = recognizer
+        # Optional icon_match.IconMatcher (the registered-art matcher).  With
+        # templates it recognises the ban icons; DINOv2 brings its own.
+        self.icons = icons
         # One cache entry per slot, keyed by a stable slot id.
         self._cache: Dict[str, _SlotCache] = {}
         self._prefetch: Dict[str, "np.ndarray"] = {}   # slot id -> embedding
+        self._ban_match: Dict[str, object] = {}        # slot id -> BanMatch
         self._detail: Dict[str, str] = {}              # slot id -> why (debug dump)
 
     # ----- helpers ---------------------------------------------------------
@@ -633,83 +647,129 @@ class DraftDetector:
         return t / n if n > 1e-6 else t
 
     @staticmethod
-    def _continuous(cache: Optional[_SlotCache], thumb: "np.ndarray") -> bool:
-        """Is this the same content the slot was last recognised from?"""
-        return (cache is not None and cache.thumb is not None
-                and float(thumb @ cache.thumb) >= config.DINO_CONTINUITY_MIN)
+    def _level(crop: "np.ndarray") -> float:
+        """Grey-level spread: a hovered portrait halves it, animation doesn't."""
+        return float(cv2.cvtColor(crop[:, :, :3], cv2.COLOR_BGR2GRAY).std())
+
+    @staticmethod
+    def _continuous(cache: Optional[_SlotCache], thumb: "np.ndarray",
+                    level: float) -> bool:
+        """Is this the same content, at the same contrast, the slot was last
+        recognised from?  Contrast matters: a hovered hero locking in is the
+        same picture at twice the contrast."""
+        if (cache is None or cache.thumb is None
+                or float(thumb @ cache.thumb) < config.DINO_CONTINUITY_MIN):
+            return False
+        if cache.level <= 0:
+            return True
+        f = config.DINO_CONTINUITY_LEVEL
+        return 1.0 / f <= level / cache.level <= f
 
     def _slot_groups(self):
         L = self.layout
         return (("ap", L.ally_picks), ("ep", L.enemy_picks),
                 ("ab", L.ally_bans), ("eb", L.enemy_bans))
 
-    @staticmethod
-    def _template_pick(library: Optional[TemplateLibrary], crop) -> Optional[str]:
-        if library is None or len(library) == 0:
-            return None
-        tops = library.top_matches(crop, 1)
-        return tops[0][0] if tops else None
+    def _needs_recognition(self, slot_id: str, crop: "np.ndarray") -> bool:
+        cache = self._cache.get(slot_id)
+        return not (self._unchanged(cache, self._signature(crop))
+                    or self._is_empty(crop) or self._is_grayed(crop)
+                    or self._continuous(cache, self._thumb(crop), self._level(crop)))
 
     def _prefetch_embeddings(self, frame: "np.ndarray") -> None:
-        """Embed every slot that will need recognition this frame in ONE
-        batched forward pass (same skip rules as ``_classify_dino``)."""
-        ids, crops = [], []
+        """Model inputs for every slot that changed this frame: ban icons are
+        registered first (which also locates the icon), then every view is
+        embedded in ONE batched forward pass."""
+        rec = self.recognizer
+        ids, views = [], []
+        self._ban_match = {}
         for prefix, boxes in self._slot_groups():
+            kind, side = _KIND[prefix]
             for i, box in enumerate(boxes):
                 sid = f"{prefix}{i}"
                 crop = self._crop(frame, box)
-                cache = self._cache.get(sid)
-                if (self._unchanged(cache, self._signature(crop))
-                        or self._is_empty(crop) or self._is_grayed(crop)
-                        or self._continuous(cache, self._thumb(crop))):
+                if not self._needs_recognition(sid, crop):
                     continue
+                if kind == "ban":
+                    match = rec.icons.rank_ban(crop, side)
+                    self._ban_match[sid] = match
+                    views.append(rec.ban_view(crop, side, match))
+                else:
+                    views.append(rec.pick_view(crop))
                 ids.append(sid)
-                crops.append(crop)
-        self._prefetch = (dict(zip(ids, self.recognizer.embed(crops)))
-                          if crops else {})
+        self._prefetch = dict(zip(ids, rec.embed(views))) if views else {}
 
     def _classify_dino(self, crop: "np.ndarray", sig: "np.ndarray",
-                       cache: Optional[_SlotCache], slot_id: str,
-                       library: Optional[TemplateLibrary]
+                       cache: Optional[_SlotCache], slot_id: str
                        ) -> Tuple[Optional[str], float]:
-        """DINOv2 decision for one changed slot."""
+        """DINOv2 + registered-art decision for one changed slot."""
         rec = self.recognizer
-        thumb = self._thumb(crop)
+        kind, side = _KIND[slot_id[:2]]
+        thumb, level = self._thumb(crop), self._level(crop)
+        locked = True
         if self._is_empty(crop) or self._is_grayed(crop):
-            name, conf, anchor = None, 0.0, None
+            name, conf, anchor, level = None, 0.0, None, 0.0
             self._detail[slot_id] = "empty"
-        elif self._continuous(cache, thumb):
+        elif self._continuous(cache, thumb, level):
             # Only the draft animation moved: keep the answer, skip the model.
-            name, conf, anchor = cache.name, cache.confidence, cache.thumb
+            name, conf, anchor, level, locked = (cache.name, cache.confidence,
+                                                 cache.thumb, cache.level, cache.locked)
         else:
             vec = self._prefetch.pop(slot_id, None)
-            if vec is None:
-                vec = rec.embed([crop])[0]
-            rank = rec.rank(vec)
-            name, conf, method = rec.decide(
-                rank, tiebreak=lambda: self._template_pick(library, crop))
+            if kind == "ban":
+                match = self._ban_match.pop(slot_id, None) or rec.icons.rank_ban(crop, side)
+                if vec is None:
+                    vec = rec.embed([rec.ban_view(crop, side, match)])[0]
+                verdict = rec.decide_ban(crop, side, match, vec)
+            else:
+                if vec is None:
+                    vec = rec.embed([rec.pick_view(crop)])[0]
+                verdict = rec.decide_pick(crop, vec)
+            name, conf, method, locked = (verdict.hero, verdict.score,
+                                          verdict.method, verdict.locked)
             anchor = thumb
-            if name is None and self.accept_low and rank:
-                conf, name = rank[0]
+            if name is None and self.accept_low and verdict.rank:
+                conf, name = verdict.rank[0]
                 method += "(accept-low)"
             if name:
                 hero = self.db.get(name)
                 name = hero.name if hero else name
-                if config.AUTO_LEARN and method == "dino":
-                    rec.maybe_learn(name, crop, vec, rank)
-            elif config.STICKY_SLOTS and cache is not None and cache.name:
-                held = rec.sim_of(rank, cache.name, config.DINO_TIE_TOPK)
+                if config.AUTO_LEARN and kind == "pick" and locked and method == "dino":
+                    rec.maybe_learn(name, crop, vec, verdict.rank)
+            elif (kind == "pick" and config.STICKY_SLOTS
+                    and cache is not None and cache.name):
+                held = rec.sim_of(verdict.rank, cache.name, config.DINO_TIE_TOPK)
                 if held is not None and held >= config.DINO_STICKY_MIN:
                     # Transient blank while the held hero is still a top
                     # candidate: keep it, and keep the OLD anchor so the next
                     # frame is judged against the content it was named from.
-                    name, conf, anchor = cache.name, cache.confidence, cache.thumb
+                    name, conf, anchor, level, locked = (
+                        cache.name, cache.confidence, cache.thumb, cache.level,
+                        cache.locked)
                     method = "held"
-            self._detail[slot_id] = (f"{method} {conf:.2f} | top3 "
-                                     f"{rec.format_rank(rank)}")
-        self._cache[slot_id] = _SlotCache(signature=sig, name=name,
-                                          confidence=conf, thumb=anchor)
+            self._detail[slot_id] = (verdict.detail if method == verdict.method
+                                     else f"{method} | {verdict.detail}")
+        self._cache[slot_id] = _SlotCache(signature=sig, name=name, confidence=conf,
+                                          thumb=anchor, level=level, locked=locked)
         return name, conf
+
+    def _classify_ban_icon(self, crop: "np.ndarray", sig: "np.ndarray",
+                           slot_id: str) -> Optional[Tuple[Optional[str], float]]:
+        """Template mode: the registered art names a ban icon when it is sure.
+        Returns None when it isn't, so the template library (which also holds
+        crops remembered from the screen) gets its turn."""
+        if self._is_empty(crop) or self._is_grayed(crop):
+            return None
+        match = self.icons.rank_ban(crop, _KIND[slot_id[:2]][1])
+        hero, score, method = decide_ban_ncc(match)
+        self._detail[slot_id] = (f"{method} {score:.2f} | art "
+                                 + ", ".join(f"{h}:{s:.2f}" for s, h in match.rank[:3]))
+        if hero is None:
+            return None
+        known = self.db.get(hero)
+        name = known.name if known else hero
+        self._cache[slot_id] = _SlotCache(signature=sig, name=name, confidence=score)
+        return name, score
 
     def _classify_slot(self, frame: "np.ndarray", box: config.Box, slot_id: str,
                        library: "TemplateLibrary",
@@ -724,7 +784,12 @@ class DraftDetector:
         if self._unchanged(cache, sig):
             return cache.name, cache.confidence       # cache hit
         if self.recognizer is not None:
-            return self._classify_dino(crop, sig, cache, slot_id, library)
+            return self._classify_dino(crop, sig, cache, slot_id)
+        if (self.icons is not None and len(self.icons)
+                and _KIND.get(slot_id[:2], ("pick",))[0] == "ban"):
+            named = self._classify_ban_icon(crop, sig, slot_id)
+            if named is not None:
+                return named
 
         # Slot changed (or first sight) - do the real work.  Skip empty slots
         # and un-locked/hovered (grayed) slots so only confirmed picks show.
@@ -765,8 +830,14 @@ class DraftDetector:
                     and library.score_one(crop, cache.name) >= config.STICKY_MIN):
                 result_name, conf = cache.name, cache.confidence
 
+        # LOCKED-IN check (needs the registered art): a hovered hero is drawn
+        # at about half contrast.
+        locked = True
+        if (result_name and self.icons is not None
+                and _KIND.get(slot_id[:2], ("ban",))[0] == "pick"):
+            locked = not is_hover(self.icons.fit_pick(crop, result_name))
         self._cache[slot_id] = _SlotCache(signature=sig, name=result_name,
-                                          confidence=conf)
+                                          confidence=conf, locked=locked)
         return result_name, conf
 
     # ----- public API ------------------------------------------------------
@@ -808,6 +879,11 @@ class DraftDetector:
                 else:
                     name, conf = self._classify_slot(frame, box, slot_id,
                                                      library, threshold)
+                    held = self._cache.get(slot_id)
+                    if lock_gate and held is not None and not held.locked:
+                        # Recognised, but only HOVERED (drawn at half
+                        # contrast): not a pick yet.
+                        name, conf, is_pending = None, 0.0, True
                     if (name and vref > 0 and config.LOCKED_REL_BRIGHTNESS > 0
                             and self._mean_value(crop)
                             < config.LOCKED_REL_BRIGHTNESS * vref):
@@ -836,6 +912,7 @@ class DraftDetector:
         state.ally_lanes = assign_lanes(state.ally_picks, self.db)
         state.enemy_lanes = assign_lanes(state.enemy_picks, self.db)
         self._prefetch = {}
+        self._ban_match = {}
         return state
 
     # ----- self-documenting debug dump --------------------------------------

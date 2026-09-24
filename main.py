@@ -207,9 +207,15 @@ class DraftAssistant:
               f"+{n_ally_ovr}ovr+{n_learn}learned  enemy=square:{len(sq)}"
               f"+{n_enemy_ovr}ovr+{n_learn_e}learned  bans=circular:{len(ci_enemy)}  "
               f"fallback={config.USE_HISTOGRAM_FALLBACK} confirm={config.HIST_CONFIRM_FALLBACK} auto_learn={config.AUTO_LEARN}")
+        # The registered-art matcher (pure OpenCV): recognises ban icons with or
+        # without DINOv2, and is DINOv2's second opinion on every slot.
+        from icon_match import IconMatcher
+        icons = IconMatcher.from_dirs((circle_dir, square_dir) + tuple(config.ICON_ART_DIRS))
+        print(f"[icons] clean art for {len(icons)} heroes (ban icons + double-check)")
+
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
-                                 ban_library=ban, accept_low=accept_low)
+                                 ban_library=ban, accept_low=accept_low, icons=icons)
 
         factory = None
         if use_dino:
@@ -218,7 +224,7 @@ class DraftAssistant:
 
             def factory():
                 from recognizer import DinoRecognizer    # imports torch lazily
-                return DinoRecognizer.load()
+                return DinoRecognizer.load(icons=icons)
         else:
             print("[recognition] template matching (DINOv2 disabled)")
 

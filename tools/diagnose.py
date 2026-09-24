@@ -4,9 +4,10 @@ tools/diagnose.py
 Dump what the detector actually "sees" so detection can be tuned from real
 numbers instead of guesswork.
 
-For every slot it prints the DINOv2 decision (when the AI stack is installed)
-with its top-3 similarities, next to the template matcher's decision and top-3,
-and saves each slot crop to ``diag/`` so you can eyeball alignment.
+For every slot it prints the decision the live overlay makes (DINOv2 + the
+registered-art double-check when the AI stack is installed, else templates)
+with its evidence, next to the old template matcher's decision and top-3, and
+saves each slot crop to ``diag/`` so you can eyeball alignment.
 
 Run while the draft is on screen:
 
@@ -90,57 +91,52 @@ def main() -> int:
           f"PACK_FACES_ALLY={config.PACK_FACES_ALLY} histogram_fallback="
           f"{config.USE_HISTOGRAM_FALLBACK}\n")
     os.makedirs(args.out, exist_ok=True)
-    det = DraftDetector(HeroDB.load("heroes.json"))
+    from icon_match import IconMatcher
+    icons = IconMatcher.from_dirs()
     rec = None
     if config.USE_DINO and not args.no_dino:
         from recognizer import DinoRecognizer
-        rec = DinoRecognizer.load()
-    print(f"engine: {'dino (' + rec.label + ')' if rec else 'templates'}\n")
+        rec = DinoRecognizer.load(icons=icons)
+    print(f"engine: {'dino (' + rec.label + ') + registered art' if rec else 'templates + registered art (bans)'}\n")
 
-    def dump(title, boxes, lib, thr, picks=False):
-        print(f"== {title} (threshold {thr}) ==")
-        crops = [det._crop(frame, b) for b in boxes]
-        live = [c for c in crops if not det._is_empty(c)]
-        sref = max((det._mean_saturation(c) for c in live), default=0.0)
-        vref = max((det._mean_value(c) for c in live), default=0.0)
-        for i, (b, crop) in enumerate(zip(boxes, crops)):
+    # The decision the live overlay makes, with its evidence ([why]).
+    det = DraftDetector(HeroDB.load("heroes.json"), ally_library=circle,
+                        enemy_library=square, ban_library=circle,
+                        recognizer=rec, icons=icons)
+    state = det.detect(frame)
+
+    def dump(title, prefix, boxes, names, pending, lib, thr):
+        print(f"== {title} ==")
+        for i, b in enumerate(boxes):
+            crop = det._crop(frame, b)
             cv2.imwrite(os.path.join(args.out, f"{title}_{i}.png"), crop)
-            sat = det._mean_saturation(crop)
-            val = det._mean_value(crop)
-            empty = det._is_empty(crop)
-            pending = bool(picks and not empty and sref > 0 and vref > 0
-                           and config.LOCKED_REL_SATURATION > 0
-                           and config.LOCKED_REL_VALUE > 0
-                           and sat < config.LOCKED_REL_SATURATION * sref
-                           and val < config.LOCKED_REL_VALUE * vref)
-            if empty:
-                print(f"  [{i}] sat={sat:5.1f} val={val:5.1f}  (empty)")
-                continue
-            if pending:
-                print(f"  [{i}] sat={sat:5.1f} val={val:5.1f}  NOT PICKED (grayed)")
-                continue
-            tops = lib.top_matches(crop, 3)
-            # The ACTUAL decision the overlay would make (incl. histogram fallback).
-            name, score, method = lib.match(crop, thr)
-            decided = f"{name}:{score:.2f}({method})" if name else "(no match)"
-            top3 = ", ".join(f"{n}:{s:.2f}" for n, s in tops)
+            sat, val = det._mean_saturation(crop), det._mean_value(crop)
+            if pending and pending[i]:
+                decided = "NOT PICKED (hover)"
+            else:
+                decided = names[i] or "-"
+            why = det._detail.get(f"{prefix}{i}", "")
             head = f"  [{i}] sat={sat:5.1f} val={val:5.1f}  "
-            if rec is None:
-                print(f"{head}->{decided:24} | top3: {top3}")
+            print(f"{head}overlay  -> {decided:20} [{why}]")
+            if det._is_empty(crop):
                 continue
-            rank = rec.rank(rec.embed([crop])[0])
-            dn, ds, dm = rec.decide(rank, tiebreak=lambda: tops[0][0] if tops else None)
-            dino = f"{dn}:{ds:.2f}({dm})" if dn else f"-  ({dm} {ds:.2f})"
-            print(f"{head}DINO     ->{dino:26} | top3: {rec.format_rank(rank)}")
-            print(f"{' ' * len(head)}template ->{decided:26} | top3: {top3}")
+            # The old template matcher, for comparison.
+            tops = lib.top_matches(crop, 3)
+            name, score, method = lib.match(crop, thr)
+            old = f"{name}:{score:.2f}({method})" if name and method != "low" else "-"
+            print(f"{' ' * len(head)}template -> {old:20} top3: "
+                  + ", ".join(f"{n}:{s:.2f}" for n, s in tops))
         print()
 
-    dump("ally_pick", L.ally_picks, circle, config.TEMPLATE_MATCH_THRESHOLD, picks=True)
-    dump("enemy_pick", L.enemy_picks, square, config.ENEMY_MATCH_THRESHOLD, picks=True)
-    dump("ally_ban", L.ally_bans, circle, config.BAN_MATCH_THRESHOLD)
-    dump("enemy_ban", L.enemy_bans, circle, config.BAN_MATCH_THRESHOLD)
-    print(f"slot crops saved to ./{args.out}/  - check a few for alignment, "
-          f"and look for '(histogram)' decisions where a template should win.")
+    dump("ally_pick", "ap", L.ally_picks, state.ally_picks, state.ally_pending,
+         circle, config.TEMPLATE_MATCH_THRESHOLD)
+    dump("enemy_pick", "ep", L.enemy_picks, state.enemy_picks, state.enemy_pending,
+         square, config.ENEMY_MATCH_THRESHOLD)
+    dump("ally_ban", "ab", L.ally_bans, state.ally_bans, None,
+         circle, config.BAN_MATCH_THRESHOLD)
+    dump("enemy_ban", "eb", L.enemy_bans, state.enemy_bans, None,
+         circle, config.BAN_MATCH_THRESHOLD)
+    print(f"slot crops saved to {os.path.join(args.out, '')}  - check a few for alignment.")
     return 0
 
 

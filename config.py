@@ -295,19 +295,27 @@ DINO_DEVICE: str = "auto"                     # "auto" | "cpu" | "cuda"
 DINO_THREADS: int = 4                         # CPU threads for inference (0 = torch default)
 DINO_BATCH: int = 32                          # images per forward pass
 
-# The double-check.  A slot is named only when the best match is similar
-# enough AND clearly ahead of the runner-up; on a near-tie the template matcher
-# breaks it, but only by picking one of DINOv2's own top candidates.  Anything
-# else stays blank - never a guessed name.
+# The double-check for PICKS.  A slot is named only when DINOv2's best match
+# is similar enough AND clearly ahead of the runner-up.  On a near-tie the art
+# itself is registered into the portrait (icon_match.py) as a referee: its
+# winner must be one of the tied candidates.  Anything else stays blank -
+# never a guessed name.  (Bans: see 4e.)
 DINO_MIN_SIM: float = 0.66                    # best match below this -> blank
-DINO_CLEAR_MARGIN: float = 0.02               # lead needed to trust DINOv2 alone
-DINO_TIE_TOPK: int = 3                        # tie-break must be one of these
+DINO_CLEAR_MARGIN: float = 0.06               # lead needed to trust DINOv2 alone
+DINO_TIE_TOPK: int = 4                        # candidates the referee may judge
+PICK_TRIM: float = 0.07                       # crop edge ignored (frame, overlay lines)
+PICK_REF_ZOOMS: tuple = (1.0, 0.8, 0.65)      # reference framings (portraits zoom in)
+PICK_REF_SOFT: int = 64                       # + each at screen softness (px)
+PICK_NCC_AGREE: float = 0.55                  # referee confirms DINOv2's best at this
+PICK_NCC_STRONG: float = 0.80                 # referee overrules only when this sure...
+PICK_NCC_MARGIN: float = 0.10                 # ...and this far ahead
 
 # Animation: a named slot keeps its label while its pixels stay near-identical
 # to the crop it was recognised from (normalised correlation), so pulsing
 # draft effects cost no inference.  A real change re-runs recognition, and a
 # transient blank is bridged only while the held hero is still a top candidate.
 DINO_CONTINUITY_MIN: float = 0.90
+DINO_CONTINUITY_LEVEL: float = 1.25           # ...and contrast within this factor
 DINO_STICKY_MIN: float = 0.55
 
 # Memory: a confident clear win saves the crop as an extra reference for that
@@ -330,7 +338,37 @@ DINO_CLEAN_DIRS: tuple = (TEMPLATE_DIR, TEMPLATE_CIRCLE_DIR, TEMPLATE_ALLY_DIR,
                           TEMPLATE_ENEMY_DIR)
 DINO_SCREEN_DIRS: tuple = (TEMPLATE_LEARNED_DIR, TEMPLATE_LEARNED_ENEMY_DIR)
 DINO_SCREEN_MIN: float = 0.85
+DINO_SCREEN_TOLERANCE: float = 0.03           # a remembered crop must look like its
+                                              # hero (within this of the best clean
+                                              # match) or it is ignored as mislabelled
 DINO_CACHE_PATH: str = ".dino_cache.npz"
+
+# ---------------------------------------------------------------------------
+# 4e. ICON MATCHING (icon_match.py - pure OpenCV, with or without DINOv2)
+# ---------------------------------------------------------------------------
+# BANS: every ban icon is the hero's portrait art at a fixed scale under a red
+# ban badge.  Registering each hero's art at that scale and correlating the
+# face (badge corner + ring masked) scored the true hero 0.91-0.99 and every
+# other hero <= 0.78 on the real screenshots - so the correlation decides, and
+# DINOv2 (fed the same masked icon) must agree.
+ICON_ART_DIRS: tuple = (TEMPLATE_CIRCLE_DIR, TEMPLATE_DIR)   # one portrait per hero
+BAN_ICON_DIAMETER: float = 0.86               # icon diameter / ban box (measured)
+BAN_ICON_RATIOS: tuple = (0.82, 0.84, 0.86, 0.88, 0.90)      # searched around it
+BAN_ICON_PAD: int = 4                         # px of box drift searched
+BAN_ICON_INNER: float = 0.80                  # compare this much of the radius
+BAN_NCC_MIN: float = 0.82                     # best correlation needed
+BAN_NCC_MARGIN: float = 0.08                  # lead over the runner-up needed
+BAN_DINO_TOPK: int = 5                        # DINOv2 veto: the winner must be in
+BAN_DINO_TOLERANCE: float = 0.08              # its top-K and within this of its best
+
+# PICKS: the referee's registration search and the LOCKED-IN check.  A hovered
+# (pre-selected) portrait is drawn at about half contrast: measured 0.49 for a
+# hovered Helcurt vs 0.68-0.95 for every locked pick.
+PICK_FIT_SCALES: tuple = (0.6, 1.3)           # art size / portrait size searched
+PICK_FIT_INNER: float = 0.80
+LOCK_MIN_CONTRAST: float = 0.60               # below this -> "NOT PICKED" (hover)
+LOCK_FIT_MIN: float = 0.60                    # judge contrast only where the art fits
+                                              # well (a skin may not - never guess)
 
 # ---------------------------------------------------------------------------
 # 4b. LIVE STATS SOURCE (consumed by stats_provider.py / main.py)
