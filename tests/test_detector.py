@@ -121,10 +121,11 @@ def test_hist_confirmed_fallback_without_seeds():
     assert resolved["enemy_pick_1"] == "Johnson"
     # Garbage crops must stay blank (colour-only Gord is rejected).
     assert resolved["ally_pick_3"] is None and resolved["ally_pick_4"] is None
-    # All ten bans must still resolve seed-free.
+    # Every ban must still resolve seed-free (Sora's art now comes from the
+    # official roster - tools/update_meta.py).
     for grp in ("ally_ban", "enemy_ban"):
         for i, want in enumerate(REAL_DRAFT_TRUTH[grp]):
-            assert resolved[f"{grp}_{i}"] == want
+            assert resolved[f"{grp}_{i}"] == want, (grp, i, resolved[f"{grp}_{i}"])
 
 
 def test_full_screen_1366x768_end_to_end():
@@ -347,10 +348,10 @@ def test_real_templates_have_no_named_confusions():
          "Helcurt", {"Gord"}),
         ("templates_enemy/helcurt.png", enemy, config.ENEMY_MATCH_THRESHOLD,
          "Helcurt", {"Gord"}),
-        ("templates_circle/sora.png",   ally,  config.TEMPLATE_MATCH_THRESHOLD,
-         "Sora", {"Ixia", "Kalea", "Ling"}),
-        ("templates_enemy/sora.png",    enemy, config.ENEMY_MATCH_THRESHOLD,
-         "Sora", {"Ixia", "Kalea", "Ling"}),
+        # Sora's real ban icon (his art: the official roster + the learned
+        # screen crop).
+        ("tests/fixtures/real_draft/ally_ban_0.png", ally,
+         config.BAN_MATCH_THRESHOLD, "Sora", {"Ixia", "Kalea", "Ling"}),
     ]
     for path, lib, thr, want, confus in cases:
         crop = cv2.imread(os.path.join(ROOT, path), cv2.IMREAD_COLOR)
@@ -373,8 +374,8 @@ REAL_DRAFT_TRUTH = {
     #     crop is the player-name bar ("BD 'Walking Fanny'"), not Helcurt's
     #     face.  No matcher can fix pixels that aren't in the box - the fix is
     #     re-calibrating that one slot.  Kept here only to document it.
-    #   - "Sora" is a 2025 hero with NO portrait in any public DB, so its
-    #     template is the user's own ban crop (the only Sora image that exists).
+    #   - "Sora" had no portrait in the community DB; his art now comes from
+    #     the official roster (tools/update_meta.py).
     #   - ally_pick[4] = None: Helcurt's box sits ~25px low so the crop is the
     #     player-name bar, not the avatar.  With the colour fallback OFF it stays
     #     BLANK (never mislabelled) - the fix is re-calibrating that one slot.
@@ -478,7 +479,8 @@ def test_overlay_behaviors_helcurt_pending_and_sora_ban():
     for i, n in enumerate(fill):
         _place(f, L.ally_picks[i], circ(n))
     _place(f, L.ally_picks[3], _grayed(circ("helcurt")))   # hovered, not locked
-    _place(f, L.ally_bans[0], circ("sora"))
+    _place(f, L.ally_bans[0], cv2.imread(os.path.join(       # Sora's real ban icon
+        ROOT, "tests", "fixtures", "real_draft", "ally_ban_0.png")))
     with _grayed_gate():                                    # gate ships OFF here
         s = det.detect(f)
     assert s.ally_pending[3] is True and s.ally_picks[3] is None    # NOT PICKED

@@ -21,11 +21,18 @@ in the style of the "Otev-" AI LINEUP DRAFTER.
 update/
 ├── main.py          # entry point: capture→detect QThread → engine → overlay
 ├── config.py        # resolution, PIXEL-PERFECT slot boxes, weights, theme
-├── detector.py      # OpenCV pipeline: template match + histogram fallback,
-│                    #   per-slot caching, lane-prediction optimiser
+├── detector.py      # capture → per-slot crops → recognition (DINOv2 or
+│                    #   templates), per-slot caching, lane-prediction optimiser
+├── recognizer.py    # optional DINOv2 recognition: fingerprints, double-check,
+│                    #   learn-from-screen memory
+├── icon_match.py    # the clean art registered into each slot (pure OpenCV):
+│                    #   names ban icons, referees picks, spots hovers
+├── requirements-ai.txt # optional AI stack for recognizer.py
 ├── engine.py        # the scoring brain (pure, testable maths)
 ├── ui.py            # PyQt5: click-through canvas + interactive control dock
 ├── stats_provider.py# pluggable live-stats overlay (HTTP/JSON + TTL cache)
+├── meta.py          # the live meta from the official hero rank
+│                    #   (tools/update_meta.py writes it to heroes.json)
 ├── heroes.json      # hero database (roles, win/ban %, counters, synergies…)
 ├── requirements.txt
 ├── templates/       # drop cropped hero avatars here (see templates/README.md)
@@ -68,6 +75,83 @@ python main.py --region 0,0,1366,614      # capture only a sub-region if you pre
 Position the Scrcpy window borderless at the top-left of the primary monitor
 (or set `config.CAPTURE_ORIGIN`). Drag the dock anywhere; press **Esc** or the
 ✕ to close.
+
+---
+
+## DINOv2 hero recognition (recommended)
+
+Recognition — which hero sits in which slot — is the hard part of the overlay.
+With the optional AI stack installed, the app names heroes with **DINOv2**, a
+small local vision model (~90 MB, runs offline after the first start), and
+**double-checks every name with a second, independent method**: the hero's
+clean art is registered (scaled, shifted, mirrored) into the slot and
+correlated pixel by pixel (`icon_match.py`).
+
+Measured on **11 real 1366×768 screenshots of two drafts** (176 hero slots:
+skins, tiny ban icons, compression, the old overlay's labels drawn over the
+portraits, a hovered hero), using downloaded art only:
+
+| Recognizer | Correct | Wrong labels |
+|---|---|---|
+| Template matching (old, with its learned seeds) | 162 / 176 | 2 (Hanabi→Ixia, Miya→Layla) |
+| DINOv2 alone (first version) | 139 / 176 | 4 (Minsithar, Saber, Floryn, Hanabi) + a hovered Helcurt shown as picked |
+| **DINOv2 + registered art (what ships)** | **176 / 176** | **0** |
+
+**Bans** are the same portrait art at a fixed scale under the red ban badge,
+so the registered art decides: the true hero scores 0.91–0.99 and no other
+hero above 0.78, and DINOv2 — fed the same masked icon — must agree. Rendered
+for all 131 heroes as synthetic ban icons, every one is named correctly (the
+closest pair, Benedetta/Ixia, still 0.21 apart).
+
+**Picks** are named by DINOv2 (it copes with skins and the portraits'
+hero-specific framing); a near-tie goes to the registered art as referee.
+
+**Hover vs locked.** A pre-selected (hovered, not locked) hero is drawn at
+about half contrast: the art fit measures 0.50 for a hovered Helcurt against
+0.70–0.96 for every locked pick, so a hover reads **NOT PICKED** until it
+locks in.
+
+**The overlay never covers a slot.** The overlay is part of every screen
+capture, so boxes are drawn just outside the slots and labels go where they
+cover no slot (they used to sit on the portrait above and be read as part of
+that hero).
+
+Install it once:
+
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements-ai.txt
+python main.py        # first start: downloads the model + fingerprints the roster (~20 s, once)
+```
+
+Without these packages — or with `python main.py --no-dino` — the app uses
+template matching for picks, and the registered art (pure OpenCV) still names
+the bans and flags hovers. The console says which engine is active.
+
+**The double-check.** A pick gets a name only when DINOv2's best match is
+similar enough (`DINO_MIN_SIM`) **and** clearly ahead of the runner-up
+(`DINO_CLEAR_MARGIN`); on a near-tie the registered art must pick one of the
+tied candidates. A ban needs the registered art to be sure (`BAN_NCC_MIN`,
+`BAN_NCC_MARGIN`) and DINOv2 not to disagree. Anything else stays blank, never
+a guessed name. `python tools/diagnose.py` prints both methods' evidence for
+every slot.
+
+**Speed.** Changed slots are recognised in one batch (~0.9 s for a whole cold
+board on a laptop CPU). A slot whose pixels only pulse with the draft animation
+keeps its label without running the model (~5 ms per frame).
+
+**Memory.** A confident, locked pick is saved to `templates_learned_dino/` as
+an extra reference for that hero, so your skins become near-certain matches
+over time. Remembered crops are double-checked on every start: one that
+clearly shows a different hero than it is filed under (an old mislabel) is
+ignored, and the console says so.
+
+**Clean art vs screen crops.** Downloaded portraits live in `templates*/`;
+crops taken off your screen belong in `templates_learned*/`. A screen crop
+carries the slot's ring, badges or red ban slash, which every other slot of
+that type shares, so it only counts when it is a near-exact match
+(`DINO_SCREEN_MIN`). Heroes with no public art (currently **Sora**) are
+recognised from their screen crop this way.
 
 ---
 
@@ -269,11 +353,42 @@ Every candidate starts at a **baseline of 10**, then:
 
 ---
 
-## Live hero stats (optional)
+## The live meta (official hero rank)
 
-`heroes.json` is the always-present seed/fallback. To overlay fresh win/ban
-rates (or counters) from any source, point the pluggable provider at a JSON
-endpoint — nothing site-specific is hard-coded:
+The meta changes every patch, so the app keeps itself current from the
+**official source**: Moonton's own hero-rank data — the numbers behind the
+Hero Rank page on the official site (no account or key needed). For every
+hero: win / pick / ban rate over the past 7 days (all ranks), the 5 enemies it
+does best against (`counters`), the 5 it struggles against (`countered_by`),
+and its 5 best teammates (`synergies`).
+
+**Automatic.** `python main.py` starts instantly from `heroes.json` + the last
+good copy, then refreshes in the background (and every 15 minutes) — the
+overlay never waits on the website, and offline it keeps the last numbers.
+When the official roster has a hero your `heroes.json` doesn't, the console
+says so. `--no-meta` turns it off.
+
+**Permanent / new heroes.** One command writes the current meta into
+`heroes.json` and adds newly released heroes — with their official portraits
+in every template folder, so the detector recognises them too:
+
+```bash
+python tools/update_meta.py                     # past 7 days, all ranks
+python tools/update_meta.py --days 30 --rank mythic
+python tools/update_meta.py --dry-run           # just show what would change
+```
+
+It backs up `heroes.json` first, keeps your own fields (owned heroes,
+archetypes, damage type), updates recommended lanes/roles from the official
+roster (`--keep-lanes` to skip), and new heroes start as not owned
+(`tools/set_owned.py` when you buy them). Settings: `META_DAYS` (1/3/7/15/30),
+`META_RANK` (all/epic/legend/mythic/honor/glory) in `config.py`.
+
+### Your own stats source (optional)
+
+`heroes.json` is the always-present seed/fallback. To overlay win/ban rates
+(or counters) from a different source instead, point the pluggable provider at
+a JSON endpoint — nothing site-specific is hard-coded:
 
 ```bash
 python main.py --stats-url https://example.com/mlbb/heroes.json
@@ -296,8 +411,9 @@ How it behaves (`stats_provider.py`):
 - `CachedStatsProvider` wraps it with an on-disk TTL cache and **serves stale
   data if the network is down** instead of crashing the overlay.
 - `StatsRepository.build()` overlays live data onto the seed and **degrades to
-  `heroes.json` on any error**; `refresh()` mutates the live `HeroDB` in place
-  on a `QTimer`, so the engine immediately re-scores on fresh numbers.
+  `heroes.json` on any error**; the app refreshes on a background thread and
+  mutates the live `HeroDB` in place, so the engine immediately re-scores on
+  fresh numbers.
 - Writing your own scraper? Wrap it in `CallableStatsProvider(fn)` — same
   caching/refresh machinery applies.
 
@@ -318,6 +434,11 @@ buttons. So:
 
 ```bash
 python tests/test_engine.py     # or: pytest -q
+python tests/test_meta.py       # official hero rank -> stats, roster, heroes.json
+python tests/test_recognizer.py # double-check rules, memory, and 3 REAL screenshots
+                                # end-to-end (every slot, the hover, the bans)
 python engine.py                # scoring self-test across all 4 modes
 python detector.py              # synthetic-frame match + cache + lane test
 ```
+
+The real-crop DINOv2 test needs the optional AI stack and skips without it.

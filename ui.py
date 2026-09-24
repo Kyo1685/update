@@ -28,7 +28,7 @@ Run ``python ui.py`` for a self-contained mock demo (no game / capture needed).
 from __future__ import annotations
 
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from PyQt5.QtCore import (Qt, QSize, QRectF, QPoint, pyqtSignal, pyqtProperty,
                           QPropertyAnimation, QEasingCurve)
@@ -301,7 +301,7 @@ class OverlayCanvas(QWidget):
                 continue
             p.setPen(pen)
             p.setBrush(Qt.NoBrush)
-            p.drawRect(box.x, box.y, box.w, box.h)
+            self._draw_box(p, box)
             lane = next((ln for ln, hn in lanes.items() if hn == name), None)
             tag = predicted_role_label(name, lane, self.db)
             label = f"{name.upper()} [{tag}]"
@@ -315,8 +315,39 @@ class OverlayCanvas(QWidget):
         pen.setStyle(Qt.DashLine)
         p.setPen(pen)
         p.setBrush(Qt.NoBrush)
-        p.drawRect(box.x, box.y, box.w, box.h)
+        self._draw_box(p, box)
         self._paint_label(p, box, "NOT PICKED", THEME.ban_box)
+
+    # The overlay is part of every screen capture, so nothing may be painted
+    # where the detector reads a slot: boxes sit just OUTSIDE their slot, and
+    # a label goes wherever it covers no slot (it used to sit on the portrait
+    # above and get read as part of that hero).
+    @staticmethod
+    def _outset() -> int:
+        return THEME.box_thickness // 2 + 3
+
+    def _draw_box(self, p, box) -> None:
+        m = self._outset()
+        p.drawRect(box.x - m, box.y - m, box.w + 2 * m, box.h + 2 * m)
+
+    def _slot_rects(self) -> List[QRectF]:
+        L = self.layout
+        return [QRectF(b.x - 2, b.y - 2, b.w + 4, b.h + 4)
+                for grp in (L.ally_picks, L.enemy_picks, L.ally_bans, L.enemy_bans)
+                for b in grp]
+
+    def _label_pos(self, box, tw: float, th: float) -> Tuple[float, float]:
+        m = self._outset() + 2
+        beside = box.x2 + m if box.x + box.w / 2 < self.width() / 2 else box.x - m - tw
+        spots = [(box.x, box.y - th - m), (beside, box.y), (box.x, box.y2 + m)]
+        slots = self._slot_rects()
+        for x, y in spots:
+            r = QRectF(x, y, tw, th)
+            inside = (r.left() >= 0 and r.top() >= 0
+                      and r.right() <= self.width() and r.bottom() <= self.height())
+            if inside and not any(r.intersects(s) for s in slots):
+                return x, y
+        return spots[1]
 
     def _paint_label(self, p, box, text, color, font=None) -> None:
         font = font or self._font
@@ -324,8 +355,7 @@ class OverlayCanvas(QWidget):
         fm = QFontMetrics(font)
         tw = fm.horizontalAdvance(text) + 12
         th = fm.height() + 4
-        lx = box.x
-        ly = box.y - th - 4 if box.y - th - 4 > 0 else box.y2 + 4
+        lx, ly = self._label_pos(box, tw, th)
 
         bg = QPainterPath()
         bg.addRoundedRect(QRectF(lx, ly, tw, th), 4, 4)

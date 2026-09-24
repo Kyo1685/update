@@ -15,6 +15,8 @@ so an idle draft costs almost nothing.
 Usage
 -----
     python main.py                      # live: capture the Scrcpy mirror
+    python main.py --no-dino            # template matching instead of DINOv2
+    python main.py --no-meta            # heroes.json only (no live meta refresh)
     python main.py --templates ./templates
     python main.py --accept-low         # trust low-confidence guesses too
     python main.py --mock               # demo with a scripted draft (no game)
@@ -58,11 +60,16 @@ class DetectorWorker(QThread):
     the board changes (cheap idle, no UI stutter)."""
     state_ready = pyqtSignal(object)         # emits DraftState
 
-    def __init__(self, detector, capturer, interval: float = config.DETECT_INTERVAL):
+    def __init__(self, detector, capturer, interval: float = config.DETECT_INTERVAL,
+                 recognizer_factory=None):
         super().__init__()
         self._detector = detector
         self._capturer = capturer
         self._interval = interval
+        # Builds the DINOv2 recognizer (seconds: model + reference index).  It
+        # runs HERE, on the worker thread, so the overlay never freezes; it
+        # returns None when the AI stack is unavailable -> template matching.
+        self._recognizer_factory = recognizer_factory
         self._running = False
         self._last_key: Optional[Tuple] = None
 
@@ -74,6 +81,13 @@ class DetectorWorker(QThread):
 
     def run(self) -> None:
         self._running = True
+        if self._recognizer_factory is not None:
+            try:
+                self._detector.recognizer = self._recognizer_factory()
+            except Exception as exc:                      # never block detection
+                sys.stderr.write(f"[dino] failed to start ({exc}); "
+                                 "using template matching\n")
+                self._detector.recognizer = None
         while self._running:
             try:
                 frame = self._capturer.grab()
@@ -97,6 +111,23 @@ class DetectorWorker(QThread):
         self.wait(2000)
 
 
+class StatsRefresher(QThread):
+    """Fetches live stats OFF the UI thread - a slow website must never freeze
+    the overlay.  Emits the fresh {hero: fields} (or nothing on failure)."""
+    fetched = pyqtSignal(object)
+
+    def __init__(self, provider):
+        super().__init__()
+        self._provider = provider
+
+    def run(self) -> None:
+        try:
+            self.fetched.emit(self._provider.fetch(force=True))
+        except Exception as exc:
+            sys.stderr.write(f"[meta] refresh failed ({exc}); keeping the "
+                             "current numbers\n")
+
+
 # ---------------------------------------------------------------------------
 # Application controller
 # ---------------------------------------------------------------------------
@@ -109,6 +140,8 @@ class DraftAssistant:
         self.worker: Optional[DetectorWorker] = None
         self.repo = None
         self._stats_timer: Optional[QTimer] = None
+        self._refresher: Optional[StatsRefresher] = None
+        self._told_new_heroes = False
 
         # Recompute whenever the board OR the toggles change.
         self.overlay.settingsChanged.connect(self._on_settings)
@@ -116,17 +149,33 @@ class DraftAssistant:
 
     # ----- live stats -----------------------------------------------------
     def enable_live_stats(self, repo, interval_sec: int) -> None:
-        """Periodically refresh hero stats from the StatsRepository in place.
-        The DB is mutated, so the engine immediately scores on fresh numbers."""
+        """Refresh hero stats now and periodically, in the background.  The DB
+        is mutated in place, so the engine immediately scores on fresh numbers."""
         self.repo = repo
         self._stats_timer = QTimer()
         self._stats_timer.timeout.connect(self._refresh_stats)
         self._stats_timer.start(max(30, interval_sec) * 1000)
+        self._refresh_stats()
 
     def _refresh_stats(self) -> None:
-        if self.repo is None:
+        if self.repo is None or self.repo.provider is None:
             return
-        if self.repo.refresh(self.db) > 0:
+        if self._refresher is not None and self._refresher.isRunning():
+            return
+        self._refresher = StatsRefresher(self.repo.provider)
+        self._refresher.fetched.connect(self._apply_stats)
+        self._refresher.start()
+
+    def _apply_stats(self, data) -> None:
+        n = self.db.apply_updates(data)
+        print(f"[meta] live stats applied to {n} heroes")
+        live = getattr(self.repo.provider, "inner", self.repo.provider)
+        new = getattr(live, "new_heroes", None)
+        if new and not self._told_new_heroes:
+            self._told_new_heroes = True
+            print(f"[meta] new heroes not in heroes.json yet: {', '.join(new)} - "
+                  "run:  python tools/update_meta.py")
+        if n:
             self._recompute()                     # re-score with new stats
 
     # ----- event handlers -------------------------------------------------
@@ -143,7 +192,8 @@ class DraftAssistant:
         self.overlay.update_result(result)
 
     # ----- lifecycle ------------------------------------------------------
-    def start_live(self, square_dir: str, circle_dir: str, accept_low: bool) -> None:
+    def start_live(self, square_dir: str, circle_dir: str, accept_low: bool,
+                   use_dino: bool = True) -> None:
         # Imported lazily so --mock works on machines without the CV stack.
         from detector import ScreenCapturer, TemplateLibrary, DraftDetector
 
@@ -193,11 +243,28 @@ class DraftAssistant:
               f"+{n_ally_ovr}ovr+{n_learn}learned  enemy=square:{len(sq)}"
               f"+{n_enemy_ovr}ovr+{n_learn_e}learned  bans=circular:{len(ci_enemy)}  "
               f"fallback={config.USE_HISTOGRAM_FALLBACK} confirm={config.HIST_CONFIRM_FALLBACK} auto_learn={config.AUTO_LEARN}")
+        # The registered-art matcher (pure OpenCV): recognises ban icons with or
+        # without DINOv2, and is DINOv2's second opinion on every slot.
+        from icon_match import IconMatcher
+        icons = IconMatcher.from_dirs((circle_dir, square_dir) + tuple(config.ICON_ART_DIRS))
+        print(f"[icons] clean art for {len(icons)} heroes (ban icons + double-check)")
+
         capturer = ScreenCapturer()
         detector = DraftDetector(self.db, ally_library=ally, enemy_library=enemy,
-                                 ban_library=ban, accept_low=accept_low)
+                                 ban_library=ban, accept_low=accept_low, icons=icons)
 
-        self.worker = DetectorWorker(detector, capturer)
+        factory = None
+        if use_dino:
+            print("[recognition] DINOv2 loading on the detector thread "
+                  "(falls back to templates if unavailable)")
+
+            def factory():
+                from recognizer import DinoRecognizer    # imports torch lazily
+                return DinoRecognizer.load(icons=icons)
+        else:
+            print("[recognition] template matching (DINOv2 disabled)")
+
+        self.worker = DetectorWorker(detector, capturer, recognizer_factory=factory)
         self.worker.state_ready.connect(self.on_state)
         self.worker.start()
 
@@ -272,6 +339,11 @@ def main() -> int:
                         help="calibration JSON produced by calibrate.py")
     parser.add_argument("--accept-low", action="store_true",
                         help="accept low-confidence template guesses")
+    parser.add_argument("--no-dino", action="store_true",
+                        help="use template matching instead of DINOv2 recognition")
+    parser.add_argument("--no-meta", action="store_true",
+                        help="don't refresh the meta (win/ban rates, counters) "
+                             "from the official hero rank; use heroes.json only")
     parser.add_argument("--mock", action="store_true",
                         help="run a scripted demo without screen capture")
     parser.add_argument("--calibrate", action="store_true",
@@ -342,6 +414,17 @@ def main() -> int:
                                        ttl=config.STATS_CACHE_TTL)
         repo = StatsRepository(args.heroes, provider)
         _DB = repo.build()
+    elif config.META_LIVE and not args.no_meta:
+        # The official hero rank (meta.py).  Start instantly from heroes.json +
+        # the last good copy; fresh numbers arrive in the background.
+        from stats_provider import StatsRepository, CachedStatsProvider
+        from meta import MoontonStatsProvider
+        live = MoontonStatsProvider(HeroDB.load(args.heroes).names())
+        repo = StatsRepository(args.heroes, CachedStatsProvider(
+            live, cache_path=config.META_CACHE_PATH, ttl=config.STATS_CACHE_TTL))
+        _DB = repo.build(network=False)
+        print(f"[meta] live meta: {live.describe()} - refreshing in the "
+              "background (--no-meta to use heroes.json only)")
     else:
         _DB = HeroDB.load(args.heroes)
 
@@ -354,7 +437,8 @@ def main() -> int:
         assistant.start_mock()
     else:
         try:
-            assistant.start_live(args.templates, args.circle_templates, args.accept_low)
+            assistant.start_live(args.templates, args.circle_templates, args.accept_low,
+                                 use_dino=config.USE_DINO and not args.no_dino)
         except Exception as exc:
             sys.stderr.write(
                 f"[fatal] could not start live capture: {exc}\n"

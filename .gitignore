@@ -23,6 +23,17 @@ templates_learned_enemy/*
 !templates_learned/nana.png
 !templates_learned/melissa.png
 !templates_learned/lukas.png
+!templates_learned/sora.png
 !templates_learned_enemy/vexana.png
 !templates_learned_enemy/johnson.png
 !templates_learned_enemy/layla.png
+
+# DINOv2 recognition: reference-embedding cache + per-screen memory (local)
+.dino_cache.npz
+.dino_cache.npz.tmp.npz
+templates_learned_dino/
+
+# Meta updater: backup of the previous heroes.json + the live-meta cache
+heroes.json.bak
+.meta_cache.json
+.meta_cache.json.tmp

@@ -172,6 +172,11 @@ class CachedStatsProvider(StatsProvider):
         except OSError as exc:
             sys.stderr.write(f"[stats] cache write failed: {exc}\n")
 
+    def cached(self) -> Optional[Dict[str, dict]]:
+        """The last good copy, however old (None if there is none) - no
+        network, so it is safe to call while the UI is starting."""
+        return self._read_cache(respect_ttl=False)
+
     def fetch(self, force: bool = False) -> Dict[str, dict]:
         if not force:
             fresh = self._read_cache(respect_ttl=True)
@@ -201,14 +206,23 @@ class StatsRepository:
         self.base_path = base_path
         self.provider = provider
 
-    def build(self) -> HeroDB:
+    def build(self, network: bool = True) -> HeroDB:
         """Load the seed DB, then overlay live data if a provider is set.
-        Always returns a usable DB - provider errors degrade to the seed."""
+        Always returns a usable DB - provider errors degrade to the seed.
+        ``network=False`` overlays only the last cached copy (instant startup;
+        refresh in the background afterwards)."""
         db = HeroDB.load(self.base_path)
         if self.provider is not None:
             try:
-                n = db.apply_updates(self.provider.fetch())
-                sys.stderr.write(f"[stats] overlaid live data on {n} heroes.\n")
+                if network:
+                    data = self.provider.fetch()
+                else:
+                    cached = getattr(self.provider, "cached", None)
+                    data = cached() if cached is not None else None
+                if data:
+                    n = db.apply_updates(data)
+                    sys.stderr.write(f"[stats] overlaid {'live' if network else 'cached'} "
+                                     f"data on {n} heroes.\n")
             except Exception as exc:
                 sys.stderr.write(f"[stats] provider unavailable ({exc}); "
                                  "using seed heroes.json.\n")

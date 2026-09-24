@@ -280,6 +280,97 @@ SHOW_CONFIDENCE: bool = False                 # don't draw the match % on labels
 MIN_DISPLAY_CONFIDENCE: float = 0.0           # 0 = show everything detected
 
 # ---------------------------------------------------------------------------
+# 4d. DINOv2 RECOGNITION (consumed by recognizer.py / detector.py)
+# ---------------------------------------------------------------------------
+# A small local vision model (DINOv2-small, ~90 MB) turns every hero portrait
+# into a feature "fingerprint" and names a slot by its nearest reference.
+# Measured on real 1366x768 draft crops using DOWNLOADED art only: DINOv2 14/15
+# heroes (skins included), template matching 13/15, CLIP 6/15; with the
+# double-check below, 15/15 and every empty slot rejected.  Needs torch +
+# torchvision + transformers (requirements-ai.txt); without them, or when the
+# one-time model download fails, the app keeps using template matching.
+USE_DINO: bool = True
+DINO_MODEL: str = "facebook/dinov2-small"
+DINO_DEVICE: str = "auto"                     # "auto" | "cpu" | "cuda"
+DINO_THREADS: int = 4                         # CPU threads for inference (0 = torch default)
+DINO_BATCH: int = 32                          # images per forward pass
+
+# The double-check for PICKS.  A slot is named only when DINOv2's best match
+# is similar enough AND clearly ahead of the runner-up.  On a near-tie the art
+# itself is registered into the portrait (icon_match.py) as a referee: its
+# winner must be one of the tied candidates.  Anything else stays blank -
+# never a guessed name.  (Bans: see 4e.)
+DINO_MIN_SIM: float = 0.66                    # best match below this -> blank
+DINO_CLEAR_MARGIN: float = 0.06               # lead needed to trust DINOv2 alone
+DINO_TIE_TOPK: int = 4                        # candidates the referee may judge
+PICK_TRIM: float = 0.07                       # crop edge ignored (frame, overlay lines)
+PICK_REF_ZOOMS: tuple = (1.0, 0.8, 0.65)      # reference framings (portraits zoom in)
+PICK_REF_SOFT: int = 64                       # + each at screen softness (px)
+PICK_NCC_AGREE: float = 0.55                  # referee confirms DINOv2's best at this
+PICK_NCC_STRONG: float = 0.80                 # referee overrules only when this sure...
+PICK_NCC_MARGIN: float = 0.10                 # ...and this far ahead
+
+# Animation: a named slot keeps its label while its pixels stay near-identical
+# to the crop it was recognised from (normalised correlation), so pulsing
+# draft effects cost no inference.  A real change re-runs recognition, and a
+# transient blank is bridged only while the held hero is still a top candidate.
+DINO_CONTINUITY_MIN: float = 0.90
+DINO_CONTINUITY_LEVEL: float = 1.25           # ...and contrast within this factor
+DINO_STICKY_MIN: float = 0.55
+
+# Memory: a confident clear win saves the crop as an extra reference for that
+# hero (several per hero, so a pick and a ban of the same hero both stick).
+DINO_LEARN_DIR: str = "templates_learned_dino"
+DINO_LEARN_MIN: float = 0.80                  # similarity needed to remember
+DINO_LEARN_MARGIN: float = 0.05               # lead needed to remember
+DINO_LEARN_MAX_PER_HERO: int = 6
+DINO_LEARN_DUP_SIM: float = 0.97              # skip crops this close to a known ref
+
+# Reference art, in two classes.  CLEAN folders hold downloaded portraits.
+# SCREEN folders hold crops taken off the draft screen: those carry the slot's
+# overlay (ring, badges, the red ban slash) that every other slot of that type
+# shares, so a screen crop only counts as evidence at DINO_SCREEN_MIN or above
+# (measured: same hero re-sighted with a 4 px box shift >= 0.90; different
+# heroes sharing the overlay <= 0.79).  Put screen crops in a SCREEN folder,
+# never in a clean one.  Embeddings are cached by image content, so only new
+# or changed files are embedded on startup (the first run embeds the roster).
+DINO_CLEAN_DIRS: tuple = (TEMPLATE_DIR, TEMPLATE_CIRCLE_DIR, TEMPLATE_ALLY_DIR,
+                          TEMPLATE_ENEMY_DIR)
+DINO_SCREEN_DIRS: tuple = (TEMPLATE_LEARNED_DIR, TEMPLATE_LEARNED_ENEMY_DIR)
+DINO_SCREEN_MIN: float = 0.85
+DINO_SCREEN_TOLERANCE: float = 0.03           # a remembered crop must look like its
+                                              # hero (within this of the best clean
+                                              # match) or it is ignored as mislabelled
+DINO_CACHE_PATH: str = ".dino_cache.npz"
+
+# ---------------------------------------------------------------------------
+# 4e. ICON MATCHING (icon_match.py - pure OpenCV, with or without DINOv2)
+# ---------------------------------------------------------------------------
+# BANS: every ban icon is the hero's portrait art at a fixed scale under a red
+# ban badge.  Registering each hero's art at that scale and correlating the
+# face (badge corner + ring masked) scored the true hero 0.91-0.99 and every
+# other hero <= 0.78 on the real screenshots - so the correlation decides, and
+# DINOv2 (fed the same masked icon) must agree.
+ICON_ART_DIRS: tuple = (TEMPLATE_CIRCLE_DIR, TEMPLATE_DIR)   # one portrait per hero
+BAN_ICON_DIAMETER: float = 0.86               # icon diameter / ban box (measured)
+BAN_ICON_RATIOS: tuple = (0.82, 0.84, 0.86, 0.88, 0.90)      # searched around it
+BAN_ICON_PAD: int = 4                         # px of box drift searched
+BAN_ICON_INNER: float = 0.80                  # compare this much of the radius
+BAN_NCC_MIN: float = 0.82                     # best correlation needed
+BAN_NCC_MARGIN: float = 0.08                  # lead over the runner-up needed
+BAN_DINO_TOPK: int = 5                        # DINOv2 veto: the winner must be in
+BAN_DINO_TOLERANCE: float = 0.08              # its top-K and within this of its best
+
+# PICKS: the referee's registration search and the LOCKED-IN check.  A hovered
+# (pre-selected) portrait is drawn at about half contrast: measured 0.49 for a
+# hovered Helcurt vs 0.68-0.95 for every locked pick.
+PICK_FIT_SCALES: tuple = (0.6, 1.3)           # art size / portrait size searched
+PICK_FIT_INNER: float = 0.80
+LOCK_MIN_CONTRAST: float = 0.60               # below this -> "NOT PICKED" (hover)
+LOCK_FIT_MIN: float = 0.60                    # judge contrast only where the art fits
+                                              # well (a skin may not - never guess)
+
+# ---------------------------------------------------------------------------
 # 4b. LIVE STATS SOURCE (consumed by stats_provider.py / main.py)
 # ---------------------------------------------------------------------------
 # Leave STATS_URL = None to run purely from heroes.json.  Set it to a JSON
@@ -292,6 +383,19 @@ STATS_FIELD_MAP: Dict[str, str] = {}                # our_field -> source_key
 STATS_CACHE_PATH: str = ".stats_cache.json"
 STATS_CACHE_TTL: float = 3600.0                     # serve cache for 1h
 STATS_REFRESH_SEC: int = 900                        # auto-refresh every 15 min
+
+# The live META (meta.py): Moonton's own hero-rank data - the numbers behind
+# the official Hero Rank page - refreshed in the background while the app runs
+# (win / ban / pick rates, counters, synergies).  Offline, the last good copy
+# (or heroes.json) is used.  `python tools/update_meta.py` writes the same data
+# into heroes.json and adds newly released heroes with their portraits.
+# Ignored when STATS_URL is set.  Disable with --no-meta.
+META_LIVE: bool = True
+META_API: str = "https://api.gms.moontontech.com/api/gms/source/2669606/"
+META_DAYS: int = 7                                  # 1 | 3 | 7 | 15 | 30 days
+META_RANK: str = "all"                              # all|epic|legend|mythic|honor|glory
+META_TOP: int = 5                                   # counters/synergies per hero
+META_CACHE_PATH: str = ".meta_cache.json"
 
 # ---------------------------------------------------------------------------
 # 4c. TEMPLATE AUTO-FETCH (consumed by fetch_templates.py)
